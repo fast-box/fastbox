@@ -19,7 +19,7 @@ package state
 import (
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/common"
 )
 
 type journalEntry interface {

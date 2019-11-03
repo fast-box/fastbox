@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/blockchain/state"
-	"github.com/hpb-project/go-hpb/blockchain/storage"
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/config"
+	"github.com/hpb-project/sphinx/blockchain/state"
+	"github.com/hpb-project/sphinx/blockchain/storage"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/config"
 )
 
 // So we can deterministically seed different blockchains

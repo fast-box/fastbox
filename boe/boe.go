@@ -150,8 +150,8 @@ int recover_pubkey_callback(unsigned char *pub, unsigned char *sig,void *param, 
 import "C"
 import (
 	"fmt"
-	"github.com/hpb-project/go-hpb/common/crypto"
-	"github.com/hpb-project/go-hpb/common/log"
+	"github.com/hpb-project/sphinx/common/crypto"
+	"github.com/hpb-project/sphinx/common/log"
 	"runtime"
 	"time"
 	"unsafe"

@@ -19,8 +19,8 @@ package keystore
 import (
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/account"
-	"github.com/hpb-project/go-hpb/blockchain/types"
+	"github.com/hpb-project/sphinx/account"
+	"github.com/hpb-project/sphinx/blockchain/types"
 )
 
 // keystoreWallet implements the accounts.Wallet interface for the original

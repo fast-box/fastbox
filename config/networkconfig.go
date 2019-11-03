@@ -18,9 +18,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/hpb-project/go-hpb/network/p2p/discover"
-	"github.com/hpb-project/go-hpb/network/p2p/nat"
-	"github.com/hpb-project/go-hpb/network/p2p/netutil"
+	"github.com/hpb-project/sphinx/network/p2p/discover"
+	"github.com/hpb-project/sphinx/network/p2p/nat"
+	"github.com/hpb-project/sphinx/network/p2p/netutil"
 
 	"os"
 	"path/filepath"

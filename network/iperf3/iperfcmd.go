@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"bufio"
 	"io"
-	"github.com/hpb-project/go-hpb/common/log"
+	"github.com/hpb-project/sphinx/common/log"
 	"strings"
 	"encoding/json"
 	"os"

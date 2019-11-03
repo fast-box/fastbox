@@ -17,8 +17,8 @@
 package bc
 
 import (
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
 )
 
 // TxPreEvent is posted when a transaction enters the transaction pool.

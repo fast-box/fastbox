@@ -33,7 +33,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/go-hpb/common/log"
+	"github.com/hpb-project/sphinx/common/log"
 )
 
 // Handler is the global debugging handler.

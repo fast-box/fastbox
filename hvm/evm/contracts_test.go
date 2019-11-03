@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/common"
 )
 
 // precompiledTest defines the input/output pairs for precompiled contract tests.

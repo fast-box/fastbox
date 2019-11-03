@@ -40,7 +40,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/hpb-project/go-hpb/common/crypto"
+	"github.com/hpb-project/sphinx/common/crypto"
 )
 
 var dumpEnc bool

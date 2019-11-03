@@ -21,7 +21,7 @@ import (
 	"math/rand"
 	"os"
 	"time"
-	"github.com/hpb-project/go-hpb/common/log"
+	"github.com/hpb-project/sphinx/common/log"
 	"gopkg.in/urfave/cli.v1"
 )
 

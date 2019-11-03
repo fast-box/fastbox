@@ -21,10 +21,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/crypto"
-	"github.com/hpb-project/go-hpb/blockchain/storage"
-	"github.com/hpb-project/go-hpb/common/trie"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/crypto"
+	"github.com/hpb-project/sphinx/blockchain/storage"
+	"github.com/hpb-project/sphinx/common/trie"
 )
 
 // testAccount is the data associated with an account used by the state tests.

@@ -28,10 +28,10 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/crypto/sha3"
-	"github.com/hpb-project/go-hpb/common/math"
-	"github.com/hpb-project/go-hpb/common/rlp"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/crypto/sha3"
+	"github.com/hpb-project/sphinx/common/math"
+	"github.com/hpb-project/sphinx/common/rlp"
 )
 
 var (

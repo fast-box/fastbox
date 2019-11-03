@@ -1,10 +1,10 @@
 package hvm
 
 import (
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/consensus"
-	"github.com/hpb-project/go-hpb/hvm/evm"
-	"github.com/hpb-project/go-hpb/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/consensus"
+	"github.com/hpb-project/sphinx/hvm/evm"
+	"github.com/hpb-project/sphinx/blockchain/types"
 	"math/big"
 )
 

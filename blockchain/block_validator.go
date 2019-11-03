@@ -18,11 +18,11 @@ package bc
 
 import (
 	"fmt"
-	"github.com/hpb-project/go-hpb/blockchain/state"
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common/math"
-	"github.com/hpb-project/go-hpb/config"
-	"github.com/hpb-project/go-hpb/consensus"
+	"github.com/hpb-project/sphinx/blockchain/state"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common/math"
+	"github.com/hpb-project/sphinx/config"
+	"github.com/hpb-project/sphinx/consensus"
 	"math/big"
 )
 

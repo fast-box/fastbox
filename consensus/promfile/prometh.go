@@ -29,9 +29,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hpb-project/go-hpb/blockchain"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/log"
+	"github.com/hpb-project/sphinx/blockchain"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/log"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

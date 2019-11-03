@@ -1,8 +1,8 @@
 package event
 
 import (
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
 )
 
 type RemovedLogsEvent struct {

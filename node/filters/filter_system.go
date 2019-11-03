@@ -26,12 +26,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/hpb-project/go-hpb/network/rpc"
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/blockchain"
-	"github.com/hpb-project/go-hpb/event"
-	"github.com/hpb-project/go-hpb/event/sub"
+	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/blockchain"
+	"github.com/hpb-project/sphinx/event"
+	"github.com/hpb-project/sphinx/event/sub"
 )
 
 // Type determines the kind of filter and is used to put the filter in to

@@ -18,17 +18,17 @@
 package node
 
 import (
-	"github.com/hpb-project/go-hpb/account"
-	"github.com/hpb-project/go-hpb/consensus"
-	"github.com/hpb-project/go-hpb/internal/hpbapi"
-	"github.com/hpb-project/go-hpb/network/p2p"
-	"github.com/hpb-project/go-hpb/network/rpc"
-	"github.com/hpb-project/go-hpb/blockchain"
-	"github.com/hpb-project/go-hpb/blockchain/storage"
-	"github.com/hpb-project/go-hpb/worker"
-	"github.com/hpb-project/go-hpb/txpool"
-	"github.com/hpb-project/go-hpb/synctrl"
-	"github.com/hpb-project/go-hpb/node/filters"
+	"github.com/hpb-project/sphinx/account"
+	"github.com/hpb-project/sphinx/consensus"
+	"github.com/hpb-project/sphinx/internal/hpbapi"
+	"github.com/hpb-project/sphinx/network/p2p"
+	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/hpb-project/sphinx/blockchain"
+	"github.com/hpb-project/sphinx/blockchain/storage"
+	"github.com/hpb-project/sphinx/worker"
+	"github.com/hpb-project/sphinx/txpool"
+	"github.com/hpb-project/sphinx/synctrl"
+	"github.com/hpb-project/sphinx/node/filters"
 )
 
 type LesServer interface {

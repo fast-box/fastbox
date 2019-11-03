@@ -24,10 +24,10 @@ import (
 
 
 	"gopkg.in/urfave/cli.v1"
-	"github.com/hpb-project/go-hpb/cmd/utils"
-	"github.com/hpb-project/go-hpb/config"
-	"github.com/hpb-project/go-hpb/boe"
-	"github.com/hpb-project/go-hpb/network/p2p"
+	"github.com/hpb-project/sphinx/cmd/utils"
+	"github.com/hpb-project/sphinx/config"
+	"github.com/hpb-project/sphinx/boe"
+	"github.com/hpb-project/sphinx/network/p2p"
 )
 
 var (

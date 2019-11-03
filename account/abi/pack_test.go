@@ -24,7 +24,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/common"
 )
 
 func TestPack(t *testing.T) {

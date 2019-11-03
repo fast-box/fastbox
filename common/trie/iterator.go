@@ -21,7 +21,7 @@ import (
 	"container/heap"
 	"errors"
 
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/common"
 )
 
 // Iterator is a key-value trie iterator that traverses a Trie.

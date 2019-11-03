@@ -22,7 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"github.com/hpb-project/go-hpb/common/log"
+	"github.com/hpb-project/sphinx/common/log"
 )
 
 // makeWizard creates and returns a new prometh prometh.

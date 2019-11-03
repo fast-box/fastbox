@@ -19,7 +19,7 @@ package evm
 import (
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/common"
 )
 
 // ContractRef is a reference to the contract's backing object

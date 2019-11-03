@@ -19,9 +19,9 @@ package state
 import (
 	"bytes"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/rlp"
-	"github.com/hpb-project/go-hpb/common/trie"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/rlp"
+	"github.com/hpb-project/sphinx/common/trie"
 )
 
 // NewStateSync create a new state trie download scheduler.

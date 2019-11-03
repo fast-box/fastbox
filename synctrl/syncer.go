@@ -24,14 +24,14 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hpb-project/go-hpb/blockchain"
-	"github.com/hpb-project/go-hpb/blockchain/storage"
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/log"
-	"github.com/hpb-project/go-hpb/config"
-	"github.com/hpb-project/go-hpb/event/sub"
-	hpbinter "github.com/hpb-project/go-hpb/interface"
+	"github.com/hpb-project/sphinx/blockchain"
+	"github.com/hpb-project/sphinx/blockchain/storage"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/config"
+	"github.com/hpb-project/sphinx/event/sub"
+	hpbinter "github.com/hpb-project/sphinx/interface"
 )
 
 var (

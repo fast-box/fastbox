@@ -27,8 +27,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/crypto"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/crypto"
 )
 
 func tmpKeyStoreIface(t *testing.T, encrypted bool) (dir string, ks keyStore) {

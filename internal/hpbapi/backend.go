@@ -21,17 +21,17 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/account"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/blockchain/storage"
-	"github.com/hpb-project/go-hpb/blockchain/state"
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/network/rpc"
-	"github.com/hpb-project/go-hpb/hvm/evm"
-	"github.com/hpb-project/go-hpb/synctrl"
-	"github.com/hpb-project/go-hpb/config"
-	"github.com/hpb-project/go-hpb/event/sub"
-	"github.com/hpb-project/go-hpb/blockchain"
+	"github.com/hpb-project/sphinx/account"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/blockchain/storage"
+	"github.com/hpb-project/sphinx/blockchain/state"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/hpb-project/sphinx/hvm/evm"
+	"github.com/hpb-project/sphinx/synctrl"
+	"github.com/hpb-project/sphinx/config"
+	"github.com/hpb-project/sphinx/event/sub"
+	"github.com/hpb-project/sphinx/blockchain"
 )
 
 // Backend interface provides the common API services (that are provided by

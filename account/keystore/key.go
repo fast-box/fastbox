@@ -29,9 +29,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hpb-project/go-hpb/account"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/crypto"
+	"github.com/hpb-project/sphinx/account"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/crypto"
 	"github.com/pborman/uuid"
 )
 

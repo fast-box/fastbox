@@ -17,11 +17,11 @@
 package synctrl
 
 import (
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/log"
-	"github.com/hpb-project/go-hpb/network/p2p"
-	"github.com/hpb-project/go-hpb/network/p2p/discover"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/network/p2p"
+	"github.com/hpb-project/sphinx/network/p2p/discover"
 	"math/rand"
 )
 

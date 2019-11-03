@@ -19,7 +19,7 @@ package bloombits
 import (
 	"errors"
 
-	"github.com/hpb-project/go-hpb/blockchain/types"
+	"github.com/hpb-project/sphinx/blockchain/types"
 )
 
 // errSectionOutOfBounds is returned if the user tried to add more bloom filters

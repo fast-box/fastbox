@@ -26,8 +26,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/internal/jsre/deps"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/internal/jsre/deps"
 	"github.com/robertkrimen/otto"
 
 )

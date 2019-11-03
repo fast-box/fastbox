@@ -23,17 +23,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/go-hpb/common/mclock"
-	"github.com/hpb-project/go-hpb/common/log"
-	"github.com/hpb-project/go-hpb/network/p2p/discover"
-	"github.com/hpb-project/go-hpb/common/rlp"
-	"github.com/hpb-project/go-hpb/event"
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/common/mclock"
+	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/network/p2p/discover"
+	"github.com/hpb-project/sphinx/common/rlp"
+	"github.com/hpb-project/sphinx/event"
+	"github.com/hpb-project/sphinx/common"
 	"math/big"
 	"gopkg.in/fatih/set.v0"
 	"errors"
-	//"github.com/hpb-project/go-hpb/boe"
-	//"github.com/hpb-project/go-hpb/boe"
+	//"github.com/hpb-project/sphinx/boe"
+	//"github.com/hpb-project/sphinx/boe"
 )
 
 

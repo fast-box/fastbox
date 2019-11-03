@@ -19,7 +19,7 @@ package evm
 import (
 	"fmt"
 
-	"github.com/hpb-project/go-hpb/config"
+	"github.com/hpb-project/sphinx/config"
 )
 
 func makeStackFunc(pop, push int) stackValidationFunc {

@@ -26,9 +26,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hpb-project/go-hpb/account"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/event/sub"
+	"github.com/hpb-project/sphinx/account"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/event/sub"
 )
 
 var testSigData = make([]byte, 32)

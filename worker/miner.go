@@ -21,15 +21,15 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/consensus"
-	"github.com/hpb-project/go-hpb/common/log"
-	"github.com/hpb-project/go-hpb/config"
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/blockchain/state"
-	"github.com/hpb-project/go-hpb/synctrl"
-	"github.com/hpb-project/go-hpb/blockchain"
-	"github.com/hpb-project/go-hpb/event/sub"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/consensus"
+	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/config"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/blockchain/state"
+	"github.com/hpb-project/sphinx/synctrl"
+	"github.com/hpb-project/sphinx/blockchain"
+	"github.com/hpb-project/sphinx/event/sub"
 )
 
 

@@ -19,7 +19,7 @@ package evm
 import (
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/config"
+	"github.com/hpb-project/sphinx/config"
 )
 
 const (

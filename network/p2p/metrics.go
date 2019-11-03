@@ -20,7 +20,7 @@ package p2p
 
 import (
 	"net"
-	"github.com/hpb-project/go-hpb/common/metrics"
+	"github.com/hpb-project/sphinx/common/metrics"
 )
 
 var (

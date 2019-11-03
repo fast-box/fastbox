@@ -24,13 +24,13 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/blockchain/storage"
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/log"
-	"github.com/hpb-project/go-hpb/common/metrics"
-	"github.com/hpb-project/go-hpb/common/rlp"
-	"github.com/hpb-project/go-hpb/config"
+	"github.com/hpb-project/sphinx/blockchain/storage"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/common/metrics"
+	"github.com/hpb-project/sphinx/common/rlp"
+	"github.com/hpb-project/sphinx/config"
 )
 
 // DatabaseReader wraps the Get method of a backing data store.

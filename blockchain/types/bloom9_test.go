@@ -54,7 +54,7 @@ func TestBloom(t *testing.T) {
 import (
 	"testing"
 
-	"github.com/hpb-project/go-hpb/blockchain/state"
+	"github.com/hpb-project/sphinx/blockchain/state"
 )
 
 func TestBloom9(t *testing.T) {

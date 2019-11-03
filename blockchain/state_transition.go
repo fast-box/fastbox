@@ -20,17 +20,17 @@ import (
 	"errors"
 	"math/big"
 
-	//"github.com/hpb-project/go-hpb/blockchain/state"
-	"github.com/hpb-project/go-hpb/blockchain/state"
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/constant"
-	"github.com/hpb-project/go-hpb/common/log"
-	"github.com/hpb-project/go-hpb/common/math"
-	"github.com/hpb-project/go-hpb/config"
-	"github.com/hpb-project/go-hpb/hvm"
-	"github.com/hpb-project/go-hpb/hvm/evm"
-	"github.com/hpb-project/go-hpb/hvm/native"
+	//"github.com/hpb-project/sphinx/blockchain/state"
+	"github.com/hpb-project/sphinx/blockchain/state"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/constant"
+	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/common/math"
+	"github.com/hpb-project/sphinx/config"
+	"github.com/hpb-project/sphinx/hvm"
+	"github.com/hpb-project/sphinx/hvm/evm"
+	"github.com/hpb-project/sphinx/hvm/native"
 )
 
 var (

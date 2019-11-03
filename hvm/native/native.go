@@ -1,8 +1,8 @@
 package native
 
 import (
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/hvm/evm"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/hvm/evm"
 	"math/big"
 )
 

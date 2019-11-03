@@ -25,9 +25,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hpb-project/go-hpb/cmd/utils"
-	"github.com/hpb-project/go-hpb/config"
-	"github.com/hpb-project/go-hpb/network/rpc"
+	"github.com/hpb-project/sphinx/cmd/utils"
+	"github.com/hpb-project/sphinx/config"
+	"github.com/hpb-project/sphinx/network/rpc"
 	"github.com/gizak/termui"
 	"gopkg.in/urfave/cli.v1"
 )

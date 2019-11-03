@@ -18,12 +18,12 @@ package prometheus
 
 import (
 	//"fmt"
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/consensus"
-	"github.com/hpb-project/go-hpb/consensus/snapshots"
-	"github.com/hpb-project/go-hpb/consensus/voting"
-	"github.com/hpb-project/go-hpb/network/rpc"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/consensus"
+	"github.com/hpb-project/sphinx/consensus/snapshots"
+	"github.com/hpb-project/sphinx/consensus/voting"
+	"github.com/hpb-project/sphinx/network/rpc"
 )
 
 type API struct {

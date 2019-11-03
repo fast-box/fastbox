@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hpb-project/go-hpb/common/crypto"
+	"github.com/hpb-project/sphinx/common/crypto"
 )
 
 // Method represents a callable given a `Name` and whether the method is a constant.

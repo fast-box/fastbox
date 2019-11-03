@@ -23,8 +23,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/rlp"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/rlp"
 )
 
 func init() {

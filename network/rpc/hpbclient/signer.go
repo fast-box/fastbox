@@ -20,8 +20,8 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/blockchain/types"
 )
 
 // senderFromServer is a types.Signer that remembers the sender address returned by the RPC

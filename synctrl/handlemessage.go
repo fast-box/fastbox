@@ -17,14 +17,14 @@
 package synctrl
 
 import (
-	"github.com/hpb-project/go-hpb/blockchain"
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/log"
-	"github.com/hpb-project/go-hpb/common/rlp"
-	"github.com/hpb-project/go-hpb/network/p2p"
-	"github.com/hpb-project/go-hpb/node/db"
-	"github.com/hpb-project/go-hpb/txpool"
+	"github.com/hpb-project/sphinx/blockchain"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/common/rlp"
+	"github.com/hpb-project/sphinx/network/p2p"
+	"github.com/hpb-project/sphinx/node/db"
+	"github.com/hpb-project/sphinx/txpool"
 	"gopkg.in/fatih/set.v0"
 	"math/big"
 	"sync/atomic"

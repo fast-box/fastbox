@@ -8,7 +8,7 @@ import (
 	"strings"
 	"io/ioutil"
 
-	"github.com/hpb-project/go-hpb/common/log"
+	"github.com/hpb-project/sphinx/common/log"
 )
 
 func  send(url string, data string, client http.Client)  {

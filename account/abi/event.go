@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/crypto"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/crypto"
 )
 
 // Event is an event potentially triggered by the EVM's LOG mechanism. The Event

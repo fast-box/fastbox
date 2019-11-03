@@ -22,7 +22,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/hpb-project/go-hpb/network/rpc"
+	"github.com/hpb-project/sphinx/network/rpc"
 )
 
 // In this example, our client whishes to track the latest 'block number'

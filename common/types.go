@@ -24,8 +24,8 @@ import (
 	"reflect"
 
 	"bytes"
-	"github.com/hpb-project/go-hpb/common/crypto/sha3"
-	"github.com/hpb-project/go-hpb/common/hexutil"
+	"github.com/hpb-project/sphinx/common/crypto/sha3"
+	"github.com/hpb-project/sphinx/common/hexutil"
 )
 
 const (

@@ -21,7 +21,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/common"
 )
 
 var (

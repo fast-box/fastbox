@@ -19,7 +19,7 @@ package number
 import (
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/common"
 )
 
 var tt256 = new(big.Int).Lsh(big.NewInt(1), 256)

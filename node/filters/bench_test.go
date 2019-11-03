@@ -23,14 +23,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/bitutil"
-	"github.com/hpb-project/go-hpb/blockchain"
-	"github.com/hpb-project/go-hpb/blockchain/bloombits"
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/event/sub"
-	"github.com/hpb-project/go-hpb/blockchain/storage"
-	"github.com/hpb-project/go-hpb/config"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/bitutil"
+	"github.com/hpb-project/sphinx/blockchain"
+	"github.com/hpb-project/sphinx/blockchain/bloombits"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/event/sub"
+	"github.com/hpb-project/sphinx/blockchain/storage"
+	"github.com/hpb-project/sphinx/config"
 )
 
 func BenchmarkBloomBits512(b *testing.B) {

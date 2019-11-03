@@ -24,8 +24,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hpb-project/go-hpb/account/abi/bind"
-	"github.com/hpb-project/go-hpb/common/compiler"
+	"github.com/hpb-project/sphinx/account/abi/bind"
+	"github.com/hpb-project/sphinx/common/compiler"
 )
 
 var (

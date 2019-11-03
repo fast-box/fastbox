@@ -19,8 +19,8 @@ package bc
 import (
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/blockchain/state"
-	"github.com/hpb-project/go-hpb/blockchain/types"
+	"github.com/hpb-project/sphinx/blockchain/state"
+	"github.com/hpb-project/sphinx/blockchain/types"
 )
 
 // Validator is an interface which defines the standard for block validation. It

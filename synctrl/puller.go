@@ -21,11 +21,11 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/log"
-	"github.com/hpb-project/go-hpb/consensus"
-	"github.com/hpb-project/go-hpb/network/p2p"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/consensus"
+	"github.com/hpb-project/sphinx/network/p2p"
 	"gopkg.in/karalabe/cookiejar.v2/collections/prque"
 )
 

@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/hpb-project/go-hpb/common/math"
+	"github.com/hpb-project/sphinx/common/math"
 )
 
 func TestBlockNumberJSONUnmarshal(t *testing.T) {

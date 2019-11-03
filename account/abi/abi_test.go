@@ -27,8 +27,8 @@ import (
 
 	"reflect"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/crypto"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/crypto"
 )
 
 const jsondata = `

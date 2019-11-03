@@ -1,10 +1,10 @@
 package txpool
 
 import (
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/hexutil"
-	"github.com/hpb-project/go-hpb/config"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/hexutil"
+	"github.com/hpb-project/sphinx/config"
 	"github.com/orcaman/concurrent-map"
 	"math/big"
 )

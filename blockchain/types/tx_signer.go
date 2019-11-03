@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/boe"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/crypto"
-	"github.com/hpb-project/go-hpb/common/log"
-	"github.com/hpb-project/go-hpb/config"
+	"github.com/hpb-project/sphinx/boe"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/crypto"
+	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/config"
 )
 
 var (

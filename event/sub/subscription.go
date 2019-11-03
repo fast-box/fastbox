@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/go-hpb/common/mclock"
+	"github.com/hpb-project/sphinx/common/mclock"
 )
 
 // Subscription represents a stream of events. The carrier of the events is typically a

@@ -21,11 +21,11 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/hpb-project/go-hpb/cmd/utils"
-	"github.com/hpb-project/go-hpb/common/console"
-	"github.com/hpb-project/go-hpb/network/rpc"
+	"github.com/hpb-project/sphinx/cmd/utils"
+	"github.com/hpb-project/sphinx/common/console"
+	"github.com/hpb-project/sphinx/network/rpc"
 	"gopkg.in/urfave/cli.v1"
-	"github.com/hpb-project/go-hpb/config"
+	"github.com/hpb-project/sphinx/config"
 )
 
 var (

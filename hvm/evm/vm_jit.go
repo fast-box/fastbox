@@ -38,9 +38,9 @@ import (
 	"math/big"
 	"unsafe"
 
-	"github.com/hpb-project/go-hpb/storage/state"
-	"github.com/hpb-project/go-hpb/common/crypto"
-	"github.com/hpb-project/go-hpb/config"
+	"github.com/hpb-project/sphinx/storage/state"
+	"github.com/hpb-project/sphinx/common/crypto"
+	"github.com/hpb-project/sphinx/config"
 )
 
 type JitVm struct {

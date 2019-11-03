@@ -21,7 +21,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/hpb-project/go-hpb/blockchain/types"
+	"github.com/hpb-project/sphinx/blockchain/types"
 )
 
 // Tests that batched bloom bits are correctly rotated from the input bloom

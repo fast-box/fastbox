@@ -23,9 +23,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/hexutil"
-	"github.com/hpb-project/go-hpb/hvm/evm"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/hexutil"
+	"github.com/hpb-project/sphinx/hvm/evm"
 	"github.com/robertkrimen/otto"
 )
 

@@ -4,9 +4,9 @@ import (
 
 	"os"
 
-	"github.com/hpb-project/go-hpb/cmd/utils"
-	"github.com/hpb-project/go-hpb/common/log"
-	"github.com/hpb-project/go-hpb/config"
+	"github.com/hpb-project/sphinx/cmd/utils"
+	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/config"
 	"gopkg.in/urfave/cli.v1"
 	"io"
 	"github.com/naoina/toml"

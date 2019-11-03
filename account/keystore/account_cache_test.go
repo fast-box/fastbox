@@ -29,8 +29,8 @@ import (
 
 	"github.com/cespare/cp"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hpb-project/go-hpb/account"
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/account"
+	"github.com/hpb-project/sphinx/common"
 )
 
 var (

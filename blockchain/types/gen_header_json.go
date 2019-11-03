@@ -7,8 +7,8 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/hexutil"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/hexutil"
 )
 
 func (h Header) MarshalJSON() ([]byte, error) {

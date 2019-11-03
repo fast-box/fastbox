@@ -18,9 +18,9 @@ package synctrl
 
 import (
 	"context"
-	"github.com/hpb-project/go-hpb/event/sub"
-	hpb "github.com/hpb-project/go-hpb/interface"
-	"github.com/hpb-project/go-hpb/network/rpc"
+	"github.com/hpb-project/sphinx/event/sub"
+	hpb "github.com/hpb-project/sphinx/interface"
+	"github.com/hpb-project/sphinx/network/rpc"
 	"sync"
 )
 

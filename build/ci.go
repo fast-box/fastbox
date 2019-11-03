@@ -49,7 +49,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hpb-project/go-hpb/internal/build"
+	"github.com/hpb-project/sphinx/internal/build"
 )
 
 var (

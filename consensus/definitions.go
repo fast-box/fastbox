@@ -19,14 +19,14 @@ package consensus
 import (
 	"errors"
 
-	"github.com/hpb-project/go-hpb/blockchain/types"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/hexutil"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/hexutil"
 
 	"github.com/hashicorp/golang-lru"
-	"github.com/hpb-project/go-hpb/common/crypto"
-	"github.com/hpb-project/go-hpb/common/crypto/sha3"
-	"github.com/hpb-project/go-hpb/common/rlp"
+	"github.com/hpb-project/sphinx/common/crypto"
+	"github.com/hpb-project/sphinx/common/crypto/sha3"
+	"github.com/hpb-project/sphinx/common/rlp"
 )
 
 const HpbNodeCheckpointInterval = 200

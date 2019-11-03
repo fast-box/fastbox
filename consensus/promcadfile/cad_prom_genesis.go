@@ -20,8 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"github.com/hpb-project/go-hpb/common"
-	"github.com/hpb-project/go-hpb/common/log"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/log"
 )
 
 

@@ -34,13 +34,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/go-hpb/common/crypto"
-	"github.com/hpb-project/go-hpb/common/crypto/ecies"
-	"github.com/hpb-project/go-hpb/common/crypto/secp256k1"
-	"github.com/hpb-project/go-hpb/common/crypto/sha3"
-	"github.com/hpb-project/go-hpb/network/p2p/discover"
-	"github.com/hpb-project/go-hpb/common/rlp"
-	"github.com/hpb-project/go-hpb/common/log"
+	"github.com/hpb-project/sphinx/common/crypto"
+	"github.com/hpb-project/sphinx/common/crypto/ecies"
+	"github.com/hpb-project/sphinx/common/crypto/secp256k1"
+	"github.com/hpb-project/sphinx/common/crypto/sha3"
+	"github.com/hpb-project/sphinx/network/p2p/discover"
+	"github.com/hpb-project/sphinx/common/rlp"
+	"github.com/hpb-project/sphinx/common/log"
 )
 
 const (

@@ -23,7 +23,7 @@ import (
 	"unicode"
 
 	"fmt"
-	"github.com/hpb-project/go-hpb/common/log"
+	"github.com/hpb-project/sphinx/common/log"
 	"github.com/naoina/toml"
 	"os"
 	"sync/atomic"
