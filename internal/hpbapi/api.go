@@ -558,7 +558,7 @@ type CallArgs struct {
 	GasPrice hexutil.Big     `json:"gasPrice"`
 	Value    hexutil.Big     `json:"value"`
 	Data     hexutil.Bytes   `json:"data"`
-	ExData     types.TxExdata   `json:"exdata"`
+	ExData   types.TxExdata  `json:"exdata"`
 }
 
 func (s *PublicBlockChainAPI) doCall(ctx context.Context, args CallArgs, blockNr rpc.BlockNumber, vmCfg evm.Config) ([]byte, *big.Int, bool, error) {
@@ -794,7 +794,7 @@ type RPCTransaction struct {
 	GasPrice         *hexutil.Big    `json:"gasPrice"`
 	Hash             common.Hash     `json:"hash"`
 	Input            hexutil.Bytes   `json:"input"`
-	ExData        types.TxExdata   `json:"exdata"`
+	ExData           types.TxExdata  `json:"exdata"`
 	Nonce            hexutil.Uint64  `json:"nonce"`
 	To               *common.Address `json:"to"`
 	TransactionIndex hexutil.Uint    `json:"transactionIndex"`
@@ -807,9 +807,9 @@ type RPCTransaction struct {
 // newRPCTransaction returns a transaction that will serialize to the RPC
 // representation, with the given location metadata set (if available).
 func newRPCTransaction(tx *types.Transaction, blockHash common.Hash, blockNumber uint64, index uint64) *RPCTransaction {
-	var signer types.Signer = types.BoeSigner{}
+	var signer types.Signer = types.QSSigner{}
 	if tx.Protected() {
-		signer = types.NewBoeSigner(tx.ChainId())
+		signer = types.NewQSSigner(tx.ChainId())
 	}
 	from, _ := types.Sender(signer, tx)
 	v, r, s := tx.RawSignatureValues()
@@ -820,7 +820,7 @@ func newRPCTransaction(tx *types.Transaction, blockHash common.Hash, blockNumber
 		GasPrice: (*hexutil.Big)(tx.GasPrice()),
 		Hash:     tx.Hash(),
 		Input:    hexutil.Bytes(tx.Data()),
-		ExData:    tx.ExData(),
+		ExData:   tx.ExData(),
 		Nonce:    hexutil.Uint64(tx.Nonce()),
 		To:       tx.To(),
 		Value:    (*hexutil.Big)(tx.Value()),
@@ -978,9 +978,9 @@ func (s *PublicTransactionPoolAPI) GetTransactionReceipt(hash common.Hash) (map[
 	}
 	receipt, _, _, _ := bc.GetReceipt(s.b.ChainDb(), hash) // Old receipts don't have the lookup data available
 
-	var signer types.Signer = types.BoeSigner{}
+	var signer types.Signer = types.QSSigner{}
 	if tx.Protected() {
-		signer = types.NewBoeSigner(tx.ChainId())
+		signer = types.NewQSSigner(tx.ChainId())
 	}
 	from, _ := types.Sender(signer, tx)
 
@@ -1039,7 +1039,7 @@ type SendTxArgs struct {
 	GasPrice *hexutil.Big    `json:"gasPrice"`
 	Value    *hexutil.Big    `json:"value"`
 	Data     hexutil.Bytes   `json:"data"`
-	ExData     types.TxExdata   `json:"exdata"`
+	ExData   types.TxExdata  `json:"exdata"`
 	Nonce    *hexutil.Uint64 `json:"nonce"`
 }
 
@@ -1204,9 +1204,9 @@ func (s *PublicTransactionPoolAPI) PendingTransactions() ([]*RPCTransaction, err
 
 	transactions := make([]*RPCTransaction, 0, len(pending))
 	for _, tx := range pending {
-		var signer types.Signer = types.BoeSigner{}
+		var signer types.Signer = types.QSSigner{}
 		if tx.Protected() {
-			signer = types.NewBoeSigner(tx.ChainId())
+			signer = types.NewQSSigner(tx.ChainId())
 		}
 		from, _ := types.Sender(signer, tx)
 		if _, err := s.b.AccountManager().Find(accounts.Account{Address: from}); err == nil {
@@ -1232,9 +1232,9 @@ func (s *PublicTransactionPoolAPI) Resend(ctx context.Context, sendArgs SendTxAr
 	}
 
 	for _, p := range pending {
-		var signer types.Signer = types.BoeSigner{}
+		var signer types.Signer = types.QSSigner{}
 		if p.Protected() {
-			signer = types.NewBoeSigner(p.ChainId())
+			signer = types.NewQSSigner(p.ChainId())
 		}
 		wantSigHash := signer.Hash(matchTx)
 

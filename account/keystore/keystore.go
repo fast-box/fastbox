@@ -32,9 +32,9 @@ import (
 	"time"
 
 	"github.com/hpb-project/sphinx/account"
+	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/event/sub"
 )
 
@@ -60,10 +60,10 @@ type KeyStore struct {
 	changes  chan struct{}                // Channel receiving change notifications from the cache
 	unlocked map[common.Address]*unlocked // Currently unlocked account (decrypted private keys)
 
-	wallets     []accounts.Wallet       // Wallet wrappers around the individual key files
+	wallets     []accounts.Wallet     // Wallet wrappers around the individual key files
 	updateFeed  sub.Feed              // Event feed to notify wallet additions/removals
 	updateScope sub.SubscriptionScope // Subscription scope tracking current live listeners
-	updating    bool                    // Whether the event notification loop is running
+	updating    bool                  // Whether the event notification loop is running
 
 	mu sync.RWMutex
 }
@@ -277,7 +277,7 @@ func (ks *KeyStore) SignTx(a accounts.Account, tx *types.Transaction, chainID *b
 	}
 	// Depending on the presence of the chain ID, sign with EIP155 or homestead
 	if chainID != nil {
-		return types.SignTx(tx, types.NewBoeSigner(chainID), unlockedKey.PrivateKey)
+		return types.SignTx(tx, types.NewQSSigner(chainID), unlockedKey.PrivateKey)
 	}
 	// error when chainId is nil.
 	panic("chainId is nil")
@@ -306,7 +306,7 @@ func (ks *KeyStore) SignTxWithPassphrase(a accounts.Account, passphrase string, 
 
 	// Depending on the presence of the chain ID, sign with EIP155 or homestead
 	if chainID != nil {
-		return types.SignTx(tx, types.NewBoeSigner(chainID), key.PrivateKey)
+		return types.SignTx(tx, types.NewQSSigner(chainID), key.PrivateKey)
 	}
 	// error when chainId is nil.
 	panic("chainId is nil")

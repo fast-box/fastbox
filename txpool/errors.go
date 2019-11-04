@@ -42,6 +42,6 @@ var (
 	// ErrTxPoolFull is returned if the pool is full.
 	ErrTxPoolFull = errors.New("txpool full")
 
-	//AsynSinger boe
+	//AsynSinger
 	ErrAsynError = errors.New("ErrAsynError")
 )

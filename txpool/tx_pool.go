@@ -59,18 +59,18 @@ type Txchevent struct {
 	Tx *types.Transaction
 }
 type TxPool struct {
-	wg     sync.WaitGroup
-	stopCh chan struct{}
-	chain blockChain
+	wg           sync.WaitGroup
+	stopCh       chan struct{}
+	chain        blockChain
 	chainHeadSub sub.Subscription
 	chainHeadCh  chan bc.ChainHeadEvent
 	txFeed       sub.Feed
 	scope        sub.SubscriptionScope
 
 	txPreTrigger *event.Trigger
-	signer   types.Signer
-	config   config.TxPoolConfiguration
-	gasPrice *big.Int
+	signer       types.Signer
+	config       config.TxPoolConfiguration
+	gasPrice     *big.Int
 
 	// use sync.map instead of map.
 	beats    sync.Map //map[common.Address]time.Time  	   Last heartbeat from each known account
@@ -101,10 +101,10 @@ func NewTxPool(config config.TxPoolConfiguration, chainConfig *config.ChainConfi
 	}
 	//2.Create the transaction pool with its initial settings
 	pool := &TxPool{
-		config: config,
+		config:      config,
 		gasPrice:    new(big.Int).SetUint64(config.PriceLimit),
 		chain:       blockChain,
-		signer:      types.NewBoeSigner(chainConfig.ChainId),
+		signer:      types.NewQSSigner(chainConfig.ChainId),
 		chainHeadCh: make(chan bc.ChainHeadEvent, chanHeadBuffer),
 		stopCh:      make(chan struct{}),
 	}
@@ -302,7 +302,7 @@ func (pool *TxPool) softvalidateTx(tx *types.Transaction) error {
 		return ErrNegativeValue
 	}
 
-	// Call BOE recover sender.
+	// Call recover sender.
 	from, err := types.Sender(pool.signer, tx)
 	if err != nil {
 		log.Error("validateTx Sender ErrInvalidSender", "ErrInvalidSender", ErrInvalidSender, "tx.hash", tx.Hash())
@@ -339,67 +339,9 @@ func (pool *TxPool) softvalidateTx(tx *types.Transaction) error {
 	return nil
 }
 
-// validateTx checks whether a transaction is valid according to the consensus
-// rules and adheres to some heuristic limits of the local node (price and size).
-func (pool *TxPool) validateTx(tx *types.Transaction) error {
-	// Heuristic limit, reject transactions over 32KB to prevent DOS attacks
-	if tx.Size() > maxTransactionSize {
-		log.Trace("ErrOversizedData maxTransactionSize", "ErrOversizedData", ErrOversizedData)
-		return ErrOversizedData
-	}
-	// Transactions can't be negative. This may never happen using RLP decoded
-	// transactions but may occur if you create a transaction using the RPC.
-	if tx.Value().Sign() < 0 {
-		log.Trace("ErrNegativeValue", "ErrNegativeValue", ErrNegativeValue)
-		return ErrNegativeValue
-	}
-
-	// Call BOE recover sender.
-	from, err := types.ASynSender(pool.signer, tx)
-	if err != nil {
-		log.Trace("validateTx ASynSender ErrInvalid", "ErrInvalidSender", ErrInvalidSender, "tx.hash", tx.Hash())
-		from2, err := types.Sender(pool.signer, tx)
-
-		if err != nil {
-			log.Error("validateTx Sender ErrInvalidSender", "ErrInvalidSender", ErrInvalidSender, "tx.hash", tx.Hash())
-			return ErrInvalidSender
-		}
-		copy(from[0:], from2[0:])
-	}
-
-	// Ensure the transaction doesn't exceed the current block limit gas.
-	if pool.currentMaxGas.Cmp(tx.Gas()) < 0 {
-		log.Trace("ErrGasLimit", "ErrGasLimit", ErrGasLimit)
-		return ErrGasLimit
-	}
-
-	// Check gasPrice.
-	if pool.gasPrice.Cmp(tx.GasPrice()) > 0 {
-		log.Trace("ErrUnderpriced", "ErrUnderpriced", ErrUnderpriced)
-		return ErrUnderpriced
-	}
-	// Ensure the transaction adheres to nonce ordering
-	if pool.currentState.GetNonce(from) > tx.Nonce() {
-		log.Trace("ErrNonceTooLow", "tx.Nonce()", tx.Nonce())
-		return ErrNonceTooLow
-	}
-	// Transactor should have enough funds to cover the costs
-	// cost == V + GP * GL
-	if pool.currentState.GetBalance(from).Cmp(tx.Cost()) < 0 {
-		log.Trace("ErrInsufficientFunds", "ErrInsufficientFunds", ErrInsufficientFunds)
-		return ErrInsufficientFunds
-	}
-	intrGas := types.IntrinsicGas(tx.Data(), tx.To() == nil)
-	if tx.Gas().Cmp(intrGas) < 0 {
-		log.Trace("ErrIntrinsicGas", "ErrIntrinsicGas", ErrIntrinsicGas)
-		return ErrIntrinsicGas
-	}
-	return nil
-}
-
 var (
-	allCnt     = int64(0)
-	pendingCnt = int64(0)
+	allCnt         = int64(0)
+	pendingCnt     = int64(0)
 	normalQueueLen = uint64(200000) // nornal queue/pending account number
 )
 
@@ -427,9 +369,9 @@ func (pool *TxPool) AddTxs(txs []*types.Transaction) error {
 func (pool *TxPool) AddTx(tx *types.Transaction) error {
 	// If the transaction txpool pending is full
 	if uint64(pendingCnt) >= pool.config.GlobalSlots {
-			log.Warn("TxPool pending is full", "pending size", pendingCnt,
-				"max size", pool.config.GlobalSlots, "Hash", tx.Hash(), "to", tx.To())
-			return fmt.Errorf("the transaction txpool pending is full: %x", tx.Hash())
+		log.Warn("TxPool pending is full", "pending size", pendingCnt,
+			"max size", pool.config.GlobalSlots, "Hash", tx.Hash(), "to", tx.To())
+		return fmt.Errorf("the transaction txpool pending is full: %x", tx.Hash())
 	}
 
 	hash := tx.Hash()
@@ -782,7 +724,7 @@ func (pool *TxPool) promoteTx(addr common.Address, hash common.Hash, tx *types.T
 		atomic.AddInt64(&allCnt, -1)
 	}
 	// Failsafe to work around direct pending inserts (tests)
-	_,exist = pool.all.LoadOrStore(hash, tx)
+	_, exist = pool.all.LoadOrStore(hash, tx)
 	if !exist {
 		atomic.AddInt64(&allCnt, 1)
 	}

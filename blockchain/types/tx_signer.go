@@ -20,13 +20,11 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"math/big"
-
-	"github.com/hpb-project/sphinx/boe"
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/common/crypto"
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/config"
+	"math/big"
 )
 
 var (
@@ -43,7 +41,7 @@ type sigCache struct {
 
 // MakeSigner returns a Signer based on the given chain config and block number.
 func MakeSigner(config *config.ChainConfig) Signer {
-	return NewBoeSigner(config.ChainId)
+	return NewQSSigner(config.ChainId)
 }
 
 // SignTx signs the transaction using the given signer and private key
@@ -124,7 +122,7 @@ type Signer interface {
 }
 
 // EIP155Transaction implements Signer using the EIP155 rules.
-type BoeSigner struct {
+type QSSigner struct {
 	chainId, chainIdMul *big.Int
 }
 
@@ -132,20 +130,20 @@ func CheckChainIdCompatible(chainId *big.Int) bool {
 	return chainId.Cmp(config.CompatibleChainId) == 0
 }
 
-func NewBoeSigner(chainId *big.Int) BoeSigner {
+func NewQSSigner(chainId *big.Int) QSSigner {
 	if chainId == nil {
 		chainId = new(big.Int)
 	}
-	boe.BoeGetInstance().RegisterRecoverPubCallback(boecallback)
+	QSGetInstance().RegisterRecoverPubCallback(qscallback)
 
-	return BoeSigner{
+	return QSSigner{
 		chainId:    chainId,
 		chainIdMul: new(big.Int).Mul(chainId, big.NewInt(2)),
 	}
 }
 
-func (s BoeSigner) Equal(s2 Signer) bool {
-	eip155, ok := s2.(BoeSigner)
+func (s QSSigner) Equal(s2 Signer) bool {
+	eip155, ok := s2.(QSSigner)
 
 	return ok && (CheckChainIdCompatible(eip155.chainId) || (eip155.chainId.Cmp(s.chainId) == 0))
 }
@@ -158,8 +156,8 @@ func compableV(v *big.Int) bool {
 	return (v.Cmp(big.NewInt(37)) == 0) || (v.Cmp(big.NewInt(38)) == 0)
 }
 
-func (s BoeSigner) Sender(tx *Transaction) (common.Address, error) {
-if !CheckChainIdCompatible(tx.ChainId()) && (tx.ChainId().Cmp(s.chainId) != 0) {
+func (s QSSigner) Sender(tx *Transaction) (common.Address, error) {
+	if !CheckChainIdCompatible(tx.ChainId()) && (tx.ChainId().Cmp(s.chainId) != 0) {
 		return common.Address{}, ErrInvalidChainId
 	}
 	if compableV(tx.data.V) {
@@ -175,7 +173,7 @@ if !CheckChainIdCompatible(tx.ChainId()) && (tx.ChainId().Cmp(s.chainId) != 0) {
 	}
 }
 
-func (s BoeSigner) ASynSender(tx *Transaction) (common.Address, error) {
+func (s QSSigner) ASynSender(tx *Transaction) (common.Address, error) {
 	if !CheckChainIdCompatible(tx.ChainId()) && (tx.ChainId().Cmp(s.chainId) != 0) {
 		log.Warn("ASynSender tx.Protected()")
 		return common.Address{}, ErrInvalidChainId
@@ -197,7 +195,7 @@ func (s BoeSigner) ASynSender(tx *Transaction) (common.Address, error) {
 
 // WithSignature returns a new transaction with the given signature. This signature
 // needs to be in the [R || S || V] format where V is 0 or 1.
-func (s BoeSigner) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big.Int, err error) {
+func (s QSSigner) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big.Int, err error) {
 	if len(sig) != 65 {
 		panic(fmt.Sprintf("wrong size for signature: got %d, want 65", len(sig)))
 	}
@@ -213,7 +211,7 @@ func (s BoeSigner) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big.In
 
 // Hash returns the hash to be signed by the sender.
 // It does not uniquely identify the transaction.
-func (s BoeSigner) Hash(tx *Transaction) common.Hash {
+func (s QSSigner) Hash(tx *Transaction) common.Hash {
 	return rlpHash([]interface{}{
 		tx.data.AccountNonce,
 		tx.data.Price,
@@ -226,7 +224,7 @@ func (s BoeSigner) Hash(tx *Transaction) common.Hash {
 }
 
 // CompableHash returns the hash with tx.ChainId(), used to recover the pubkey , can't use to signTx.
-func (s BoeSigner) CompableHash(tx *Transaction) common.Hash {
+func (s QSSigner) CompableHash(tx *Transaction) common.Hash {
 	return rlpHash([]interface{}{
 		tx.data.AccountNonce,
 		tx.data.Price,
@@ -250,9 +248,9 @@ func recoverPlain(sighash common.Hash, R, S, Vb *big.Int) (common.Address, error
 	// encode the snature in uncompressed format
 	r, s := R.Bytes(), S.Bytes()
 
-	pub, err := boe.BoeGetInstance().ValidateSign(sighash.Bytes(), r, s, V)
+	pub, err := QSGetInstance().ValidateSign(sighash.Bytes(), r, s, V)
 	if err != nil {
-		log.Trace("boe validatesign error")
+		log.Trace("qs validatesign error")
 		return common.Address{}, err
 	}
 
@@ -277,9 +275,9 @@ func ASynrecoverPlain(txhash common.Hash, sighash common.Hash, R, S, Vb *big.Int
 	}
 	r, s := R.Bytes(), S.Bytes()
 
-	err := boe.BoeGetInstance().ASyncValidateSign(txhash.Bytes(), sighash.Bytes(), r, s, V)
+	err := QSGetInstance().ASyncValidateSign(txhash.Bytes(), sighash.Bytes(), r, s, V)
 	if err != nil {
-		log.Trace("boe validatesign error")
+		log.Trace("qs validatesign error")
 		return common.Address{}, err
 	}
 	return common.Address{}, ErrInvalidAsynsinger
@@ -298,12 +296,12 @@ func deriveChainId(v *big.Int) *big.Int {
 	return v.Div(v, big.NewInt(2))
 }
 
-func boecallback(rs boe.RecoverPubkey, err error) {
+func qscallback(rs RecoverPubkey, err error) {
 	if err != nil {
-		log.Error("boecallback boe validatesign error")
+		log.Error("qscallback validatesign error")
 	}
 	if len(rs.Pub) == 0 || rs.Pub[0] != 4 {
-		log.Error("boecallback boe invalid public key")
+		log.Error("qscallback invalid public key")
 	}
 
 	var addr = common.Address{}

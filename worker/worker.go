@@ -338,7 +338,7 @@ func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error
 	}
 	work := &Work{
 		config:    self.config,
-		signer:    types.NewBoeSigner(self.config.ChainId),
+		signer:    types.NewQSSigner(self.config.ChainId),
 		state:     state,
 		ancestors: set.New(),
 		family:    set.New(),
