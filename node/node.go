@@ -35,27 +35,25 @@ import (
 	"github.com/hpb-project/sphinx/blockchain/bloombits"
 	"github.com/hpb-project/sphinx/blockchain/storage"
 	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/common/constant"
+	"github.com/hpb-project/sphinx/common/hexutil"
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/network/p2p"
-	"github.com/hpb-project/sphinx/network/rpc"
-	"github.com/hpb-project/sphinx/synctrl"
-	"github.com/hpb-project/sphinx/txpool"
-	"github.com/prometheus/prometheus/util/flock"
-	//"github.com/hpb-project/sphinx/boe"
-	"github.com/hpb-project/sphinx/boe"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/hexutil"
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/consensus"
 	"github.com/hpb-project/sphinx/consensus/prometheus"
 	"github.com/hpb-project/sphinx/event/sub"
 	"github.com/hpb-project/sphinx/internal/debug"
 	"github.com/hpb-project/sphinx/internal/hpbapi"
+	"github.com/hpb-project/sphinx/network/p2p"
+	"github.com/hpb-project/sphinx/network/rpc"
 	"github.com/hpb-project/sphinx/node/db"
 	"github.com/hpb-project/sphinx/node/gasprice"
+	"github.com/hpb-project/sphinx/synctrl"
+	"github.com/hpb-project/sphinx/txpool"
 	"github.com/hpb-project/sphinx/worker"
+	"github.com/prometheus/prometheus/util/flock"
 )
 
 // Node is a container on which services can be registered.
@@ -69,14 +67,13 @@ type Node struct {
 	Hpbsyncctr     *synctrl.SynCtrl
 	Hpbtxpool      *txpool.TxPool
 	Hpbbc          *bc.BlockChain
-	Hpbboe *boe.BoeHandle
 	//HpbDb
 	HpbDb hpbdb.Database
 
 	networkId     uint64
 	netRPCService *hpbapi.PublicNetAPI
 
-	Hpbengine consensus.Engine
+	Hpbengine     consensus.Engine
 	bloomRequests chan chan *bloombits.Retrieval // Channel receiving bloom data retrieval requests
 	bloomIndexer  *bc.ChainIndexer               // Bloom indexer operating during block imports
 
@@ -101,15 +98,10 @@ type Node struct {
 
 	stop chan struct{} // Channel to wait for termination notifications
 
-	//1:boe init ok  0: boe init fail
-	Boeflag uint8
 }
 
 // New creates a hpb node, create all object and start
 func New(conf *config.HpbConfig) (*Node, error) {
-
-	var coinbasestring string
-
 	if conf.Node.DataDir != "" {
 		absdatadir, err := filepath.Abs(conf.Node.DataDir)
 		if err != nil {
@@ -162,28 +154,13 @@ func New(conf *config.HpbConfig) (*Node, error) {
 	}
 	hpbnode.accman = am
 
-	hpbnode.Hpbboe = boe.BoeGetInstance()
-	err = hpbnode.Hpbboe.Init()
-	if err != nil {
-		log.Warn("Boe init fail.")
-		hpbnode.Boeflag = 0
-	} else {
-		hpbnode.Boeflag = 1
-	}
-
-	//Get coinbase from boe and set it to node.hperbase
-	coinbasestring, err = hpbnode.Hpbboe.GetBindAccount()
-	if err != nil {
-		if wallets := hpbnode.AccountManager().Wallets(); len(wallets) > 0 {
-			if account := wallets[0].Accounts(); len(account) > 0 {
-				hpbnode.hpberbase = account[0].Address
-			}
+	if wallets := hpbnode.AccountManager().Wallets(); len(wallets) > 0 {
+		if account := wallets[0].Accounts(); len(account) > 0 {
+			hpbnode.hpberbase = account[0].Address
 		}
-		log.Warn("Get coinbase from boe fail, and set coinbase with account[0]")
-
+		log.Info("Set coinbase with account[0]")
 	} else {
-		hpbnode.hpberbase = common.HexToAddress(coinbasestring)
-		log.Info("set coinbase of node", ": ", hpbnode.hpberbase.Hex())
+		log.Info("Not Set coinbase")
 	}
 
 	// Note: any interaction with Config that would create/touch files
@@ -400,7 +377,6 @@ func (n *Node) Stop() error {
 	defer n.lock.Unlock()
 
 	//stop all modules
-	n.Hpbboe.Release()
 	n.Hpbsyncctr.Stop()
 	n.Hpbtxpool.Stop()
 	n.miner.Stop()

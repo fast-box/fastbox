@@ -22,12 +22,10 @@ import (
 	"runtime"
 	"strings"
 
-
-	"gopkg.in/urfave/cli.v1"
 	"github.com/hpb-project/sphinx/cmd/utils"
 	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/boe"
 	"github.com/hpb-project/sphinx/network/p2p"
+	"gopkg.in/urfave/cli.v1"
 )
 
 var (
@@ -52,28 +50,12 @@ The output of this command is supposed to be machine-readable.
 
 func version(ctx *cli.Context) error {
 
-	boehandle := boe.BoeGetInstance()
-	err := boehandle.Init()
-	var boeversion = ""
-
-	if err != nil {
-		boeversion = "Have no boe"
-	} else {
-		version, e := boehandle.GetVersion()
-		if e != nil {
-			boeversion = "Get failed"
-		} else {
-			boeversion = version.VersionString()
-		}
-	}
-
 	fmt.Println(strings.Title(clientIdentifier))
 	fmt.Println("Version:", config.Version)
 	if gitCommit != "" {
 		fmt.Println("Git Commit:", gitCommit)
 	}
 
-	fmt.Println("BOE Firmware:", boeversion)
 	fmt.Println("Architecture:", runtime.GOARCH)
 	fmt.Println("Protocol Versions:", p2p.ProtocolVersions)
 	fmt.Println("Network Id:", config.DefaultConfig.NetworkId)

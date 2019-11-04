@@ -42,7 +42,6 @@ import (
 	//"io/ioutil"
 	"github.com/hpb-project/sphinx/blockchain"
 	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/boe"
 	"github.com/hpb-project/sphinx/consensus/snapshots"
 	"github.com/hpb-project/sphinx/node/db"
 )
@@ -160,70 +159,7 @@ Remove blockchain and state databases`,
 The arguments are interpreted as block numbers or hashes.
 Use "hpb dump 0" to dump the genesis block.`,
 	}
-	boeUpdateCommand = cli.Command{
-		Action:    utils.MigrateFlags(boeupdate),
-		Name:      "boeupdate",
-		Usage:     "update boe firmware",
-		ArgsUsage: "<firmwarepath>",
-		Flags:     []cli.Flag{},
-		Category:  "BOE FIRMWARE UPDATE COMMANDS",
-		Description: `
-Update the firmwre of BOE.`,
-	}
-	boeDetectCommand = cli.Command{
-		Action:    utils.MigrateFlags(boecheck),
-		Name:      "boecheck",
-		Usage:     "detect boe",
-		ArgsUsage: "",
-		Flags:     []cli.Flag{},
-		Category:  "BOE DETECT COMMANDS",
-		Description: `
-Detect BOE.`,
-	}
 )
-
-func boeupdate(ctx *cli.Context) error {
-	boehandle := boe.BoeGetInstance()
-	error := boehandle.Init()
-	if error != nil {
-		log.Error("boe init failed", " ", error)
-		return error
-	}
-	log.Trace("start boe fw update")
-	error = boehandle.FWUpdate()
-	if error != nil {
-		log.Error("boe fw update failed", " ", error)
-		return error
-	}
-	log.Trace("boe fw update complete")
-	error = boehandle.Release()
-	if error != nil {
-		log.Error("boe release failed", " ", error)
-		return error
-	}
-	return nil
-}
-
-func boecheck(ctx *cli.Context) error {
-	boehandle := boe.BoeGetInstance()
-	error := boehandle.Init()
-	if error != nil {
-		log.Error("boe init failed", " ", error)
-		return error
-	}
-	exist := boehandle.HWCheck()
-	if exist {
-		log.Info("boe is ok")
-	} else {
-		log.Info("boe not found")
-	}
-	
-	version,err := boehandle.GetVersion()
-	if err == nil {
-		log.Info("boe ","firmware version",version.VersionString())
-	}
-	return nil
-}
 
 // initGenesis will initialise the given JSON format genesis file and writes it as
 // the zero'd block (i.e. genesis) or will fail hard if it can't succeed.

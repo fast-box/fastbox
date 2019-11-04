@@ -23,24 +23,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/sphinx/common/mclock"
+	"errors"
+	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
+	"github.com/hpb-project/sphinx/common/mclock"
 	"github.com/hpb-project/sphinx/common/rlp"
 	"github.com/hpb-project/sphinx/event"
-	"github.com/hpb-project/sphinx/common"
-	"math/big"
+	"github.com/hpb-project/sphinx/network/p2p/discover"
 	"gopkg.in/fatih/set.v0"
-	"errors"
-	//"github.com/hpb-project/sphinx/boe"
-	//"github.com/hpb-project/sphinx/boe"
+	"math/big"
 )
 
-
 const (
-	baseProtocolMaxMsgSize = 80 * 1024   // the max msg size only for protocol handshake
-	pingInterval    = 5 * time.Second    // ping msg loop for peer
-	nodereqInterval = 15 * time.Second   //interval for request nodes
+	baseProtocolMaxMsgSize = 80 * 1024        // the max msg size only for protocol handshake
+	pingInterval           = 5 * time.Second  // ping msg loop for peer
+	nodereqInterval        = 15 * time.Second //interval for request nodes
 )
 
 // PeerEventType is the type of peer events emitted by a p2p.Server
@@ -54,25 +51,25 @@ const (
 )
 
 type PeerEvent struct {
-	Type     event.EventType    `json:"type"`
-	Peer     discover.NodeID    `json:"peer"`
-	Error    string             `json:"error,omitempty"`
-	Protocol string             `json:"protocol,omitempty"`
-	MsgCode  *uint64            `json:"msg_code,omitempty"`
-	MsgSize  *uint32            `json:"msg_size,omitempty"`
+	Type     event.EventType `json:"type"`
+	Peer     discover.NodeID `json:"peer"`
+	Error    string          `json:"error,omitempty"`
+	Protocol string          `json:"protocol,omitempty"`
+	MsgCode  *uint64         `json:"msg_code,omitempty"`
+	MsgSize  *uint32         `json:"msg_size,omitempty"`
 }
 
 // protoHandshake is the RLP structure of the protocol handshake.
 type protoHandshake struct {
-	Version    uint64
-	Name       string
-	Caps       []Cap
-	ID         discover.NodeID
-	End        *discover.EndPoint
+	Version uint64
+	Name    string
+	Caps    []Cap
+	ID      discover.NodeID
+	End     *discover.EndPoint
 
-	CoinBase     common.Address
-	RandNonce    []byte
-	Sign         []byte
+	CoinBase  common.Address
+	RandNonce []byte
+	Sign      []byte
 }
 
 // statusData is the network packet for the status message.
@@ -85,10 +82,8 @@ type statusData struct {
 }
 type hardwareTable struct {
 	Version uint32
-	Hdtab   [] HwPair
+	Hdtab   []HwPair
 }
-
-
 
 // Peer represents a connected remote node.
 type PeerBase struct {
@@ -103,19 +98,17 @@ type PeerBase struct {
 	disc     chan DiscReason
 
 	// events receives message send / receive events if set
-	events   *event.SyncEvent
+	events *event.SyncEvent
 
 	////////////////////////////////////////////////////
-	ntab       discoverTable
-	localType  discover.NodeType
+	ntab      discoverTable
+	localType discover.NodeType
 
 	remoteType discover.NodeType
 
 	beatStart  time.Time
 	count      uint64
 	msgLooping bool
-
-
 }
 
 type Peer struct {
@@ -131,16 +124,16 @@ type Peer struct {
 	td   *big.Int
 	lock sync.RWMutex
 
-	chbond      chan *discover.Node
+	chbond chan *discover.Node
 
 	knownTxs    *set.Set // Set of transaction hashes known to be known by this peer
 	knownBlocks *set.Set // Set of block hashes known to be known by this peer
 
-	statMining  string
+	statMining string
 }
 
 func newPeerBase(conn *conn, proto Protocol, ntb discoverTable) *PeerBase {
-	protorw := &protoRW{Protocol: proto,in: make(chan Msg), w: conn}
+	protorw := &protoRW{Protocol: proto, in: make(chan Msg), w: conn}
 	p := &PeerBase{
 		rw:       conn,
 		running:  protorw,
@@ -148,7 +141,7 @@ func newPeerBase(conn *conn, proto Protocol, ntb discoverTable) *PeerBase {
 		disc:     make(chan DiscReason),
 		protoErr: make(chan error, 1), // protocols + pingLoop
 		closed:   make(chan struct{}),
-		log:      log.New("id", conn.id,"port",conn.their.End.TCP),
+		log:      log.New("id", conn.id, "port", conn.their.End.TCP),
 		ntab:     ntb,
 	}
 	return p
@@ -159,10 +152,9 @@ func (p *PeerBase) ID() discover.NodeID {
 	return p.rw.id
 }
 
-
 func (p *PeerBase) Version() string {
 	if len(p.Caps()) >= 3 {
-		return p.Caps()[1].String()+"&"+p.Caps()[2].String()
+		return p.Caps()[1].String() + "&" + p.Caps()[2].String()
 	}
 
 	switch p.rw.their.Version {
@@ -177,6 +169,7 @@ func (p *PeerBase) Version() string {
 func (p *PeerBase) Name() string {
 	return p.rw.their.Name
 }
+
 // Caps returns the capabilities (supported subprotocols) of the remote peer.
 func (p *PeerBase) Caps() []Cap {
 	return p.rw.their.Caps
@@ -195,7 +188,7 @@ func (p *PeerBase) RemoteListenPort() int {
 }
 
 func (p *PeerBase) RemoteIperfPort() int {
-	return int(p.rw.their.End.TCP+100)
+	return int(p.rw.their.End.TCP + 100)
 }
 
 // LocalAddr returns the local address of the network connection.
@@ -210,9 +203,9 @@ func (p *PeerBase) RemoteType() discover.NodeType {
 
 func (p *PeerBase) SetRemoteType(nt discover.NodeType) bool {
 
-	p.log.Debug("Set peer remote type","from",p.remoteType,"to",nt.ToString())
+	p.log.Debug("Set peer remote type", "from", p.remoteType, "to", nt.ToString())
 	if p.remoteType != nt {
-		p.log.Info("Set peer remote type","to",nt.ToString())
+		p.log.Info("Set peer remote type", "to", nt.ToString())
 		p.remoteType = nt
 		return true
 	}
@@ -275,23 +268,22 @@ loop:
 		case err = <-readErr:
 			if r, ok := err.(DiscReason); ok {
 				remoteRequested = true
-				p.log.Debug("PeerBase run Read Remote Requested DISCONNECTION","error",err)
+				p.log.Debug("PeerBase run Read Remote Requested DISCONNECTION", "error", err)
 				reason = r
 			} else {
-				p.log.Debug("PeerBase run Read DiscNetwork Error","error",err)
+				p.log.Debug("PeerBase run Read DiscNetwork Error", "error", err)
 				reason = DiscNetworkError
 			}
 			break loop
 		case err = <-p.protoErr:
 			reason = discReasonForError(err)
-			p.log.Debug("PeerBase run proto Error","reason",reason,"error",err)
+			p.log.Debug("PeerBase run proto Error", "reason", reason, "error", err)
 			break loop
 		case err = <-p.disc:
-			p.log.Debug("PeerBase run peer disc Error","error",err)
+			p.log.Debug("PeerBase run peer disc Error", "error", err)
 			break loop
 		}
 	}
-
 
 	p.msgLooping = false
 	close(p.closed)
@@ -308,7 +300,7 @@ func (p *PeerBase) pingLoop() {
 		select {
 		case <-pingTime.C:
 			if err := sendItems(p.rw, pingMsg); err != nil {
-				p.log.Debug("PeerBase Send heartbeat ERROR","error",err)
+				p.log.Debug("PeerBase Send heartbeat ERROR", "error", err)
 				p.protoErr <- err
 				return
 			}
@@ -320,7 +312,6 @@ func (p *PeerBase) pingLoop() {
 	}
 	p.log.Debug("PeerBase pingLoop STOP")
 }
-
 
 func (p *PeerBase) updateNodesLoop() {
 	nodeTime := time.NewTimer(nodereqInterval) //TODO only send to bootnode
@@ -340,7 +331,7 @@ func (p *PeerBase) updateNodesLoop() {
 			}
 
 			if err := sendItems(p.rw, ReqNodesMsg); err != nil {
-				p.log.Debug("PeerBase Send ReqNodesMsg ERROR","error",err)
+				p.log.Debug("PeerBase Send ReqNodesMsg ERROR", "error", err)
 				p.protoErr <- err
 				return
 			}
@@ -353,19 +344,18 @@ func (p *PeerBase) updateNodesLoop() {
 	p.log.Error("PeerBase update nodes loop  STOP")
 }
 
-
 func (p *PeerBase) readLoop(errc chan<- error) {
 	defer p.wg.Done()
 	for {
 		msg, err := p.rw.ReadMsg()
 		if err != nil {
-			log.Trace("Peer base read loop error","error",err)
+			log.Trace("Peer base read loop error", "error", err)
 			errc <- err
 			return
 		}
 		msg.ReceivedAt = time.Now()
 		if err = p.handle(msg); err != nil {
-			log.Trace("Peer base handle msg error","error",err)
+			log.Trace("Peer base handle msg error", "error", err)
 			errc <- err
 			return
 		}
@@ -379,7 +369,7 @@ func (p *PeerBase) handle(msg Msg) error {
 		p.log.Trace("PeerBase send heartbeat from remote.")
 		go sendItems(p.rw, pongMsg)
 	case msg.Code == pongMsg:
-		p.count = p.count+1
+		p.count = p.count + 1
 		p.log.Trace("PeerBase receive heartbeat from remote.")
 		msg.Discard()
 	case msg.Code == discMsg:
@@ -390,7 +380,7 @@ func (p *PeerBase) handle(msg Msg) error {
 		return reason[0]
 	case msg.Code < baseMsgMax:
 		// ignore other base protocol messages
-		log.Debug("Peer handle massage do not matched","Msg",msg.String())
+		log.Debug("Peer handle massage do not matched", "Msg", msg.String())
 		return msg.Discard()
 	default:
 		proto := p.running
@@ -436,7 +426,7 @@ func (p *PeerBase) startProtocols(writeStart <-chan struct{}, writeErr chan<- er
 		} else if err != io.EOF {
 			p.log.Trace(fmt.Sprintf("Protocol %s/%d failed", proto.Name, proto.Version), "err", err)
 		}
-		p.log.Debug("######Protocol returned","error",err)
+		p.log.Debug("######Protocol returned", "error", err)
 		p.protoErr <- err
 		p.wg.Done()
 	}()
@@ -460,8 +450,8 @@ func (rw *protoRW) WriteMsg(msg Msg) (err error) {
 		// shutdown if the error is non-nil and unblock the next write
 		// otherwise. The calling protocol code should exit for errors
 		// as well but we don't want to rely on that.
-		if err != nil{
-			log.Debug("protoRW WriteMsg","error",err)
+		if err != nil {
+			log.Debug("protoRW WriteMsg", "error", err)
 		}
 		rw.werr <- err
 	case <-rw.closed:
@@ -498,11 +488,11 @@ func NewPeer(version uint, pr *PeerBase, rw MsgReadWriter) *Peer {
 }
 
 func (p *Peer) GetID() string {
-	return  p.id
+	return p.id
 }
 
 func (p *Peer) GetVersion() uint {
-	return  p.version
+	return p.version
 }
 
 // Head retrieves a copy of the current head hash and total difficulty of the
@@ -544,33 +534,33 @@ func (p *Peer) Bandwidth() float64 {
 	return p.bandwidth
 }
 
-func (p *Peer) KnownBlockAdd(hash common.Hash){
+func (p *Peer) KnownBlockAdd(hash common.Hash) {
 	for p.knownBlocks.Size() >= maxKnownBlocks {
 		p.knownBlocks.Pop()
 	}
 	p.knownBlocks.Add(hash)
 }
 
-func (p *Peer) KnownBlockHas(hash common.Hash) bool{
+func (p *Peer) KnownBlockHas(hash common.Hash) bool {
 	return p.knownBlocks.Has(hash)
 }
 
-func (p *Peer) KnownBlockSize() int{
+func (p *Peer) KnownBlockSize() int {
 	return p.knownBlocks.Size()
 }
 
-func (p *Peer) KnownTxsAdd(hash common.Hash){
+func (p *Peer) KnownTxsAdd(hash common.Hash) {
 	for p.knownTxs.Size() >= maxKnownTxs {
 		p.knownTxs.Pop()
 	}
 	p.knownTxs.Add(hash)
 }
 
-func (p *Peer) KnownTxsHas(hash common.Hash) bool{
+func (p *Peer) KnownTxsHas(hash common.Hash) bool {
 	return p.knownTxs.Has(hash)
 }
 
-func (p *Peer) KnownTxsSize() int{
+func (p *Peer) KnownTxsSize() int {
 	return p.knownTxs.Size()
 }
 
@@ -584,14 +574,14 @@ func SendData(p *Peer, msgCode uint64, data interface{}) error {
 
 // Handshake executes the eth protocol handshake, negotiating version number,
 // network IDs, difficulties, head and genesis blocks.
-func (p *Peer) Handshake(network uint64,td *big.Int, head common.Hash, genesis common.Hash) error {
+func (p *Peer) Handshake(network uint64, td *big.Int, head common.Hash, genesis common.Hash) error {
 	// Send out own handshake in a new thread
 	errc := make(chan error, 2)
 	var status statusData // safe to read after two values have been received from errc
 
 	go func() {
-		p.log.Debug("Do hpb handshake send.","networkid",network,"genesis",genesis,"block",head,"td",td,"head",head)
-		errc <- SendData(p,StatusMsg, &statusData{
+		p.log.Debug("Do hpb handshake send.", "networkid", network, "genesis", genesis, "block", head, "td", td, "head", head)
+		errc <- SendData(p, StatusMsg, &statusData{
 			ProtocolVersion: uint32(p.version),
 			NetworkId:       network,
 			TD:              td,
@@ -601,7 +591,7 @@ func (p *Peer) Handshake(network uint64,td *big.Int, head common.Hash, genesis c
 	}()
 	go func() {
 		errc <- p.readStatus(network, &status, genesis)
-		p.log.Debug("Do hpb handshake recv.","networkid",status.NetworkId,"genesis",status.GenesisBlock,"block",status.CurrentBlock,"td",p.td,"head", p.head)
+		p.log.Debug("Do hpb handshake recv.", "networkid", status.NetworkId, "genesis", status.GenesisBlock, "block", status.CurrentBlock, "td", p.td, "head", p.head)
 	}()
 
 	timeout := time.NewTimer(handshakeTimeout)
@@ -653,26 +643,25 @@ func (p *Peer) String() string {
 	)
 }
 
-
 ////////////////////////////////////////////
 type exchangeData struct {
 	Version uint32
 }
 
-func (p *Peer) Exchange(our *exchangeData) (*exchangeData,error) {
+func (p *Peer) Exchange(our *exchangeData) (*exchangeData, error) {
 
 	errc := make(chan error, 2)
 	var there exchangeData
 
 	go func() {
 		p.log.Debug("Send exchange data")
-		errc <- SendData(p,ExchangeMsg, &exchangeData{
+		errc <- SendData(p, ExchangeMsg, &exchangeData{
 			Version: our.Version,
 		})
 	}()
 	go func() {
 		errc <- p.readExchange(&there)
-		p.log.Debug("Read exchange data","remote",there)
+		p.log.Debug("Read exchange data", "remote", there)
 	}()
 
 	timeout := time.NewTimer(handshakeTimeout)
@@ -681,14 +670,14 @@ func (p *Peer) Exchange(our *exchangeData) (*exchangeData,error) {
 		select {
 		case err := <-errc:
 			if err != nil {
-				return nil,err
+				return nil, err
 			}
 		case <-timeout.C:
-			return nil,DiscReadTimeout
+			return nil, DiscReadTimeout
 		}
 	}
 
-	return &there,nil
+	return &there, nil
 }
 
 func (p *Peer) readExchange(status *exchangeData) (err error) {
