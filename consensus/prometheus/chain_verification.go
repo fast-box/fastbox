@@ -34,7 +34,6 @@ import (
 	"github.com/hpb-project/sphinx/network/p2p"
 )
 
-
 // Verify one header
 func (c *Prometheus) VerifyHeader(chain consensus.ChainReader, header *types.Header, seal bool, mode config.SyncMode) error {
 	return c.verifyHeader(chain, header, nil, mode)
@@ -73,7 +72,6 @@ func (c *Prometheus) SetNetTypeByOneHeader(chain consensus.ChainReader, header *
 	}
 	SetNetNodeType(snap)
 }
-
 
 func (c *Prometheus) verifyHeader(chain consensus.ChainReader, header *types.Header, parents []*types.Header, mode config.SyncMode) error {
 	if header.Number == nil {
@@ -161,7 +159,7 @@ func (c *Prometheus) verifyCascadingFields(chain consensus.ChainReader, header *
 		state, _ := chain.StateAt(lastheader.Root)
 		if cadWinner, _, err := c.GetSelectPrehp(state, chain, header, number, true); nil == err {
 			if bytes.Compare(cadWinner[0].Address[:], header.CandAddress[:]) != 0 {
-				log.Error("BAD COIN BASE","miner",header.Coinbase.String(),"local",cadWinner[0].Address[:],"header",header.CandAddress[:])
+				log.Error("BAD COIN BASE", "miner", header.Coinbase.String(), "local", cadWinner[0].Address[:], "header", header.CandAddress[:])
 				return consensus.ErrInvalidCadaddr
 			}
 		} else {
@@ -226,30 +224,6 @@ func (c *Prometheus) verifySeal(chain consensus.ChainReader, header *types.Heade
 
 	if config.GetHpbConfigInstance().Network.RoleType != "synnode" && config.GetHpbConfigInstance().Network.RoleType != "bootnode" && number >= consensus.StageNumberII {
 		// Retrieve the getHpbNodeSnap needed to verify this header and cache it
-
-		if config.GetHpbConfigInstance().Node.TestMode != 1 {
-			if !c.hboe.HWCheck() {
-				return consensus.Errboehwcheck
-			}
-			if parentheader == nil {
-				log.Error("verifySeal GetHeaderByNumber", "fail", "header is nil")
-				return consensus.ErrInvalidblockbutnodrop
-			}
-			if parentheader.HardwareRandom == nil || len(parentheader.HardwareRandom) == 0 {
-				log.Error("verifySeal GetHeaderByNumber", "fail", "HardwareRandom is nil")
-				return consensus.ErrInvalidblockbutnodrop
-			}
-			newrand, err := c.GetNextRand(parentheader.HardwareRandom, number)
-			if err != nil {
-				log.Error("verifySeal GetNextHash", "fail", err)
-				return consensus.ErrInvalidblockbutnodrop
-			}
-			if bytes.Compare(newrand, header.HardwareRandom) != 0 {
-				log.Error("verify fail consensus.Errrandcheck", "boe gen random", common.Bytes2Hex(newrand))
-				return consensus.Errrandcheck
-			}
-		}
-
 		if mode == config.FullSync {
 			//Ensure that the difficulty corresponds to the turn-ness of the signerHash
 			inturn := snap.CalculateCurrentMinerorigin(new(big.Int).SetBytes(header.HardwareRandom).Uint64(), signer)

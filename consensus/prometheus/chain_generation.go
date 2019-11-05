@@ -44,8 +44,6 @@ import (
 	"strings"
 
 	"github.com/hpb-project/sphinx/account/abi"
-	"github.com/hpb-project/sphinx/boe"
-	"github.com/hpb-project/sphinx/common/crypto"
 	"github.com/hpb-project/sphinx/hvm/evm"
 )
 
@@ -81,9 +79,8 @@ type Prometheus struct {
 
 	signer    common.Address
 	randomStr string
-	signFn    SignerFn       // Callback function
-	lock      sync.RWMutex   // Protects the signerHash fields
-	hboe      *boe.BoeHandle //boe handle for using boe
+	signFn    SignerFn     // Callback function
+	lock      sync.RWMutex // Protects the signerHash fields
 }
 
 func New(config *config.PrometheusConfig, db hpbdb.Database) *Prometheus {
@@ -103,7 +100,6 @@ func New(config *config.PrometheusConfig, db hpbdb.Database) *Prometheus {
 		recents:    recents,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
-		hboe:       boe.BoeGetInstance(),
 	}
 }
 
@@ -121,15 +117,6 @@ func InstancePrometheus() *Prometheus {
 
 type SignerFn func(accounts.Account, []byte) ([]byte, error)
 
-func (c *Prometheus) GetNextRand(lastrand []byte, number uint64) ([]byte, error) {
-	if number < consensus.StageNumberV {
-		return c.hboe.GetNextHash(lastrand)
-	} else {
-		return c.hboe.GetNextHash_v2(lastrand)
-	}
-
-}
-
 // Prepare function for Block
 func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *types.Header, state *state.StateDB) error {
 
@@ -140,33 +127,6 @@ func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *typ
 	parentheader := chain.GetHeaderByNumber(parentnum)
 	if parentheader == nil {
 		return errors.New("-----PrepareBlockHeader parentheader------ is nil")
-	}
-	if len(parentheader.HardwareRandom) == 0 {
-		return errors.New("---------- PrepareBlockHeader parentheader.HardwareRandom----------------- is nil")
-	}
-
-	if config.GetHpbConfigInstance().Node.TestMode == 1 || config.GetHpbConfigInstance().Network.RoleType == "synnode" {
-		log.Debug("TestMode, using the gensis.json hardwarerandom")
-		header.HardwareRandom = make([]byte, len(parentheader.HardwareRandom))
-		copy(header.HardwareRandom, crypto.Keccak256(parentheader.HardwareRandom))
-	} else {
-		if c.hboe.HWCheck() {
-			if parentheader.HardwareRandom == nil || len(parentheader.HardwareRandom) != 32 {
-				log.Debug("parentheader.HardwareRandom is nil or length is not 32")
-			}
-			if boehwrand, err := c.GetNextRand(parentheader.HardwareRandom, number); err != nil {
-				return err
-			} else {
-				if len(boehwrand) != 0 {
-					header.HardwareRandom = make([]byte, len(boehwrand))
-					copy(header.HardwareRandom, boehwrand)
-				} else {
-					return errors.New("c.hboe.GetNextHash success but output random length is 0")
-				}
-			}
-		} else {
-			return errors.New("boe check fail")
-		}
 	}
 
 	snap, err := voting.GetHpbNodeSnap(c.db, c.recents, c.signatures, c.config, chain, number, header.ParentHash, nil)
