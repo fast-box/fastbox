@@ -21,26 +21,25 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"net"
-	"sync"
-	"time"
-	"math/rand"
 	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/mclock"
-	"github.com/hpb-project/sphinx/event"
 	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/common/mclock"
+	"github.com/hpb-project/sphinx/config"
+	"github.com/hpb-project/sphinx/event"
 	"github.com/hpb-project/sphinx/network/p2p/discover"
 	"github.com/hpb-project/sphinx/network/p2p/nat"
 	"github.com/hpb-project/sphinx/network/p2p/netutil"
-	"github.com/hpb-project/sphinx/boe"
-	"strings"
-	"path/filepath"
+	"math/rand"
+	"net"
 	"os"
-	"github.com/hpb-project/sphinx/config"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
 )
 
 const (
-	defaultDialTimeout      = 15 * time.Second
+	defaultDialTimeout = 15 * time.Second
 
 	// Maximum number of concurrently handshaking inbound connections.
 	maxAcceptConns = 100
@@ -60,21 +59,21 @@ var errServerStopped = errors.New("server stopped")
 
 // Config holds Server options.
 type Config struct {
-	PrivateKey      *ecdsa.PrivateKey `toml:"-"`
-	Name            string `toml:"-"`
-	BootstrapNodes  []*discover.Node
-	StaticNodes     []*discover.Node
-	NetRestrict     *netutil.Netlist `toml:",omitempty"`
-	NodeDatabase    string `toml:",omitempty"`
-	Protocols       []Protocol `toml:"-"`
-	ListenAddr      string
-	NAT             nat.Interface `toml:",omitempty"`
+	PrivateKey     *ecdsa.PrivateKey `toml:"-"`
+	Name           string            `toml:"-"`
+	BootstrapNodes []*discover.Node
+	StaticNodes    []*discover.Node
+	NetRestrict    *netutil.Netlist `toml:",omitempty"`
+	NodeDatabase   string           `toml:",omitempty"`
+	Protocols      []Protocol       `toml:"-"`
+	ListenAddr     string
+	NAT            nat.Interface `toml:",omitempty"`
 
 	EnableMsgEvents bool
 	NetworkId       uint64
 	CoinBase        common.Address
 
-	TestMode        bool
+	TestMode bool
 }
 
 // Server manages all peer connections.
@@ -85,15 +84,15 @@ type Server struct {
 	// Hooks for testing. These are useful because we can inhibit
 	// the whole protocol stack.
 	newTransport func(net.Conn) transport
-	newPeerHook  func(*PeerBase)    //hook for new peers
+	newPeerHook  func(*PeerBase) //hook for new peers
 
 	lock    sync.Mutex // protects running
-	running bool   //true: server is running
+	running bool       //true: server is running
 
-	ntab         discoverTable //interface of table
+	ntab discoverTable //interface of table
 
 	listener     net.Listener
-	ourHandshake *protoHandshake   //our information for handshake
+	ourHandshake *protoHandshake //our information for handshake
 	lastLookup   time.Time
 
 	// These are for Peers, PeerCount (and nothing else).
@@ -101,29 +100,28 @@ type Server struct {
 	peerOpDone chan struct{}
 
 	quit          chan struct{}
-	addstatic     chan *discover.Node   //channel for add static node
-	removestatic  chan *discover.Node   //channel for remove static node
+	addstatic     chan *discover.Node //channel for add static node
+	removestatic  chan *discover.Node //channel for remove static node
 	posthandshake chan *conn
-	addpeer       chan *conn  // channel for add peer
+	addpeer       chan *conn     // channel for add peer
 	delpeer       chan peerDrop  // channel for del peer
 	loopWG        sync.WaitGroup // loop, listenLoop
 
-	peerEvent    *event.SyncEvent
+	peerEvent *event.SyncEvent
 
-	localType    discover.NodeType
+	localType discover.NodeType
 
-	dialer        NodeDialer
+	dialer NodeDialer
 
-	delHist       *dialHistory  //history list of del nodes
+	delHist *dialHistory //history list of del nodes
 
 	//only for test
-	synPid       [] SynnodePid
+	synPid []SynnodePid
 
-	hdlock       sync.RWMutex
-	hdtab        [] HwPair // hardware table of "ADDR CID HID"
+	hdlock sync.RWMutex
+	hdtab  []HwPair // hardware table of "ADDR CID HID"
 
-	setupLock    sync.Mutex
-
+	setupLock sync.Mutex
 }
 
 type peerOpFunc func(map[discover.NodeID]*PeerBase)
@@ -142,19 +140,20 @@ const (
 	inboundConn
 )
 const RandNonceSize = 32
+
 // conn wraps a network connection with information gathered
 // during the two handshakes.
 type conn struct {
 	fd net.Conn
 	transport
 	flags connFlag
-	cont  chan error      // The run loop uses cont to signal errors to SetupConn.
+	cont  chan error // The run loop uses cont to signal errors to SetupConn.
 
 	id    discover.NodeID // valid after the encryption handshake
 	our   protoHandshake  // valid after the protocol handshake
 	their protoHandshake  // valid after the protocol handshake
 
-	isboe bool            // valid after the protocol handshake
+	isboe bool // valid after the protocol handshake
 }
 
 type transport interface {
@@ -346,18 +345,11 @@ func (srv *Server) Start() (err error) {
 	srv.ntab = ntab
 
 	// handshake
-	srv.ourHandshake = &protoHandshake{Version: config.VersionID, Name: srv.Name, ID: discover.PubkeyID(&srv.PrivateKey.PublicKey), End:ourend}
+	srv.ourHandshake = &protoHandshake{Version: config.VersionID, Name: srv.Name, ID: discover.PubkeyID(&srv.PrivateKey.PublicKey), End: ourend}
 	for _, p := range srv.Protocols {
 		srv.ourHandshake.Caps = append(srv.ourHandshake.Caps, p.cap())
 	}
-	srv.ourHandshake.Caps = append(srv.ourHandshake.Caps,Cap{config.Version, 0})
-	v, err := boe.BoeGetInstance().GetVersion()
-	if err == nil{
-		srv.ourHandshake.Caps = append(srv.ourHandshake.Caps,Cap{v.VersionString(), 0})
-	}else {
-		srv.ourHandshake.Caps = append(srv.ourHandshake.Caps,Cap{"N.A", 0})
-		log.Error("p2p get boe version","error",err)
-	}
+	srv.ourHandshake.Caps = append(srv.ourHandshake.Caps, Cap{config.Version, 0})
 	srv.ourHandshake.CoinBase = srv.CoinBase
 
 	if srv.ListenAddr == "" {
@@ -373,7 +365,7 @@ func (srv *Server) Start() (err error) {
 	}
 	//////////////////////////////////////////////////////////////////////////////////////////////
 
-	log.Info("Server start with type.","NodeType",srv.localType.ToString())
+	log.Info("Server start with type.", "NodeType", srv.localType.ToString())
 
 	dialer := newDialState(srv.StaticNodes, srv.BootstrapNodes, srv.ntab, srv.NetRestrict)
 	srv.loopWG.Add(1)
@@ -438,7 +430,7 @@ func (srv *Server) run(dialstate dialer) {
 			go func() {
 				t.Do(srv)
 				taskdone <- t
-				}()
+			}()
 			runningTasks = append(runningTasks, t)
 		}
 		return ts[i:]
@@ -451,7 +443,7 @@ func (srv *Server) run(dialstate dialer) {
 			var nt []task
 			if srv.localType == discover.BootNode {
 				nt = append(nt, &waitExpireTask{time.Second})
-			}else{
+			} else {
 				nt = dialstate.newTasks(len(runningTasks)+len(queuedTasks), peers, time.Now())
 			}
 			queuedTasks = append(queuedTasks, startTasks(nt)...)
@@ -463,7 +455,7 @@ running:
 		scheduleTasks()
 
 		srv.delHist.expire(time.Now())
-		log.Trace("Server running: expire node from history.","DelHist",srv.delHist.Len())
+		log.Trace("Server running: expire node from history.", "DelHist", srv.delHist.Len())
 		select {
 		case <-srv.quit:
 			// The server was stopped. Run the cleanup logic.
@@ -526,7 +518,7 @@ running:
 					p.events = srv.peerEvent
 				}
 
-				p.beatStart  = time.Now()
+				p.beatStart = time.Now()
 				srv.setPeerInitType(p, c.isboe)
 				//////////////////////////////////////////////////////////
 
@@ -556,9 +548,9 @@ running:
 
 			srv.ntab.RemoveNode(nid)
 
-			expire := time.Second*time.Duration(10+rand.Intn(20))
+			expire := time.Second * time.Duration(10+rand.Intn(20))
 			srv.delHist.add(nid, time.Now().Add(expire))
-			log.Debug("Server running: add node to history.","expire",expire)
+			log.Debug("Server running: add node to history.", "expire", expire)
 
 		}
 	}
@@ -684,8 +676,8 @@ func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *discover.Nod
 
 	// Run the encryption handshake.
 	var err error
-	var ourRand, theirRand []byte
-	if c.id, ourRand, theirRand, err = c.doEncHandshake(srv.PrivateKey, dialDest); err != nil {
+	var ourRand []byte
+	if c.id, ourRand, _, err = c.doEncHandshake(srv.PrivateKey, dialDest); err != nil {
 		log.Debug("Failed RLPx handshake", "addr", c.fd.RemoteAddr(), "conn", c.flags, "reason", err)
 		c.close(err)
 		return
@@ -702,17 +694,12 @@ func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *discover.Nod
 		c.close(err)
 		return
 	}
-	log.Debug("Do enc handshake OK.","id",c.id)
+	log.Debug("Do enc handshake OK.", "id", c.id)
 
 	/////////////////////////////////////////////////////////////////////////////////
 	// Run the protocol handshake
 	c.our = *srv.ourHandshake
 	c.our.RandNonce = ourRand
-
-	if c.our.Sign, err = boe.BoeGetInstance().HW_Auth_Sign(theirRand); err!=nil{
-		clog.Debug("Do hardware sign  error.","err",err)
-	}
-	clog.Debug("Hardware has signed remote rand.","rand",theirRand,"sign",c.our.Sign)
 
 	their, err := c.doProtoHandshake(&c.our)
 	if err != nil {
@@ -726,7 +713,7 @@ func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *discover.Nod
 		return
 	}
 	c.their = *their
-	clog.Debug("Do protocol handshake OK.","id",c.id)
+	clog.Debug("Do protocol handshake OK.", "id", c.id)
 
 	/////////////////////////////////////////////////////////////////////////////////
 	isRemoteBoot := false
@@ -734,7 +721,7 @@ func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *discover.Nod
 
 	for _, n := range srv.BootstrapNodes {
 		if c.id == n.ID {
-			clog.Info("Remote node is boot.","id",c.id)
+			clog.Info("Remote node is boot.", "id", c.id)
 			c.isboe = true
 			isRemoteBoot = true
 		}
@@ -742,33 +729,29 @@ func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *discover.Nod
 
 	if !c.isboe {
 		remoteCoinbase := strings.ToLower(c.their.CoinBase.String())
-		clog.Trace("Remote coinbase","address",remoteCoinbase)
+		clog.Trace("Remote coinbase", "address", remoteCoinbase)
 		if len(hdtab) == 0 {
-			clog.Debug("Do not ready for connected.","id",c.id.TerminalString())
+			clog.Debug("Do not ready for connected.", "id", c.id.TerminalString())
 			c.close(DiscHwSignError)
 			return
 		}
 
-		for _,hw := range hdtab {
+		for _, hw := range hdtab {
 			if hw.Adr == remoteCoinbase {
-				clog.Trace("Input to boe paras","rand",c.our.RandNonce,"hid",hw.Hid,"cid",hw.Cid,"sign",c.their.Sign)
-				c.isboe = boe.BoeGetInstance().HW_Auth_Verify(c.our.RandNonce,hw.Hid,hw.Cid,c.their.Sign)
-				clog.Info("Boe verify the remote.","id",c.id.TerminalString(),"result",c.isboe)
+				c.isboe = true
 			}
 		}
 	}
-	clog.Info("Verify the remote hardware.","id",c.id.TerminalString(),"result",c.isboe)
+	clog.Info("Verify the remote hardware.", "id", c.id.TerminalString(), "result", c.isboe)
 
-
-	if !srv.TestMode && srv.localType == discover.SynNode  && c.isboe == false {
+	if !srv.TestMode && srv.localType == discover.SynNode && c.isboe == false {
 		clog.Debug("SynNode peer SynNode, dorp peer.")
 		c.close(DiscHwSignError)
 		return
 	}
 
-
 	{
-		ourHdtable := &hardwareTable{Version:0x00,Hdtab:hdtab}
+		ourHdtable := &hardwareTable{Version: 0x00, Hdtab: hdtab}
 		theirHdtable, err := c.doHardwareTable(ourHdtable)
 		if err != nil {
 			clog.Debug("Failed hardware table handshake", "reason", err)
@@ -776,39 +759,39 @@ func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *discover.Nod
 			return
 		}
 
-		clog.Trace("Exchange hardware table.","our",ourHdtable, "their",theirHdtable)
+		clog.Trace("Exchange hardware table.", "our", ourHdtable, "their", theirHdtable)
 
-		if isRemoteBoot{
-			srv.updateHdtab(theirHdtable.Hdtab,true)
-			clog.Trace("Update hardware table from boot.","srv hdtab", srv.getHdtab() )
+		if isRemoteBoot {
+			srv.updateHdtab(theirHdtable.Hdtab, true)
+			clog.Trace("Update hardware table from boot.", "srv hdtab", srv.getHdtab())
 		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////
 	if err := srv.checkpoint(c, srv.addpeer); err != nil {
-		clog.Warn("Rejected peer", "err", err, "dialDest",dialDest)
+		clog.Warn("Rejected peer", "err", err, "dialDest", dialDest)
 		c.close(err)
 		return
 	}
 }
 
-func  (srv *Server) updateHdtab(pairs [] HwPair, boot bool) error {
+func (srv *Server) updateHdtab(pairs []HwPair, boot bool) error {
 
 	log.Trace("hw pairs from prometheus", "boot", boot, "pairs", pairs)
 
 	if len(srv.hdtab) == len(pairs) {
 		theSame := true
-		for _,our := range srv.hdtab {
+		for _, our := range srv.hdtab {
 			find := false
-			for _, there:= range pairs {
-				if our.Adr == there.Adr{
+			for _, there := range pairs {
+				if our.Adr == there.Adr {
 					find = true
 					break
 				}
 			}
 
-			if !find{
-				log.Debug("update hardware table do not fond.","address",our.Adr)
+			if !find {
+				log.Debug("update hardware table do not fond.", "address", our.Adr)
 				theSame = false
 				break
 			}
@@ -828,17 +811,18 @@ func  (srv *Server) updateHdtab(pairs [] HwPair, boot bool) error {
 	return nil
 }
 
-func  (srv *Server) getHdtab() [] HwPair {
+func (srv *Server) getHdtab() []HwPair {
 	srv.hdlock.RLock()
 	defer srv.hdlock.RUnlock()
 	return srv.hdtab
 }
 
-func  (srv *Server) getHdtabSize() int {
+func (srv *Server) getHdtabSize() int {
 	srv.hdlock.RLock()
 	defer srv.hdlock.RUnlock()
 	return len(srv.hdtab)
 }
+
 // checkpoint sends the conn to run, which performs the
 // post-handshake checks for the stage (posthandshake, addpeer).
 func (srv *Server) checkpoint(c *conn, stage chan<- *conn) error {
@@ -864,16 +848,16 @@ func (srv *Server) runPeer(p *PeerBase) {
 	}
 
 	// broadcast peer add
-	srv.peerEvent.Notify(PeerEventAdd,&PeerEvent{
+	srv.peerEvent.Notify(PeerEventAdd, &PeerEvent{
 		Type: PeerEventAdd,
 		Peer: p.ID(),
-		})
+	})
 
 	// run the protocol
 	remoteRequested, err := p.run()
 
 	// broadcast peer drop
-	srv.peerEvent.Notify(PeerEventDrop,&PeerEvent{
+	srv.peerEvent.Notify(PeerEventDrop, &PeerEvent{
 		Type:  PeerEventDrop,
 		Peer:  p.ID(),
 		Error: err.Error(),
@@ -881,12 +865,11 @@ func (srv *Server) runPeer(p *PeerBase) {
 
 	// Note: run waits for existing peers to be sent on srv.delpeer
 	// before returning, so this send should not select on srv.quit.
-	log.Debug("Server stop to run peer","id",p.ID(),"err",err)
+	log.Debug("Server stop to run peer", "id", p.ID(), "err", err)
 	srv.delpeer <- peerDrop{p, err, remoteRequested}
 }
 
-
-func (srv *Server) setPeerInitType(p *PeerBase,isboe bool) {
+func (srv *Server) setPeerInitType(p *PeerBase, isboe bool) {
 
 	p.localType = srv.localType
 	p.remoteType = discover.SynNode
@@ -908,7 +891,7 @@ func (srv *Server) setPeerInitType(p *PeerBase,isboe bool) {
 	if srv.TestMode {
 		p.remoteType = discover.PreNode
 		for _, spid := range srv.synPid {
-			if  spid.PID == p.ID().TerminalString() {
+			if spid.PID == p.ID().TerminalString() {
 				p.remoteType = discover.SynNode
 				p.log.Info("P2P set init peer remote type synnode (TestMode)")
 				return
@@ -917,30 +900,30 @@ func (srv *Server) setPeerInitType(p *PeerBase,isboe bool) {
 		p.log.Info("P2P set init peer remote type prenode (TestMode)")
 	}
 
-
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 
 //for test synnode
-const  synnodeFile  = "synnode.json"
+const synnodeFile = "synnode.json"
+
 type SynnodePid struct {
-	PID    string     `json:"pid"`
+	PID string `json:"pid"`
 }
 
-func (srv *Server) parseSynnode()  error{
+func (srv *Server) parseSynnode() error {
 
 	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	filename := filepath.Join(dir, synnodeFile)
-	log.Debug("Parse syn node pid from config.","filename",filename)
-
+	log.Debug("Parse syn node pid from config.", "filename", filename)
 
 	if err := common.LoadJSON(filename, &srv.synPid); err != nil {
 		log.Warn(fmt.Sprintf("Can't load file %s: %v", filename, err))
 		return nil
 	}
-	log.Debug("Parse syn node pid from config.","synPid",srv.synPid)
+	log.Debug("Parse syn node pid from config.", "synPid", srv.synPid)
 
-	return  nil
+	return nil
 }
 
 ///////////////////////////////////////////////////////////////////////////////

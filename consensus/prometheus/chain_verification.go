@@ -194,12 +194,6 @@ func (c *Prometheus) verifySeal(chain consensus.ChainReader, header *types.Heade
 	if number == 0 {
 		return consensus.ErrUnknownBlock
 	}
-	var parentheader *types.Header
-	if len(parents) > 0 {
-		parentheader = parents[len(parents)-1]
-	} else {
-		parentheader = chain.GetHeader(header.ParentHash, number-1)
-	}
 
 	// Resolve the authorization key and check against signers
 	signer, err := consensus.Ecrecover(header, c.signatures)
