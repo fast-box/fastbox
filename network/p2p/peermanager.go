@@ -17,9 +17,7 @@
 package p2p
 
 import (
-	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/hpb-project/sphinx/common"
@@ -27,10 +25,6 @@ import (
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/network/p2p/discover"
 	"math/big"
-	"math/rand"
-	"net"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -59,10 +53,6 @@ type PeerManager struct {
 	server *Server    // pointer to server of p2p
 	hpbpro *HpbProto  // pointer to hpb protocol
 
-	ilock   sync.Mutex
-	iport   int       //iperf test port
-	isrvcmd *exec.Cmd  // for bandwidth test
-	isrvout *os.File   // for bandwidth test
 }
 
 var INSTANCE = atomic.Value{}
@@ -112,9 +102,6 @@ func (prm *PeerManager) Start(coinbase common.Address) error {
 	prm.hpbpro.regMsgProcess(ReqNodesMsg, HandleReqNodesMsg)
 	prm.hpbpro.regMsgProcess(ResNodesMsg, HandleResNodesMsg)
 
-	prm.hpbpro.regMsgProcess(ReqBWTestMsg, prm.HandleReqBWTestMsg)
-	prm.hpbpro.regMsgProcess(ResBWTestMsg, prm.HandleResBWTestMsg)
-
 	prm.hpbpro.regMsgProcess(ReqRemoteStateMsg, HandleReqRemoteStateMsg)
 	prm.hpbpro.regMsgProcess(ResRemoteStateMsg, HandleResRemoteStateMsg)
 
@@ -143,17 +130,6 @@ func (prm *PeerManager) Start(coinbase common.Address) error {
 		}
 	}
 
-	/////////////////////////////////////////////////////////////////////////////////////////
-	add, _ := net.ResolveUDPAddr("udp", prm.server.ListenAddr)
-	prm.iport = add.Port + 100
-	log.Debug("Iperf server start", "port", prm.iport)
-	prm.startServerBW(strconv.Itoa(prm.iport))
-
-	if prm.server.localType != discover.BootNode && prm.server.localType != discover.SynNode {
-		go prm.startClientBW()
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////
 	//for bing info
 	if prm.server.localType == discover.BootNode {
 		filename := filepath.Join(config.Node.DataDir, bindInfoFileName)
@@ -170,8 +146,6 @@ func (prm *PeerManager) Stop() {
 
 	prm.close()
 
-	prm.isrvout.Close()
-	prm.isrvcmd.Process.Kill()
 }
 
 func (prm *PeerManager) P2pSvr() *Server {
@@ -537,229 +511,4 @@ func (prm *PeerManager) parseBindInfo(filename string) error {
 	prm.server.updateHdtab(hdtab,true)
 
 	return nil
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-func (prm *PeerManager) startServerBW(port string) error {
-	/////////////////////////////////////
-	//for iperf test
-	hpbbin, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-	ipfbin := filepath.Join(hpbbin, "iperf3")
-
-	if flag, err := exists(ipfbin); err != nil || flag == false {
-		log.Error("Iperf3 should exist in correct dir.", "Path", ipfbin)
-		panic("Iperf3 should exist in correct dir.")
-	}
-
-	//server
-	var err error
-	logName := "iperf_server_" + port + ".log"
-	logName = filepath.Join(hpbbin, logName)
-	prm.isrvout, err = os.OpenFile(logName, os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		log.Error("Open iperf log file", "file", logName, "err", err)
-		panic("Can not open iperf log file")
-		return err
-	}
-
-	cmd := ipfbin + " -s -p " + port
-	prm.isrvcmd = exec.Command("/bin/bash", "-c", cmd)
-	prm.isrvcmd.Stdout = prm.isrvout
-
-	if err := prm.isrvcmd.Start(); err != nil {
-		log.Error("Start iperf server", "err", err)
-		panic("Can not start iperf server")
-		return err
-	}
-
-	log.Info("Start server of bandwidth test.", "port", port)
-	return nil
-}
-
-func (prm *PeerManager) startTest(host string, port string) float64 {
-	hpbbin, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-	ipfbin := filepath.Join(hpbbin, "iperf3")
-
-	cmd := ipfbin + " -J -c " + host + " -p " + port + " -t 5"
-	result, _ := exec_shell(cmd)
-
-	if !strings.Contains(result, "bits_per_second") {
-		log.Warn("Test string in not right.", "host", host, "port", port)
-		return 0
-	}
-
-	var dat map[string]interface{}
-	json.Unmarshal([]byte(result), &dat)
-
-	sum := dat["end"].(map[string]interface{})
-
-	sum_sent := sum["sum_sent"].(map[string]interface{})
-	sum_received := sum["sum_received"].(map[string]interface{})
-
-	send := sum_sent["bits_per_second"].(float64)
-	recv := sum_received["bits_per_second"].(float64)
-	log.Debug("iperf test result", "sendrate", send, "recvrate", recv, "avg", (send+recv)/2)
-	return (send + recv) / 2
-}
-
-func (prm *PeerManager) startClientBW() {
-	/////////////////////////////////////
-	//client
-	inteval := 60 * 60 // second of one hour
-	rand.Seed(time.Now().UnixNano())
-	timeout := time.NewTimer(time.Second * time.Duration(inteval+rand.Intn(inteval)))
-	defer timeout.Stop()
-
-	for {
-		//1 start to test
-		select {
-		case <-timeout.C:
-			timeout.Reset(time.Second * time.Duration(inteval+rand.Intn(inteval)))
-		}
-
-		//2 select peer to test
-		if len(prm.peers) == 0 {
-			log.Warn("There is no peer to start bandwidth testing.")
-			continue
-		}
-
-		pzlist := make([]*Peer, 0, len(prm.peers))
-		palist := make([]*Peer, 0, len(prm.peers))
-		for _, p := range prm.peers {
-			//bandwidth
-			if p.remoteType == discover.BootNode || p.remoteType == discover.SynNode {
-				continue
-			}
-			p.log.Debug("select peer to bw test", "bandwidth", p.bandwidth)
-			palist = append(palist, p)
-			if p.bandwidth < 0.1 {
-				pzlist = append(pzlist, p)
-			}
-		}
-
-		if len(palist) == 0 {
-			log.Warn("There is no hpnode or prenode peer to start bandwidth testing.")
-			continue
-		}
-
-		//3. do test
-		if len(pzlist) > 0 {
-			pt := pzlist[0]
-			pt.log.Debug("Start bandwidth testing(first).", "remoteType", pt.remoteType.ToString())
-			prm.sendReqBWTestMsg(pt)
-			timeout.Reset(time.Second * time.Duration(inteval+rand.Intn(inteval)))
-			continue
-		}
-
-		skip := rand.Intn(len(palist))
-		for _, p := range palist {
-			if skip > 0 {
-				skip = skip - 1
-				continue
-			}
-
-			p.log.Debug("Start bandwidth testing.", "remoteType", p.remoteType.ToString())
-			prm.sendReqBWTestMsg(p)
-			break
-		}
-		log.Debug("Reset timeout to longer.")
-		timeout.Reset(time.Second * time.Duration(inteval*2+rand.Intn(inteval*2)))
-	}
-	log.Error("Test bandwidth loop stop.")
-	return
-}
-
-type bwTestRes struct {
-	Version uint64
-	Port    uint16
-	Allowed uint16
-	Expir   uint64
-}
-
-func (prm *PeerManager) sendReqBWTestMsg(p *Peer) {
-	if err := SendData(p, ReqBWTestMsg, struct{}{}); err != nil {
-		log.Error("Send req bandwidth test msg.", "error", err)
-	}
-
-	return
-}
-
-func (prm *PeerManager) HandleReqBWTestMsg(p *Peer, msg Msg) error {
-	go func() {
-		prm.ilock.Lock()
-		defer prm.ilock.Unlock()
-
-		p.log.Debug("Lock of iperf server.")
-		resp := bwTestRes{
-			Version: 0x01,
-			Port:    uint16(prm.iport),
-			Allowed: 0xff,
-			Expir:   uint64(time.Now().Add(time.Second * 5).Unix()),
-		}
-		if err := SendData(p, ResBWTestMsg, &resp); err != nil {
-			p.log.Warn("Send ResBWTestMsg msg error.", "error", err)
-			return
-		}
-
-		time.Sleep(time.Second * 15)
-		p.log.Debug("Release lock of iperf server.")
-	}()
-
-	return nil
-}
-
-func (prm *PeerManager) HandleResBWTestMsg(p *Peer, msg Msg) error {
-	var request bwTestRes
-	if err := msg.Decode(&request); err != nil {
-		log.Error("Received nodes from remote", "msg", msg, "error", err)
-		return ErrResp(ErrDecode, "msg %v: %v", msg, err)
-	}
-	log.Trace("Received bandwidth test msg from remote", "request", request)
-
-	if request.Allowed == 0 {
-		log.Error("Remote node do not allowed to bw test.")
-		return errors.New("remote node do not allowed to bw test")
-	}
-	if time.Unix(int64(request.Expir), 0).Before(time.Now()) {
-		log.Error("Test bandwidth msg timeout.")
-		return errors.New("test bandwidth msg timeout")
-	}
-
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				p.log.Error("Test bandwidth panic.", "ip", p.RemoteIP(), "port", p.RemoteIperfPort())
-				p.log.Error("Test bandwidth panic.", "r", r)
-			}
-		}()
-
-		p.log.Debug("Test bandwidth start", "ip", p.RemoteIP(), "port", p.RemoteIperfPort())
-
-		result := prm.startTest(p.RemoteIP(), strconv.Itoa(p.RemoteIperfPort()))
-		p.lock.Lock()
-		defer p.lock.Unlock()
-		p.bandwidth = result
-		p.log.Info("Test bandwidth ok", "result", result)
-	}()
-
-	return nil
-}
-
-func exec_shell(s string) (string, error) {
-	var out bytes.Buffer
-	cmd := exec.Command("/bin/bash", "-c", s)
-
-	cmd.Stdout = &out
-	err := cmd.Run()
-	return out.String(), err
-}
-func exists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return true, err
 }

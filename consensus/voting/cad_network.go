@@ -31,7 +31,7 @@ import (
 )
 
 // get the best one
-func GetCadNodeFromNetwork(random []byte, rankingdata map[common.Address]float64) ([]*snapshots.CadWinner, []byte, error) {
+func GetCadNodeFromNetwork(random []byte, rankingdata map[common.Address]float64) ([]*snapshots.CadWinner,error) {
 
 	bestCadWinners := []*snapshots.CadWinner{}
 	peerp2ps := p2p.PeerMgrInst().PeersAll()
@@ -79,7 +79,7 @@ func GetCadNodeFromNetwork(random []byte, rankingdata map[common.Address]float64
 	for i := 0; i < consensus.NumberPrehp; i++ {
 		err, output := snapshots.GenRand(input)
 		if nil != err {
-			return nil, nil, err
+			return nil,  err
 		}
 		tempbigint := new(big.Int).SetBytes(output)
 		random := tempbigint.Uint64()
@@ -127,7 +127,7 @@ func GetCadNodeFromNetwork(random []byte, rankingdata map[common.Address]float64
 	}
 
 	if len(bestCadWinners) == 0 {
-		return nil, nil, nil
+		return nil,  nil
 	}
 
 	winners := make([]*snapshots.CadWinner, 0, 2)
@@ -145,28 +145,5 @@ func GetCadNodeFromNetwork(random []byte, rankingdata map[common.Address]float64
 		winners = append(winners, bestCadWinners[1:][rand.Intn(len(bestCadWinners)-1)]) //the rand
 	}
 
-	var resbandwith [2]byte
-	for _, peer := range peers {
-		if peer.Address() == winners[0].Address {
-
-			if peer.Bandwidth()/(1024*1024*8) > consensus.BandwithLimit {
-				resbandwith[0] = consensus.BandwithLimit
-			} else {
-				resbandwith[0] = byte(peer.Bandwidth() / (1024 * 1024 * 8))
-			}
-			log.Trace("get 0 bandwith", "id", peer.GetID(),"winners0",resbandwith[0], "vaule", peer.Bandwidth()/ (1024 *1024 * 8))
-
-		}
-		if peer.Address() == winners[1].Address {
-
-			if peer.Bandwidth()/(1024* 1024 *8) > consensus.BandwithLimit {
-				resbandwith[1] = consensus.BandwithLimit
-			} else {
-				resbandwith[1] = byte(peer.Bandwidth() / (1024 * 1024 * 8))
-			}
-			log.Trace("get 1 bandwith", "id", peer.GetID(),"winners1",resbandwith[1], "vaule", peer.Bandwidth()/ (1024 *1024 * 8))
-
-		}
-	}
-	return winners, resbandwith[:], nil
+	return winners, nil
 }

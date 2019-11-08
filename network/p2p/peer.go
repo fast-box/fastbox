@@ -514,25 +514,6 @@ func (p *Peer) SetHead(hash common.Hash, td *big.Int) {
 	p.td.Set(td)
 }
 
-func (p *Peer) TxsRate() float64 {
-	p.lock.RLock()
-	defer p.lock.RUnlock()
-
-	return p.txsRate
-}
-
-func (p *Peer) SetTxsRate(txs float64) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	p.txsRate = txs
-}
-
-func (p *Peer) Bandwidth() float64 {
-	p.lock.RLock()
-	defer p.lock.RUnlock()
-
-	return p.bandwidth
-}
 
 func (p *Peer) KnownBlockAdd(hash common.Hash) {
 	for p.knownBlocks.Size() >= maxKnownBlocks {

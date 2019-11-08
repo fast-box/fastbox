@@ -157,7 +157,7 @@ func (c *Prometheus) verifyCascadingFields(chain consensus.ChainReader, header *
 
 		lastheader := chain.GetHeader(header.ParentHash, number-1)
 		state, _ := chain.StateAt(lastheader.Root)
-		if cadWinner, _, err := c.GetSelectPrehp(state, chain, header, number, true); nil == err {
+		if cadWinner, err := c.GetSelectPrehp(state, chain, header, number, true); nil == err {
 			if bytes.Compare(cadWinner[0].Address[:], header.CandAddress[:]) != 0 {
 				log.Error("BAD COIN BASE", "miner", header.Coinbase.String(), "local", cadWinner[0].Address[:], "header", header.CandAddress[:])
 				return consensus.ErrInvalidCadaddr
@@ -236,10 +236,10 @@ func (c *Prometheus) verifySeal(chain consensus.ChainReader, header *types.Heade
 	return nil
 }
 
-func (c *Prometheus) GetSelectPrehp(state *state.StateDB, chain consensus.ChainReader, header *types.Header, number uint64, verify bool) ([]*snapshots.CadWinner, []byte, error) {
+func (c *Prometheus) GetSelectPrehp(state *state.StateDB, chain consensus.ChainReader, header *types.Header, number uint64, verify bool) ([]*snapshots.CadWinner, error) {
 
 	if state == nil {
-		return nil, nil, errors.New("chain stateAt return nil")
+		return nil, errors.New("chain stateAt return nil")
 	}
 	var err error
 	var bootnodeinfp []p2p.HwPair
@@ -258,17 +258,17 @@ func (c *Prometheus) GetSelectPrehp(state *state.StateDB, chain consensus.ChainR
 		}
 		err, bootnodeinfp = PreDealNodeInfo(bootnodeinfp)
 		if nil != err {
-			return nil, nil, err
+			return nil,  err
 		}
 	} else {
 		err, bootnodeinfp = PreDealNodeInfo(bootnodeinfp)
 		if nil != err {
-			return nil, nil, err
+			return nil, err
 		}
 		err = p2p.PeerMgrInst().SetHwInfo(bootnodeinfp)
 		if nil != err {
 			log.Debug("VerifySelectPrehp get node info from contract, p2p.PeerMgrInst().SetHwInfo set fail ", "err", err)
-			return nil, nil, err
+			return nil, err
 		}
 	}
 	addrlist := make([]common.Address, 0, len(bootnodeinfp))
@@ -277,7 +277,7 @@ func (c *Prometheus) GetSelectPrehp(state *state.StateDB, chain consensus.ChainR
 	}
 
 	if len(addrlist) == 0 {
-		return nil, nil, errors.New("forbid mining before successfully connect with bootnode")
+		return nil, errors.New("forbid mining before successfully connect with bootnode")
 	}
 
 	if verify == true {
@@ -291,7 +291,7 @@ func (c *Prometheus) GetSelectPrehp(state *state.StateDB, chain consensus.ChainR
 		}
 
 		if !comaddrinboot {
-			return nil, nil, errors.New("comaddress invalid")
+			return nil, errors.New("comaddress invalid")
 		}
 	}
 
@@ -312,7 +312,7 @@ func (c *Prometheus) GetSelectPrehp(state *state.StateDB, chain consensus.ChainR
 	//get votes ranking res
 	voterank, errvote := c.GetRankingRes(voteres, addrlist)
 	//get bandwith ranking res
-	bandrank, errbandwith := c.GetBandwithRes(addrlist, chain, number-1)
+	//bandrank, errbandwith := c.GetBandwithRes(addrlist, chain, number-1)
 	//get all balances
 	var allbalances map[common.Address]big.Int
 	if header.Number.Uint64() > consensus.NewContractVersion {
@@ -327,24 +327,24 @@ func (c *Prometheus) GetSelectPrehp(state *state.StateDB, chain consensus.ChainR
 	}
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	//get balance ranking res
 	balancerank, errbalance := c.GetRankingRes(allbalances, addrlist)
-	if errvote != nil || errbandwith != nil || errbalance != nil {
-		return nil, nil, errors.New("get ranking fail")
+	if errvote != nil || errbalance != nil {
+		return nil, errors.New("get ranking fail")
 	}
 	rankingmap := make(map[common.Address]float64)
 	for _, v := range addrlist {
-		rankingmap[v] = float64(bandrank[v])*0.5 + float64(balancerank[v])*0.15 + float64(voterank[v])*0.35
-		log.Trace("**********************+three item ranking info******************", "addr", v, "bandwith", bandrank[v], "balance", balancerank[v], "vote", voterank[v], "number", number)
+		rankingmap[v] = float64(balancerank[v])*0.30 + float64(voterank[v])*0.35
+		log.Trace("**********************+three item ranking info******************", "addr", v,  "balance", balancerank[v], "vote", voterank[v], "number", number)
 	}
 
 	random := crypto.Keccak256(header.Number.Bytes())
 	// Get the best peer from the network
-	if cadWinner, nonce, err := voting.GetCadNodeFromNetwork(random, rankingmap); err == nil {
-		return cadWinner, nonce, nil
+	if cadWinner, err := voting.GetCadNodeFromNetwork(random, rankingmap); err == nil {
+		return cadWinner, nil
 	} else {
-		return nil, nil, err
+		return nil, err
 	}
 }

@@ -225,12 +225,6 @@ func (hp *HpbProto) handleMsg(p *Peer) error {
 		}
 		return nil
 
-	case ReqBWTestMsg, ResBWTestMsg:
-		if cb := hp.msgProcess[msg.Code]; cb != nil{
-			err := cb(p,msg)
-			p.log.Trace("Handle bandwidth test message.","msg",msg,"err",err)
-		}
-		return nil
 
 	case GetBlockHeadersMsg, GetBlockBodiesMsg,GetNodeDataMsg,GetReceiptsMsg:
 		if cb := hp.msgProcess[msg.Code]; cb != nil{
