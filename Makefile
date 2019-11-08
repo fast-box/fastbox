@@ -16,7 +16,6 @@ ghpb:
 	build/env.sh go run build/ci.go install ./cmd/ghpb
 	@echo "Done building."
 	@echo "Run \"$(GOBIN)/geth\" to launch geth."
-	cp "$(GOHPB)/network/iperf3/iperf3" "$(GOBIN)/iperf3"
 	cp "$(GOHPB)/network/p2p/binding.json" "$(GOBIN)/binding.json"
 	cp "$(GOHPB)/network/p2p/config.json" "$(GOBIN)/config.json"
 

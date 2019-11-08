@@ -164,7 +164,7 @@ func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *typ
 
 	c.lock.RLock()
 
-	if cadWinner, nonce, err := c.GetSelectPrehp(state, chain, header, number, false); nil == err {
+	if cadWinner, err := c.GetSelectPrehp(state, chain, header, number, false); nil == err {
 
 		if cadWinner == nil || len(cadWinner) != 2 {
 			//if no peers, add itself Coinbase to CandAddress and ComdAddress, or when candidate nodes is less len(hpbsnap.signers), the zero address will become the hpb node
@@ -178,15 +178,6 @@ func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *typ
 		}
 		log.Trace(">>>>>>>>>>>>>header.CandAddress<<<<<<<<<<<<<<<<<", "addr", header.CandAddress, "number", number) //for test
 
-		if nil == nonce {
-			copy(header.Nonce[:], consensus.NonceDropVote)
-		} else {
-			if number > consensus.StageNumberIII {
-				copy(header.Nonce[len(header.Nonce)-len(nonce):], nonce)
-			} else {
-				copy(header.Nonce[:], consensus.NonceDropVote)
-			}
-		}
 
 	} else {
 		c.lock.RUnlock()
@@ -795,6 +786,7 @@ func (c *Prometheus) GetVoteRes(chain consensus.ChainReader, header *types.Heade
 }
 
 //input number, return key is commonAddress, order is value
+/*
 func (c *Prometheus) GetBandwithRes(addrlist []common.Address, chain consensus.ChainReader, number uint64) (map[common.Address]int, error) {
 
 	if number < consensus.NumberBackBandwith {
@@ -905,7 +897,7 @@ func (c *Prometheus) GetBandwithRes(addrlist []common.Address, chain consensus.C
 
 	return res, nil
 }
-
+*/
 type BandWithStatics struct {
 	AverageValue uint64
 	Num          uint64
