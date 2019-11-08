@@ -1069,9 +1069,6 @@ func (args *SendTxArgs) setDefaults(ctx context.Context, b Backend) error {
 }
 
 func (args *SendTxArgs) toTransaction() *types.Transaction {
-	if args.To == nil {
-		return types.NewContractCreation(uint64(*args.Nonce), (*big.Int)(args.Value), (*big.Int)(args.Gas), (*big.Int)(args.GasPrice), args.Data, args.ExData)
-	}
 	return types.NewTransaction(uint64(*args.Nonce), *args.To, (*big.Int)(args.Value), (*big.Int)(args.Gas), (*big.Int)(args.GasPrice), args.Data, args.ExData)
 }
 
@@ -1087,9 +1084,6 @@ func submitTransaction(ctx context.Context, b Backend, tx *types.Transaction) (c
 			return common.Hash{}, err
 		}
 		crypto.CreateAddress(from, tx.Nonce())
-		//log.Info("Submitted contract creation", "fullhash", tx.Hash().Hex(), "contract", addr.Hex())
-	} else {
-		//log.Info("Submitted transaction", "fullhash", tx.Hash().Hex(), "recipient", tx.To())
 	}
 	return tx.Hash(), nil
 }

@@ -97,10 +97,6 @@ func NewTransaction(nonce uint64, to common.Address, amount, gasLimit, gasPrice 
 	return newTransaction(nonce, &to, amount, gasLimit, gasPrice, data, exdata)
 }
 
-func NewContractCreation(nonce uint64, amount, gasLimit, gasPrice *big.Int, data []byte, exdata TxExdata) *Transaction {
-	return newTransaction(nonce, nil, amount, gasLimit, gasPrice, data, exdata)
-}
-
 func newTransaction(nonce uint64, to *common.Address, amount, gasLimit, gasPrice *big.Int, data []byte, exdata TxExdata) *Transaction {
 	if len(data) > 0 {
 		data = common.CopyBytes(data)

@@ -57,7 +57,7 @@ const InvokeIndexThree = 3
 const Hpcalclookbackround = 3
 const BandwithLimit = 200       //200M
 const NumberBackBandwith = 1100 //bandwith statistic block num + 100
-// Todo : lrj change to english.
+
 var (
 	HpbNodenumber = 31    //hpb nodes number
 	NumberPrehp   = 20    //nodes num from 151 nodes select
@@ -117,7 +117,7 @@ var (
 	ErrInvalidCheckpointBeneficiary = errors.New("beneficiary in checkpoint block non-zero")
 
 	ErrInvalidVote = errors.New("vote nonce not 0x00..0 or 0xff..f")
-	
+
 	// vote nonce in checkpoint block non-zero
 	ErrInvalidCheckpointVote = errors.New("vote nonce in checkpoint block non-zero")
 	// reject block but do not drop peer
@@ -152,7 +152,7 @@ func Ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 	if address, known := sigcache.Get(hash); known {
 		return address.(common.Address), nil
 	}
-	
+
 	if len(header.Extra) < ExtraSeal {
 		return common.Address{}, ErrMissingSignature
 	}
