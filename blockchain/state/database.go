@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/common/trie"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/hpb-project/sphinx/blockchain/storage"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/trie"
 )
 
 // Trie cache generation limit after which to evic trie nodes from memory.
@@ -45,9 +45,6 @@ type Database interface {
 	// OpenStorageTrie opens the storage trie of an account.
 	OpenTrie(root common.Hash) (Trie, error)
 	OpenStorageTrie(addrHash, root common.Hash) (Trie, error)
-	// Accessing contract code:
-	ContractCode(addrHash, codeHash common.Hash) ([]byte, error)
-	ContractCodeSize(addrHash, codeHash common.Hash) (int, error)
 	// CopyTrie returns an independent copy of the given trie.
 	CopyTrie(Trie) Trie
 }
@@ -118,25 +115,6 @@ func (db *cachingDB) CopyTrie(t Trie) Trie {
 	default:
 		panic(fmt.Errorf("unknown trie type %T", t))
 	}
-}
-
-func (db *cachingDB) ContractCode(addrHash, codeHash common.Hash) ([]byte, error) {
-	code, err := db.db.Get(codeHash[:])
-	if err == nil {
-		db.codeSizeCache.Add(codeHash, len(code))
-	}
-	return code, err
-}
-
-func (db *cachingDB) ContractCodeSize(addrHash, codeHash common.Hash) (int, error) {
-	if cached, ok := db.codeSizeCache.Get(codeHash); ok {
-		return cached.(int), nil
-	}
-	code, err := db.ContractCode(addrHash, codeHash)
-	if err == nil {
-		db.codeSizeCache.Add(codeHash, len(code))
-	}
-	return len(code), err
 }
 
 // cachedTrie inserts its trie into a cachingDB on commit.

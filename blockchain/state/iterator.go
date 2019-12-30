@@ -18,8 +18,6 @@ package state
 
 import (
 	"bytes"
-	"fmt"
-
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/common/rlp"
 	"github.com/hpb-project/sphinx/common/trie"
@@ -34,8 +32,6 @@ type NodeIterator struct {
 	dataIt  trie.NodeIterator // Secondary iterator for the data trie of a contract
 
 	accountHash common.Hash // Hash of the node containing the account
-	codeHash    common.Hash // Hash of the contract source code
-	code        []byte      // Source code associated with a contract
 
 	Hash   common.Hash // Hash of the current entry being iterated (nil if not standalone)
 	Parent common.Hash // Hash of the first full ancestor node (nil if current is the root)
@@ -86,11 +82,6 @@ func (it *NodeIterator) step() error {
 		}
 		return nil
 	}
-	// If we had source code previously, discard that
-	if it.code != nil {
-		it.code = nil
-		return nil
-	}
 	// Step to the next state trie node, terminating if we're out of nodes
 	if cont := it.stateIt.Next(true); !cont {
 		if it.stateIt.Error() != nil {
@@ -116,14 +107,7 @@ func (it *NodeIterator) step() error {
 	if !it.dataIt.Next(true) {
 		it.dataIt = nil
 	}
-	if !bytes.Equal(account.CodeHash, emptyCodeHash) {
-		it.codeHash = common.BytesToHash(account.CodeHash)
-		addrHash := common.BytesToHash(it.stateIt.LeafKey())
-		it.code, err = it.state.db.ContractCode(addrHash, common.BytesToHash(account.CodeHash))
-		if err != nil {
-			return fmt.Errorf("code %x: %v", account.CodeHash, err)
-		}
-	}
+
 	it.accountHash = it.stateIt.Parent()
 	return nil
 }
@@ -145,8 +129,6 @@ func (it *NodeIterator) retrieve() bool {
 		if it.Parent == (common.Hash{}) {
 			it.Parent = it.accountHash
 		}
-	case it.code != nil:
-		it.Hash, it.Parent = it.codeHash, it.accountHash
 	case it.stateIt != nil:
 		it.Hash, it.Parent = it.stateIt.Hash(), it.stateIt.Parent()
 	}

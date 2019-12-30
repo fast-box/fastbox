@@ -212,20 +212,7 @@ func (self *StateDB) GetCode(addr common.Address) []byte {
 }
 
 func (self *StateDB) GetCodeSize(addr common.Address) int {
-	self.lock.Lock()
-	defer self.lock.Unlock()
-	stateObject := self.getStateObject(addr)
-	if stateObject == nil {
-		return 0
-	}
-	if stateObject.code != nil {
-		return len(stateObject.code)
-	}
-	size, err := self.db.ContractCodeSize(stateObject.addrHash, common.BytesToHash(stateObject.CodeHash()))
-	if err != nil {
-		self.setError(err)
-	}
-	return size
+	return 0
 }
 
 func (self *StateDB) GetCodeHash(addr common.Address) common.Hash {
@@ -347,7 +334,6 @@ func (self *StateDB) Suicide(addr common.Address) bool {
 		prevbalance: new(big.Int).Set(stateObject.Balance()),
 	})
 	stateObject.markSuicided()
-	stateObject.data.Balance = new(big.Int)
 
 	return true
 }
@@ -456,10 +442,7 @@ func (self *StateDB) createObject(addr common.Address) (newobj, prev *stateObjec
 func (self *StateDB) CreateAccount(addr common.Address) {
 	self.lock.Lock()
 	defer self.lock.Unlock()
-	new, prev := self.createObject(addr)
-	if prev != nil {
-		new.setBalance(prev.data.Balance)
-	}
+	self.createObject(addr)
 }
 
 func (db *StateDB) ForEachStorage(addr common.Address, cb func(key, value common.Hash) bool) {
@@ -642,13 +625,6 @@ func (s *StateDB) CommitTo(dbw trie.DatabaseWriter, deleteEmptyObjects bool) (ro
 			// and just mark it for deletion in the trie.
 			s.deleteStateObject(stateObject)
 		case isDirty:
-			// Write any contract code associated with the state object
-			if stateObject.code != nil && stateObject.dirtyCode {
-				if err := dbw.Put(stateObject.CodeHash(), stateObject.code); err != nil {
-					return common.Hash{}, err
-				}
-				stateObject.dirtyCode = false
-			}
 			// Write any storage changes in the state object to its storage trie.
 			if err := stateObject.CommitTrie(s.db, dbw); err != nil {
 				return common.Hash{}, err

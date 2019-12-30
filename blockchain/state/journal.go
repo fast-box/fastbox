@@ -43,21 +43,9 @@ type (
 	}
 
 	// Changes to individual accounts.
-	balanceChange struct {
-		account *common.Address
-		prev    *big.Int
-	}
-	nonceChange struct {
-		account *common.Address
-		prev    uint64
-	}
 	storageChange struct {
 		account       *common.Address
 		key, prevalue common.Hash
-	}
-	codeChange struct {
-		account            *common.Address
-		prevcode, prevhash []byte
 	}
 
 	// Changes to other state values.
@@ -103,18 +91,6 @@ func (ch touchChange) undo(s *StateDB) {
 			delete(s.stateObjectsDirty, *ch.account)
 		}
 	}
-}
-
-func (ch balanceChange) undo(s *StateDB) {
-	s.getStateObject(*ch.account).setBalance(ch.prev)
-}
-
-func (ch nonceChange) undo(s *StateDB) {
-	s.getStateObject(*ch.account).setNonce(ch.prev)
-}
-
-func (ch codeChange) undo(s *StateDB) {
-	s.getStateObject(*ch.account).setCode(common.BytesToHash(ch.prevhash), ch.prevcode)
 }
 
 func (ch storageChange) undo(s *StateDB) {

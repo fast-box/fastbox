@@ -93,26 +93,17 @@ type stateObject struct {
 
 // empty returns whether the account is considered empty.
 func (s *stateObject) empty() bool {
-	return s.data.Nonce == 0 && s.data.Balance.Sign() == 0 && bytes.Equal(s.data.CodeHash, emptyCodeHash)
+	return bytes.Equal(s.data.Root.Bytes(), emptyCodeHash)
 }
 
 // Account is the Hpb consensus representation of accounts.
 // These objects are stored in the main account trie.
 type Account struct {
-	Nonce    uint64
-	Balance  *big.Int
-	Root     common.Hash // merkle root of the storage trie
-	CodeHash []byte
+	Root common.Hash // merkle root of the storage trie
 }
 
 // newObject creates a state object.
 func newObject(db *StateDB, address common.Address, data Account, onDirty func(addr common.Address)) *stateObject {
-	if data.Balance == nil {
-		data.Balance = new(big.Int)
-	}
-	if data.CodeHash == nil {
-		data.CodeHash = emptyCodeHash
-	}
 	return &stateObject{
 		db:            db,
 		address:       address,
@@ -253,41 +244,17 @@ func (self *stateObject) CommitTrie(db Database, dbw trie.DatabaseWriter) error 
 // AddBalance removes amount from c's balance.
 // It is used to add funds to the destination account of a transfer.
 func (c *stateObject) AddBalance(amount *big.Int) {
-	// EIP158: We must check emptiness for the objects such that the account
-	// clearing (0,0,0 objects) can take effect.
-	if amount.Sign() == 0 {
-		if c.empty() {
-			c.touch()
-		}
-
-		return
-	}
-	c.SetBalance(new(big.Int).Add(c.Balance(), amount))
 }
 
 // SubBalance removes amount from c's balance.
 // It is used to remove funds from the origin account of a transfer.
 func (c *stateObject) SubBalance(amount *big.Int) {
-	if amount.Sign() == 0 {
-		return
-	}
-	c.SetBalance(new(big.Int).Sub(c.Balance(), amount))
 }
 
 func (self *stateObject) SetBalance(amount *big.Int) {
-	self.db.journal = append(self.db.journal, balanceChange{
-		account: &self.address,
-		prev:    new(big.Int).Set(self.data.Balance),
-	})
-	self.setBalance(amount)
 }
 
 func (self *stateObject) setBalance(amount *big.Int) {
-	self.data.Balance = amount
-	if self.onDirty != nil {
-		self.onDirty(self.Address())
-		self.onDirty = nil
-	}
 }
 
 // Return the gas back to the origin. Used by the Virtual machine or Closures
@@ -318,66 +285,31 @@ func (c *stateObject) Address() common.Address {
 
 // Code returns the contract code associated with this object, if any.
 func (self *stateObject) Code(db Database) []byte {
-	if self.code != nil {
-		return self.code
-	}
-	if bytes.Equal(self.CodeHash(), emptyCodeHash) {
-		return nil
-	}
-	code, err := db.ContractCode(self.addrHash, common.BytesToHash(self.CodeHash()))
-	if err != nil {
-		self.setError(fmt.Errorf("can't load code hash %x: %v", self.CodeHash(), err))
-	}
-	self.code = code
-	return code
+	return nil
 }
 
 func (self *stateObject) SetCode(codeHash common.Hash, code []byte) {
-	prevcode := self.Code(self.db.db)
-	self.db.journal = append(self.db.journal, codeChange{
-		account:  &self.address,
-		prevhash: self.CodeHash(),
-		prevcode: prevcode,
-	})
-	self.setCode(codeHash, code)
 }
 
 func (self *stateObject) setCode(codeHash common.Hash, code []byte) {
-	self.code = code
-	self.data.CodeHash = codeHash[:]
-	self.dirtyCode = true
-	if self.onDirty != nil {
-		self.onDirty(self.Address())
-		self.onDirty = nil
-	}
 }
 
 func (self *stateObject) SetNonce(nonce uint64) {
-	self.db.journal = append(self.db.journal, nonceChange{
-		account: &self.address,
-		prev:    self.data.Nonce,
-	})
-	self.setNonce(nonce)
 }
 
 func (self *stateObject) setNonce(nonce uint64) {
-	self.data.Nonce = nonce
-	if self.onDirty != nil {
-		self.onDirty(self.Address())
-		self.onDirty = nil
-	}
 }
 
 func (self *stateObject) CodeHash() []byte {
-	return self.data.CodeHash
+	return nil
 }
 
 func (self *stateObject) Balance() *big.Int {
-	return self.data.Balance
+	return big.NewInt(0)
 }
 
 func (self *stateObject) Nonce() uint64 {
-	return self.data.Nonce
+	return 0
 }
 
 // Never called, but must be present to allow stateObject to be used

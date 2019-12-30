@@ -52,37 +52,6 @@ func (ms *ManagedState) SetState(statedb *StateDB) {
 	ms.StateDB = statedb
 }
 
-// RemoveNonce removed the nonce from the managed state and all future pending nonces
-func (ms *ManagedState) RemoveNonce(addr common.Address, n uint64) {
-	if ms.hasAccount(addr) {
-		ms.mu.Lock()
-		defer ms.mu.Unlock()
-
-		account := ms.getAccount(addr)
-		if n-account.nstart <= uint64(len(account.nonces)) {
-			reslice := make([]bool, n-account.nstart)
-			copy(reslice, account.nonces[:n-account.nstart])
-			account.nonces = reslice
-		}
-	}
-}
-
-// NewNonce returns the new canonical nonce for the managed account
-func (ms *ManagedState) NewNonce(addr common.Address) uint64 {
-	ms.mu.Lock()
-	defer ms.mu.Unlock()
-
-	account := ms.getAccount(addr)
-	for i, nonce := range account.nonces {
-		if !nonce {
-			return account.nstart + uint64(i)
-		}
-	}
-	account.nonces = append(account.nonces, true)
-
-	return uint64(len(account.nonces)-1) + account.nstart
-}
-
 // GetNonce returns the canonical nonce for the managed or unmanaged account.
 //
 // Because GetNonce mutates the DB, we must take a write lock.
