@@ -558,73 +558,11 @@ type CallArgs struct {
 	GasPrice hexutil.Big     `json:"gasPrice"`
 	Value    hexutil.Big     `json:"value"`
 	Data     hexutil.Bytes   `json:"data"`
-	ExData   types.TxExdata  `json:"exdata"`
+	ExData   hexutil.Bytes   `json:"exdata"`
 }
 
 func (s *PublicBlockChainAPI) doCall(ctx context.Context, args CallArgs, blockNr rpc.BlockNumber, vmCfg evm.Config) ([]byte, *big.Int, bool, error) {
-	defer func(start time.Time) { log.Debug("Executing EVM call finished", "runtime", time.Since(start)) }(time.Now())
-
-	state, header, err := s.b.StateAndHeaderByNumber(ctx, blockNr)
-
-	if state == nil || err != nil {
-		return nil, common.Big0, false, err
-	}
-	// Set sender address or use a default if none specified
-	addr := args.From
-	if addr == (common.Address{}) {
-		if wallets := s.b.AccountManager().Wallets(); len(wallets) > 0 {
-			if accounts := wallets[0].Accounts(); len(accounts) > 0 {
-				addr = accounts[0].Address
-			}
-		}
-	}
-	// Set default gas & gas price if none were set
-	gas, gasPrice := args.Gas.ToInt(), args.GasPrice.ToInt()
-	if gas.Sign() == 0 {
-		gas = big.NewInt(defaultGas)
-	}
-	if gasPrice.Sign() == 0 {
-		gasPrice = new(big.Int).SetUint64(defaultGasPrice)
-	}
-
-	// Create new call message
-	msg := types.NewMessage(addr, args.To, 0, args.Value.ToInt(), gas, gasPrice, args.Data, args.ExData, false)
-
-	// Setup context so it may be cancelled the call has completed
-	// or, in case of unmetered gas, setup a context with a timeout.
-	var cancel context.CancelFunc
-	if vmCfg.DisableGasMetering {
-		ctx, cancel = context.WithTimeout(ctx, time.Second*10)
-	} else {
-		ctx, cancel = context.WithCancel(ctx)
-	}
-	// Make sure the context is cancelled when the call has completed
-	// this makes sure resources are cleaned up.
-	defer func() { cancel() }()
-
-	// Get a new instance of the EVM.
-	vm, _, err := s.b.GetEVM(ctx, msg, state, header, vmCfg)
-	if err != nil {
-		return nil, common.Big0, false, err
-	}
-	// Wait for the context to be done and cancel the evm. Even if the
-	// EVM has finished, cancelling may be done (repeatedly)
-	go func() {
-		<-ctx.Done()
-		vm.Cancel()
-	}()
-
-	// Setup the gas pool (also for unmetered requests)
-	// and apply the message.
-	gp := new(bc.GasPool).AddGas(math.MaxBig256)
-
-	res, gas, failed, err := bc.ApplyMessage(vm, msg, gp)
-	if err != nil {
-		return nil, common.Big0, false, err
-	}
-
-	return res, gas, failed, err
-
+	return nil, common.Big0, false, errors.New("unsupport")
 }
 
 // Call executes the given transaction on the state for the given block number.
@@ -794,7 +732,7 @@ type RPCTransaction struct {
 	GasPrice         *hexutil.Big    `json:"gasPrice"`
 	Hash             common.Hash     `json:"hash"`
 	Input            hexutil.Bytes   `json:"input"`
-	ExData           types.TxExdata  `json:"exdata"`
+	ExData           hexutil.Bytes   `json:"exdata"`
 	Nonce            hexutil.Uint64  `json:"nonce"`
 	To               *common.Address `json:"to"`
 	TransactionIndex hexutil.Uint    `json:"transactionIndex"`
@@ -1039,7 +977,7 @@ type SendTxArgs struct {
 	GasPrice *hexutil.Big    `json:"gasPrice"`
 	Value    *hexutil.Big    `json:"value"`
 	Data     hexutil.Bytes   `json:"data"`
-	ExData   types.TxExdata  `json:"exdata"`
+	ExData   hexutil.Bytes   `json:"exdata"`
 	Nonce    *hexutil.Uint64 `json:"nonce"`
 }
 

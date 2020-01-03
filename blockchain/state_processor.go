@@ -17,12 +17,12 @@
 package bc
 
 import (
+	"errors"
 	"math/big"
 
 	"github.com/hpb-project/sphinx/blockchain/state"
 	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/consensus"
 )
@@ -75,14 +75,14 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 	for i, tx := range block.Transactions() {
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
 
-		receipt, _, errs = ApplyTransactionNonContractNonFinallize(p.config, p.bc, &author, gp, statedb, header, tx, totalUsedGas)
+		// Todo: chang to new ApplyTransaction for sphinx
+		receipt, _, errs = ApplyTransactionNonContract(p.config, p.bc, &author, gp, statedb, header, tx, totalUsedGas)
 		if errs != nil {
 			return nil, nil, nil, errs
 		}
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)
 	}
-	ApplyTransactionFinalize(statedb)
 
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
 	if _, errfinalize := p.engine.Finalize(p.bc, header, statedb, block.Transactions(), block.Uncles(), receipts); nil != errfinalize {
@@ -97,71 +97,5 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 // for the transaction, gas used and an error if the transaction failed,
 // indicating the block was invalid.
 func ApplyTransactionNonContract(config *config.ChainConfig, bc *BlockChain, author *common.Address, gp *GasPool, statedb *state.StateDB, header *types.Header, tx *types.Transaction, usedGas *big.Int) (*types.Receipt, *big.Int, error) {
-	msg, err := tx.AsMessage(types.MakeSigner(config))
-	if err != nil {
-		log.Error("Asmessage err", "err", err)
-		return nil, nil, err
-	}
-
-	// Apply the transaction to the current state (included in the env)
-	_, gas, failed, err := ApplyMessageNonContract(msg, bc, author, gp, statedb, header)
-	if err != nil {
-		log.Error("ApplyMessageNonContract err", "err", err)
-		return nil, nil, err
-	}
-
-	// Update the state with pending changes
-	var root []byte
-
-	statedb.Finalise(true)
-
-	usedGas.Add(usedGas, gas)
-	// Create a new receipt for the transaction, storing the intermediate root and gas used by the tx
-	// based on the eip phase, we're passing wether the root touch-delete accounts.
-	receipt := types.NewReceipt(root, failed, usedGas)
-	receipt.TxHash = tx.Hash()
-	receipt.GasUsed = new(big.Int).Set(gas)
-
-	// Set the receipt logs and create a bloom for filtering
-	receipt.Logs = statedb.GetLogs(tx.Hash())
-	receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
-
-	return receipt, gas, err
-}
-
-// ApplyTransaction attempts to apply a transaction to the given state database
-// and uses the input parameters for its environment. It returns the receipt
-// for the transaction, gas used and an error if the transaction failed,
-// indicating the block was invalid.
-func ApplyTransactionNonContractNonFinallize(config *config.ChainConfig, bc *BlockChain, author *common.Address, gp *GasPool, statedb *state.StateDB, header *types.Header, tx *types.Transaction, usedGas *big.Int) (*types.Receipt, *big.Int, error) {
-	msg, err := tx.AsMessage(types.MakeSigner(config))
-	if err != nil {
-		log.Error("Asmessage err", "err", err)
-		return nil, nil, err
-	}
-
-	// Apply the transaction to the current state (included in the env)
-	_, gas, failed, err := ApplyMessageNonContract(msg, bc, author, gp, statedb, header)
-	if err != nil {
-		log.Error("ApplyMessageNonContract err", "err", err)
-		return nil, nil, err
-	}
-
-	// Update the state with pending changes
-	var root []byte
-	statedb.ClearRefund()
-	usedGas.Add(usedGas, gas)
-	// Create a new receipt for the transaction, storing the intermediate root and gas used by the tx
-	// based on the eip phase, we're passing wether the root touch-delete accounts.
-	receipt := types.NewReceipt(root, failed, usedGas)
-	receipt.TxHash = tx.Hash()
-	receipt.GasUsed = new(big.Int).Set(gas)
-	// Set the receipt logs and create a bloom for filtering
-	receipt.Logs = statedb.GetLogs(tx.Hash())
-	receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
-
-	return receipt, gas, err
-}
-func ApplyTransactionFinalize(statedb *state.StateDB) {
-	statedb.Finalise(true)
+	return nil, nil, errors.New("need change to new ApplyTransaction for sphinx")
 }

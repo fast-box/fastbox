@@ -565,6 +565,7 @@ func (env *Work) commitTransaction(tx *types.Transaction, coinbase common.Addres
 	snap := env.state.Snapshot()
 	blockchain := bc.InstanceBlockChain()
 
+	//Todo: change to new ApplyTransaction for sphinx
 	receipt, _, err = bc.ApplyTransactionNonContract(env.config, blockchain, &coinbase, gp, env.state, env.header, tx, env.header.GasUsed)
 	if err != nil {
 		env.state.RevertToSnapshot(snap)

@@ -1,10 +1,10 @@
 package hvm
 
 import (
+	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/consensus"
 	"github.com/hpb-project/sphinx/hvm/evm"
-	"github.com/hpb-project/sphinx/blockchain/types"
 	"math/big"
 )
 
@@ -13,12 +13,6 @@ type Message interface {
 	From() common.Address
 	//FromFrontier() (common.Address, error)
 	To() *common.Address
-
-	GasPrice() *big.Int
-	Gas() *big.Int
-	Value() *big.Int
-
-	Nonce() uint64
 	CheckNonce() bool
 	Data() []byte
 }
@@ -52,7 +46,6 @@ func NewEVMContext(msg Message, header *types.Header, chain ChainContext, author
 		Time:        new(big.Int).Set(header.Time),
 		Difficulty:  new(big.Int).Set(header.Difficulty),
 		GasLimit:    new(big.Int).Set(header.GasLimit),
-		GasPrice:    new(big.Int).Set(msg.GasPrice()),
 	}
 }
 
