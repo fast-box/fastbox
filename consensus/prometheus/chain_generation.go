@@ -314,10 +314,6 @@ func SetNetNodeType(snapa *snapshots.HpbNodeSnap) error {
 			if flag := FindHpbNode(peer.Address(), addresses); !flag {
 				peer.SetRemoteType(discover.PreNode)
 			}
-		case discover.SynNode:
-			if flag := FindHpbNode(peer.Address(), addresses); flag {
-				peer.SetRemoteType(discover.HpNode)
-			}
 		default:
 			break
 		}

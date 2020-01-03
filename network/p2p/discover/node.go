@@ -40,7 +40,7 @@ const NodeIDBits    = 512
 
 type NodeType  uint8
 const(
-	SynNode    NodeType = 0x10
+	//SynNode    NodeType = 0x10
 	PreNode    NodeType = 0x30
 	HpNode     NodeType = 0x60
 	BootNode   NodeType = 0xA0
@@ -48,8 +48,6 @@ const(
 
 func (nt NodeType)ToString() string {
 	switch nt {
-	case SynNode:
-		return "SynNode"
 	case PreNode:
 		return "PreNode"
 	case HpNode:

@@ -744,7 +744,7 @@ func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *discover.Nod
 	}
 	clog.Info("Verify the remote hardware.", "id", c.id.TerminalString(), "result", c.isboe)
 
-	if !srv.TestMode && srv.localType == discover.SynNode && c.isboe == false {
+	if !srv.TestMode && c.isboe == false {
 		clog.Debug("SynNode peer SynNode, dorp peer.")
 		c.close(DiscHwSignError)
 		return
@@ -872,7 +872,7 @@ func (srv *Server) runPeer(p *PeerBase) {
 func (srv *Server) setPeerInitType(p *PeerBase, isboe bool) {
 
 	p.localType = srv.localType
-	p.remoteType = discover.SynNode
+	p.remoteType = discover.PreNode
 
 	for _, n := range srv.BootstrapNodes {
 		if n.ID == p.ID() {
@@ -892,7 +892,7 @@ func (srv *Server) setPeerInitType(p *PeerBase, isboe bool) {
 		p.remoteType = discover.PreNode
 		for _, spid := range srv.synPid {
 			if spid.PID == p.ID().TerminalString() {
-				p.remoteType = discover.SynNode
+				p.remoteType = discover.PreNode
 				p.log.Info("P2P set init peer remote type synnode (TestMode)")
 				return
 			}

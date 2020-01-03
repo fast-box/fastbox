@@ -93,11 +93,6 @@ func (prm *PeerManager) Start(coinbase common.Address) error {
 
 	prm.server.Config.CoinBase = coinbase
 	log.Info("Set coinbase address by start", "address", coinbase.String(), "roletype", config.Network.RoleType)
-	if config.Network.RoleType != "synnode" {
-		if coinbase.String() == "0x0000000000000000000000000000000000000000" {
-			panic("coinbase address is nil.")
-		}
-	}
 	prm.hpbpro.networkId = prm.server.NetworkId
 	prm.hpbpro.regMsgProcess(ReqNodesMsg, HandleReqNodesMsg)
 	prm.hpbpro.regMsgProcess(ResNodesMsg, HandleResNodesMsg)
@@ -111,8 +106,6 @@ func (prm *PeerManager) Start(coinbase common.Address) error {
 	localType := discover.PreNode
 	if config.Network.RoleType == "bootnode" {
 		localType = discover.BootNode
-	} else if config.Network.RoleType == "synnode" {
-		localType = discover.SynNode
 	}
 	prm.SetLocalType(localType)
 	log.Info("Set Init Local Type by p2p", "type", localType.ToString())
@@ -285,10 +278,6 @@ func (prm *PeerManager) BestPeer() *Peer {
 		bestTd   *big.Int
 	)
 	for _, p := range prm.peers {
-		if p.remoteType == discover.SynNode {
-			continue
-		}
-
 		if p.msgLooping == false {
 			continue
 		}
