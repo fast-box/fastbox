@@ -53,9 +53,6 @@ func routBlock(block *types.Block, propagate bool) {
 				case discover.PreNode:
 					sendNewBlock(peer, block, td)
 					break
-				case discover.SynNode:
-					sendNewBlock(peer, block, td)
-					break
 				default:
 					break
 				}
@@ -66,9 +63,6 @@ func routBlock(block *types.Block, propagate bool) {
 					sendNewBlock(peer, block, td)
 					break
 				case discover.HpNode:
-					sendNewBlock(peer, block, td)
-					break
-				case discover.SynNode:
 					sendNewBlock(peer, block, td)
 					break
 				default:
@@ -91,9 +85,6 @@ func routBlock(block *types.Block, propagate bool) {
 				case discover.PreNode:
 					sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
 					break
-				case discover.SynNode:
-					sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
-					break
 				default:
 					break
 				}
@@ -104,9 +95,6 @@ func routBlock(block *types.Block, propagate bool) {
 					sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
 					break
 				case discover.HpNode:
-					sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
-					break
-				case discover.SynNode:
 					sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
 					break
 				default:
@@ -171,29 +159,7 @@ func routNativeTx(hash common.Hash, tx *types.Transaction) {
 		}
 
 		break
-	case discover.SynNode:
-		for _, peer := range peers {
-			switch peer.RemoteType() {
-			case discover.HpNode:
-				sendTransactions(peer, types.Transactions{tx})
-				break
-			}
-		}
 
-		toPreCount := 0
-		for _, peer := range peers {
-			switch peer.RemoteType() {
-			case discover.PreNode:
-				sendTransactions(peer, types.Transactions{tx})
-				toPreCount += 1
-				break
-			}
-
-			if toPreCount >= 1 {
-				break
-			}
-		}
-		break
 	}
 	log.Trace("Broadcast transaction", "hash", hash, "recipients", len(peers))
 }
@@ -213,8 +179,6 @@ func routForwardTx(hash common.Hash, tx *types.Transaction) {
 				break
 			}
 		}
-		break
-	case discover.SynNode:
 		break
 	}
 
