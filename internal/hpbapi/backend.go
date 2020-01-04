@@ -22,16 +22,15 @@ import (
 	"math/big"
 
 	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/blockchain/storage"
+	"github.com/hpb-project/sphinx/blockchain"
 	"github.com/hpb-project/sphinx/blockchain/state"
+	"github.com/hpb-project/sphinx/blockchain/storage"
 	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/network/rpc"
-	"github.com/hpb-project/sphinx/hvm/evm"
-	"github.com/hpb-project/sphinx/synctrl"
+	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/event/sub"
-	"github.com/hpb-project/sphinx/blockchain"
+	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/hpb-project/sphinx/synctrl"
 )
 
 // Backend interface provides the common API services (that are provided by
@@ -52,7 +51,6 @@ type Backend interface {
 	GetBlock(ctx context.Context, blockHash common.Hash) (*types.Block, error)
 	GetReceipts(ctx context.Context, blockHash common.Hash) (types.Receipts, error)
 	GetTd(blockHash common.Hash) *big.Int
-	GetEVM(ctx context.Context, msg types.Message, state *state.StateDB, header *types.Header, vmCfg evm.Config) (*evm.EVM, func() error, error)
 	SubscribeChainEvent(ch chan<- bc.ChainEvent) sub.Subscription
 	SubscribeChainHeadEvent(ch chan<- bc.ChainHeadEvent) sub.Subscription
 	SubscribeChainSideEvent(ch chan<- bc.ChainSideEvent) sub.Subscription

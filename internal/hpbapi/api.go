@@ -35,7 +35,6 @@ import (
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/common/math"
 	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/hvm/evm"
 	"github.com/hpb-project/sphinx/network/p2p"
 	"github.com/hpb-project/sphinx/network/rpc"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -559,106 +558,6 @@ type CallArgs struct {
 	Value    hexutil.Big     `json:"value"`
 	Data     hexutil.Bytes   `json:"data"`
 	ExData   hexutil.Bytes   `json:"exdata"`
-}
-
-func (s *PublicBlockChainAPI) doCall(ctx context.Context, args CallArgs, blockNr rpc.BlockNumber, vmCfg evm.Config) ([]byte, *big.Int, bool, error) {
-	return nil, common.Big0, false, errors.New("unsupport")
-}
-
-// Call executes the given transaction on the state for the given block number.
-// It doesn't make and changes in the state/blockchain and is useful to execute and retrieve values.
-func (s *PublicBlockChainAPI) Call(ctx context.Context, args CallArgs, blockNr rpc.BlockNumber) (hexutil.Bytes, error) {
-	result, _, _, err := s.doCall(ctx, args, blockNr, evm.Config{DisableGasMetering: true})
-	return (hexutil.Bytes)(result), err
-}
-
-// EstimateGas returns an estimate of the amount of gas needed to execute the given transaction.
-func (s *PublicBlockChainAPI) EstimateGas(ctx context.Context, args CallArgs) (*hexutil.Big, error) {
-	// Binary search the gas requirement, as it may be higher than the amount used
-	var (
-		lo uint64 = params.TxGas - 1
-		hi uint64
-	)
-	if (*big.Int)(&args.Gas).Uint64() >= params.TxGas {
-		hi = (*big.Int)(&args.Gas).Uint64()
-	} else {
-		// Retrieve the current pending block to act as the gas ceiling
-		block, err := s.b.BlockByNumber(ctx, rpc.PendingBlockNumber)
-		if err != nil {
-			return nil, err
-		}
-		hi = block.GasLimit().Uint64()
-	}
-	for lo+1 < hi {
-		// Take a guess at the gas, and check transaction validity
-		mid := (hi + lo) / 2
-		(*big.Int)(&args.Gas).SetUint64(mid)
-
-		_, _, failed, err := s.doCall(ctx, args, rpc.PendingBlockNumber, evm.Config{})
-
-		// If the transaction became invalid or execution failed, raise the gas limit
-		if err != nil || failed {
-			lo = mid
-			continue
-		}
-		// Otherwise assume the transaction succeeded, lower the gas limit
-		hi = mid
-	}
-	return (*hexutil.Big)(new(big.Int).SetUint64(hi)), nil
-}
-
-// ExecutionResult groups all structured logs emitted by the EVM
-// while replaying a transaction in debug mode as well as transaction
-// execution status, the amount of gas used and the return value
-type ExecutionResult struct {
-	Gas         *big.Int       `json:"gas"`
-	Failed      bool           `json:"failed"`
-	ReturnValue string         `json:"returnValue"`
-	StructLogs  []StructLogRes `json:"structLogs"`
-}
-
-// StructLogRes stores a structured log emitted by the EVM while replaying a
-// transaction in debug mode
-type StructLogRes struct {
-	Pc      uint64            `json:"pc"`
-	Op      string            `json:"op"`
-	Gas     uint64            `json:"gas"`
-	GasCost uint64            `json:"gasCost"`
-	Depth   int               `json:"depth"`
-	Error   error             `json:"error"`
-	Stack   []string          `json:"stack"`
-	Memory  []string          `json:"memory"`
-	Storage map[string]string `json:"storage"`
-}
-
-// formatLogs formats EVM returned structured logs for json output
-func FormatLogs(structLogs []evm.StructLog) []StructLogRes {
-	formattedStructLogs := make([]StructLogRes, len(structLogs))
-	for index, trace := range structLogs {
-		formattedStructLogs[index] = StructLogRes{
-			Pc:      trace.Pc,
-			Op:      trace.Op.String(),
-			Gas:     trace.Gas,
-			GasCost: trace.GasCost,
-			Depth:   trace.Depth,
-			Error:   trace.Err,
-			Stack:   make([]string, len(trace.Stack)),
-			Storage: make(map[string]string),
-		}
-
-		for i, stackValue := range trace.Stack {
-			formattedStructLogs[index].Stack[i] = fmt.Sprintf("%x", math.PaddedBigBytes(stackValue, 32))
-		}
-
-		for i := 0; i+32 <= len(trace.Memory); i += 32 {
-			formattedStructLogs[index].Memory = append(formattedStructLogs[index].Memory, fmt.Sprintf("%x", trace.Memory[i:i+32]))
-		}
-
-		for i, storageValue := range trace.Storage {
-			formattedStructLogs[index].Storage[fmt.Sprintf("%x", i)] = fmt.Sprintf("%x", storageValue)
-		}
-	}
-	return formattedStructLogs
 }
 
 // rpcOutputBlock converts the given block to the RPC output which depends on fullTx. If inclTx is true transactions are

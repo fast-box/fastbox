@@ -15,24 +15,22 @@
 // along with the go-hpb. If not, see <http://www.gnu.org/licenses/>.
 
 package node
+
 import (
 	"context"
 	"math/big"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/math"
-	"github.com/hpb-project/sphinx/config"
+	"github.com/hpb-project/sphinx/account"
 	"github.com/hpb-project/sphinx/blockchain"
+	"github.com/hpb-project/sphinx/blockchain/bloombits"
+	"github.com/hpb-project/sphinx/blockchain/state"
+	"github.com/hpb-project/sphinx/blockchain/storage"
+	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/config"
+	"github.com/hpb-project/sphinx/event/sub"
 	"github.com/hpb-project/sphinx/network/rpc"
 	"github.com/hpb-project/sphinx/node/gasprice"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/hvm"
-	"github.com/hpb-project/sphinx/hvm/evm"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/blockchain/bloombits"
-	"github.com/hpb-project/sphinx/event/sub"
 	"github.com/hpb-project/sphinx/synctrl"
 )
 
@@ -108,14 +106,6 @@ func (b *HpbApiBackend) GetTd(blockHash common.Hash) *big.Int {
 	return b.hpb.Hpbbc.GetTdByHash(blockHash)
 }
 
-func (b *HpbApiBackend) GetEVM(ctx context.Context, msg types.Message, state *state.StateDB, header *types.Header, vmConfig evm.Config) (*evm.EVM, func() error, error) {
-	state.SetBalance(msg.From(), math.MaxBig256)
-	vmError := func() error { return nil }
-
-	context := hvm.NewEVMContext(msg, header, b.hpb.BlockChain(), nil)
-	return evm.NewEVM(context, state, &b.hpb.Hpbconfig.BlockChain,vmConfig), vmError, nil
-}
-
 func (b *HpbApiBackend) SubscribeRemovedLogsEvent(ch chan<- bc.RemovedLogsEvent) sub.Subscription {
 	return b.hpb.BlockChain().SubscribeRemovedLogsEvent(ch)
 }
@@ -172,7 +162,7 @@ func (b *HpbApiBackend) SubscribeTxPreEvent(ch chan<- bc.TxPreEvent) sub.Subscri
 	return b.hpb.TxPool().SubscribeTxPreEvent(ch)
 }
 
-func (b *HpbApiBackend) Downloader() *synctrl.Syncer  {
+func (b *HpbApiBackend) Downloader() *synctrl.Syncer {
 	return b.hpb.Hpbsyncctr.Syncer()
 }
 
