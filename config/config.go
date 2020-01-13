@@ -132,8 +132,6 @@ type HpbConfig struct {
 	//configuration of consensus
 	Prometheus PrometheusConfig
 
-	Gas GasConfig
-
 	HpbStats hpbStatsConfig
 }
 
@@ -186,8 +184,6 @@ func New() *HpbConfig {
 			BlockChain: DefaultBlockChainConfig,
 			//configuration of consensus
 			Prometheus: DefaultPrometheusConfig,
-
-			Gas: DefaultGasConfig,
 		}
 		log.Info("Create New HpbConfig object")
 		INSTANCE.Store(HpbConfigIns)
@@ -214,8 +210,6 @@ func GetHpbConfigInstance() *HpbConfig {
 		BlockChain: DefaultBlockChainConfig,
 		//configuration of consensus
 		Prometheus: DefaultPrometheusConfig,
-
-		Gas: DefaultGasConfig,
 	}
 	log.Info("Create New HpbConfig object")
 	INSTANCE.Store(HpbConfigIns)

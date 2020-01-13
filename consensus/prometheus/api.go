@@ -21,65 +21,12 @@ import (
 	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/consensus/snapshots"
-	"github.com/hpb-project/sphinx/consensus/voting"
 	"github.com/hpb-project/sphinx/network/rpc"
 )
 
 type API struct {
 	chain      consensus.ChainReader
 	prometheus *Prometheus
-}
-
-func (api *API) GetHpbNodeSnap(number *rpc.BlockNumber) (*snapshots.HpbNodeSnap, error) {
-	var header *types.Header
-	header = api.GetLatestBlockHeader(number)
-	if header == nil {
-		return nil, consensus.ErrUnknownBlock
-	}
-	return voting.GetHpbNodeSnap(api.prometheus.db, api.prometheus.recents, api.prometheus.signatures, api.prometheus.config, api.chain, header.Number.Uint64(), header.Hash(), nil)
-}
-
-func (api *API) GetCandidateNodeSnap(number *rpc.BlockNumber) (*snapshots.CadNodeSnap, error) {
-	var header *types.Header
-	header = api.GetLatestBlockHeader(number)
-	if header == nil {
-		return nil, consensus.ErrUnknownBlock
-	}
-	return voting.GetCadNodeSnap(api.prometheus.db, api.prometheus.recents, api.chain, header.Number.Uint64(), header.ParentHash)
-}
-
-func (api *API) GetHpbNodes(number *rpc.BlockNumber) ([]common.Address, error) {
-	// Retrieve the requested block number (or current if none requested)
-
-	var header *types.Header
-	header = api.GetLatestBlockHeader(number)
-	if header == nil {
-		return nil, consensus.ErrUnknownBlock
-	}
-	snap, err := voting.GetHpbNodeSnap(api.prometheus.db, api.prometheus.recents, api.prometheus.signatures, api.prometheus.config, api.chain, header.Number.Uint64(), header.Hash(), nil)
-	if err != nil {
-		return nil, err
-	}
-	return snap.GetHpbNodes(), nil
-}
-
-func (api *API) GetCandidateNodes(number *rpc.BlockNumber) (snapshots.CadNodeSnap, error) {
-	var header *types.Header
-	header = api.GetLatestBlockHeader(number)
-	if header == nil {
-		return snapshots.CadNodeSnap{}, consensus.ErrUnknownBlock
-	}
-	cadNodeSnap, _ := voting.GetCadNodeSnap(api.prometheus.db, api.prometheus.recents, api.chain, header.Number.Uint64(), header.ParentHash)
-	return *cadNodeSnap, nil
-}
-
-func (api *API) GetHpbNodeSnapAtHash(hash common.Hash) (*snapshots.HpbNodeSnap, error) {
-	header := api.chain.GetHeaderByHash(hash)
-	if header == nil {
-		return nil, consensus.ErrUnknownBlock
-	}
-	return voting.GetHpbNodeSnap(api.prometheus.db, api.prometheus.recents, api.prometheus.signatures, api.prometheus.config, api.chain, header.Number.Uint64(), header.Hash(), nil)
 }
 
 func (api *API) GetLatestBlockHeader(number *rpc.BlockNumber) (header *types.Header) {

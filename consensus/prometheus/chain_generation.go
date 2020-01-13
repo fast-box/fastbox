@@ -31,16 +31,12 @@ import (
 	"github.com/hpb-project/sphinx/blockchain/storage"
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/consensus/snapshots"
-	"github.com/hpb-project/sphinx/consensus/voting"
 	"github.com/hpb-project/sphinx/network/p2p"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
 	"github.com/hpb-project/sphinx/network/rpc"
 	"github.com/hpb-project/sphinx/node/db"
 
 	//"strconv"
 	"errors"
-	"math"
 	"strings"
 )
 
@@ -126,61 +122,6 @@ func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *typ
 		return errors.New("-----PrepareBlockHeader parentheader------ is nil")
 	}
 
-	snap, err := voting.GetHpbNodeSnap(c.db, c.recents, c.signatures, c.config, chain, number, header.ParentHash, nil)
-	if err != nil {
-		return err
-	}
-	SetNetNodeType(snap)
-
-	if 0 == len(snap.Signers) {
-		return errors.New("prepare header get hpbnodesnap success, but snap`s singers is 0")
-	}
-	header.Difficulty = diffNoTurn
-	if snap.CalculateCurrentMinerorigin(new(big.Int).SetBytes(header.HardwareRandom).Uint64(), c.GetSinger()) {
-		header.Difficulty = diffInTurn
-	}
-
-	if header.Difficulty == diffNoTurn {
-		// check mine backup block.
-		var chooseBackupMiner = 100
-		if header.Number.Int64() > int64(chooseBackupMiner) {
-			signersgenblks := make([]types.Header, 0, chooseBackupMiner)
-			for i := uint64(0); i < uint64(chooseBackupMiner); i++ {
-				oldHeader := chain.GetHeaderByNumber(number - i - 1)
-				if oldHeader != nil {
-					signersgenblks = append(signersgenblks, *oldHeader)
-				}
-			}
-			if !snap.CalculateBackupMiner(header.Number.Uint64(), c.GetSinger(), signersgenblks) {
-				return errors.New("Not in turn")
-			}
-		} else {
-			return errors.New("Not in turn")
-		}
-	}
-
-	c.lock.RLock()
-
-	if cadWinner, err := c.GetSelectPrehp(state, chain, header, number, false); nil == err {
-
-		if cadWinner == nil || len(cadWinner) != 2 {
-			//if no peers, add itself Coinbase to CandAddress and ComdAddress, or when candidate nodes is less len(hpbsnap.signers), the zero address will become the hpb node
-			header.CandAddress = header.Coinbase
-			header.ComdAddress = header.Coinbase
-			header.VoteIndex = new(big.Int).SetUint64(0)
-		} else {
-			header.CandAddress = cadWinner[0].Address
-			header.VoteIndex = new(big.Int).SetUint64(cadWinner[0].VoteIndex)
-			header.ComdAddress = cadWinner[1].Address
-		}
-		log.Trace(">>>>>>>>>>>>>header.CandAddress<<<<<<<<<<<<<<<<<", "addr", header.CandAddress, "number", number) //for test
-
-	} else {
-		c.lock.RUnlock()
-		return err
-	}
-	c.lock.RUnlock()
-
 	// check the header
 	if len(header.Extra) < consensus.ExtraVanity {
 		header.Extra = append(header.Extra, bytes.Repeat([]byte{0x00}, consensus.ExtraVanity-len(header.Extra))...)
@@ -190,9 +131,6 @@ func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *typ
 
 	// get all the hpb node address
 	if number%consensus.HpbNodeCheckpointInterval == 0 {
-		for _, signer := range snap.GetHpbNodes() {
-			header.Extra = append(header.Extra, signer[:]...)
-		}
 	}
 
 	header.Extra = append(header.Extra, make([]byte, consensus.ExtraSeal)...)
@@ -219,7 +157,6 @@ func (c *Prometheus) GenBlockWithSig(chain consensus.ChainReader, block *types.B
 	log.Info("HPB Prometheus Seal is starting")
 
 	number := header.Number.Uint64()
-
 	if number == 0 {
 		return nil, consensus.ErrUnknownBlock
 	}
@@ -235,35 +172,12 @@ func (c *Prometheus) GenBlockWithSig(chain consensus.ChainReader, block *types.B
 
 	c.lock.RUnlock()
 
-	snap, err := voting.GetHpbNodeSnap(c.db, c.recents, c.signatures, c.config, chain, number, header.ParentHash, nil)
-
-	SetNetNodeType(snap)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if _, authorized := snap.Signers[signer]; !authorized {
-		return nil, consensus.ErrUnauthorized
-	}
-
 	delay := time.Unix(header.Time.Int64(), 0).Sub(time.Now())
 	if delay < 0 {
 		delay = 0
 		header.Time = big.NewInt(time.Now().Unix())
 	}
 	// set delay time for out-turn hpb nodes
-	if header.Difficulty.Cmp(diffNoTurn) == 0 {
-		//It's not our turn explicitly to sign, delay it a bit
-		currentminer := new(big.Int).SetBytes(header.HardwareRandom).Uint64() % uint64(len(snap.Signers)) //miner position
-		myoffset := snap.GetOffset(header.Number.Uint64(), signer)
-		distance := int(math.Abs(float64(int64(myoffset) - int64(currentminer))))
-		if distance > len(snap.Signers)/2 {
-			distance = len(snap.Signers) - distance
-		}
-		delay = time.Second*time.Duration(c.config.Period*2) + time.Duration(distance)*wiggleTime
-	}
-
 	log.Debug("Waiting for slot to sign and propagate", "delay", common.PrettyDuration(delay), "number", number)
 
 	select {
@@ -284,46 +198,6 @@ func (c *Prometheus) GenBlockWithSig(chain consensus.ChainReader, block *types.B
 	copy(header.Extra[len(header.Extra)-consensus.ExtraSeal:], sighash)
 
 	return block.WithSeal(header), nil
-}
-
-func SetNetNodeType(snapa *snapshots.HpbNodeSnap) error {
-	addresses := snapa.GetHpbNodes()
-
-	if p2p.PeerMgrInst().GetLocalType() == discover.PreNode || p2p.PeerMgrInst().GetLocalType() == discover.HpNode {
-		newlocaltyp := discover.PreNode
-		if flag := FindHpbNode(p2p.PeerMgrInst().DefaultAddr(), addresses); flag {
-			newlocaltyp = discover.HpNode
-		}
-		if p2p.PeerMgrInst().GetLocalType() != newlocaltyp {
-			p2p.PeerMgrInst().SetLocalType(newlocaltyp)
-		}
-	}
-
-	peers := p2p.PeerMgrInst().PeersAll()
-	for _, peer := range peers {
-		switch peer.RemoteType() {
-		case discover.PreNode:
-			if flag := FindHpbNode(peer.Address(), addresses); flag {
-				peer.SetRemoteType(discover.HpNode)
-			}
-		case discover.HpNode:
-			if flag := FindHpbNode(peer.Address(), addresses); !flag {
-				peer.SetRemoteType(discover.PreNode)
-			}
-		default:
-			break
-		}
-	}
-	return nil
-}
-
-func FindHpbNode(address common.Address, addresses []common.Address) bool {
-	for _, addresstemp := range addresses {
-		if addresstemp == address {
-			return true
-		}
-	}
-	return false
 }
 
 // Authorize injects a private key into the consensus engine to mint new blocks
@@ -355,154 +229,7 @@ func (c *Prometheus) Finalize(chain consensus.ChainReader, header *types.Header,
 }
 
 func (c *Prometheus) CalculateRewards(chain consensus.ChainReader, state *state.StateDB, header *types.Header, uncles []*types.Header) error {
-	if header.Number.Uint64()%consensus.HpbNodeCheckpointInterval != 0 && header.Number.Uint64() > consensus.StageNumberIV {
-		log.Debug("CalculateRewards number is not 200 mulitple, do not reward", "number", header.Number)
-		return nil
-	}
-	// Select the correct block reward based on chain progression
-	var bigIntblocksoneyear = new(big.Int)
-	secondsoneyesr := big.NewFloat(60 * 60 * 24 * 365)                         //seconds in one year
-	secondsoneyesr.Quo(secondsoneyesr, big.NewFloat(float64(c.config.Period))) //blocks mined by miners in one year
 
-	secondsoneyesr.Int(bigIntblocksoneyear) //from big.Float to big.Int
-
-	bigrewards := big.NewFloat(float64(100000000 * 0.03)) //hpb coins additional issue one year
-	bigrewards.Mul(bigrewards, big.NewFloat(float64(consensus.Nodenumfirst)))
-	bigrewards.Quo(bigrewards, big.NewFloat(float64(consensus.Nodenumfirst)))
-
-	bigIntblocksoneyearfloat := new(big.Float)
-	bigIntblocksoneyearfloat.SetInt(bigIntblocksoneyear)      //from big.Int to big.Float
-	A := bigrewards.Quo(bigrewards, bigIntblocksoneyearfloat) //calc reward mining one block
-
-	if header.Number.Uint64() >= consensus.StageNumberIII {
-		seconds := big.NewInt(0)
-		tempheader := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
-		fromtime := tempheader.Time
-
-		for l := 0; l < 200; l++ {
-			tempheader = chain.GetHeader(tempheader.ParentHash, tempheader.Number.Uint64()-1)
-		}
-
-		seconds.Sub(fromtime, tempheader.Time)
-		secondsfloat := big.NewFloat(0)
-		secondsfloat.SetInt(seconds)
-		if header.Number.Uint64() <= consensus.StageNumberIV {
-			secondsfloat.Quo(secondsfloat, big.NewFloat(200))
-		}
-
-		A.Quo(A, big.NewFloat(float64(c.config.Period)))
-		A.Mul(A, secondsfloat)
-	}
-	log.Trace("CalculateRewards calc reward mining one block", "hpb coin", A)
-
-	//mul 2/3
-	A.Mul(A, big.NewFloat(2))
-	A.Quo(A, big.NewFloat(3))
-
-	//new two vars using below codes
-	var bigA23 = new(big.Float) //2/3 one block reward
-	var bigA13 = new(big.Float) //1/3 one block reward
-	bigA23.Set(A)
-	bigA13.Set(A)
-	if consensus.StageNumberVI < header.Number.Uint64() {
-		bigA13.Quo(bigA13, big.NewFloat(200.0))
-	}
-
-	bighobBlockReward := A.Mul(A, big.NewFloat(0.35)) //reward hpb coin for hpb nodes
-
-	ether2weis := big.NewInt(10)
-	ether2weis.Exp(ether2weis, big.NewInt(18), nil) //one hpb coin to weis
-
-	ether2weisfloat := new(big.Float)
-	ether2weisfloat.SetInt(ether2weis)
-	bighobBlockRewardwei := bighobBlockReward.Mul(bighobBlockReward, ether2weisfloat) //reward weis for hpb nodes
-
-	number := header.Number.Uint64()
-	if number == 0 {
-		return consensus.ErrUnknownBlock
-	}
-
-	var hpsnap *snapshots.HpbNodeSnap
-	var err error
-	if number < consensus.StageNumberII {
-		finalhpbrewards := new(big.Int)
-		bighobBlockRewardwei.Int(finalhpbrewards) //from big.Float to big.Int
-		state.AddBalance(header.Coinbase, finalhpbrewards)
-	} else {
-		if hpsnap, err = voting.GetHpbNodeSnap(c.db, c.recents, c.signatures, c.config, chain, number, header.ParentHash, nil); err == nil {
-			bighobBlockRewardwei.Quo(bighobBlockRewardwei, big.NewFloat(float64(len(hpsnap.Signers))))
-			finalhpbrewards := new(big.Int)
-			bighobBlockRewardwei.Int(finalhpbrewards) //from big.Float to big.Int
-			for _, v := range hpsnap.GetHpbNodes() {
-				state.AddBalance(v, finalhpbrewards)
-				log.Trace(">>>>>>>>>reward hpnode in the snapshot<<<<<<<<<<<<", "addr", v, "reward value", finalhpbrewards)
-			}
-		} else {
-			return err
-		}
-	}
-
-	if csnap, err := voting.GetCadNodeSnap(c.db, c.recents, chain, number, header.ParentHash); err == nil {
-		if csnap != nil {
-			if number < consensus.StageNumberII {
-				bigA23.Mul(bigA23, big.NewFloat(0.65))
-				canBlockReward := bigA23.Quo(bigA23, big.NewFloat(float64(len(csnap.VotePercents)))) //calc average reward coin part about cadidate nodes
-
-				bigcadRewardwei := new(big.Float)
-				bigcadRewardwei.SetInt(ether2weis)
-				bigcadRewardwei.Mul(bigcadRewardwei, canBlockReward) //calc average reward weis part about candidate nodes
-
-				cadReward := new(big.Int)
-				bigcadRewardwei.Int(cadReward) //from big.Float to big.Int
-
-				for caddress, _ := range csnap.VotePercents {
-					state.AddBalance(caddress, cadReward) //reward every cad node average
-				}
-			} else if len(csnap.CanAddresses) > 0 {
-				bigA23.Mul(bigA23, big.NewFloat(0.65))
-				canBlockReward := bigA23.Quo(bigA23, big.NewFloat(float64(len(csnap.CanAddresses)))) //calc average reward coin part about cadidate nodes
-
-				bigcadRewardwei := new(big.Float)
-				bigcadRewardwei.SetInt(ether2weis)
-				bigcadRewardwei.Mul(bigcadRewardwei, canBlockReward) //calc average reward weis part about candidate nodes
-
-				cadReward := new(big.Int)
-				bigcadRewardwei.Int(cadReward) //from big.Float to big.Int
-
-				for _, caddress := range csnap.CanAddresses {
-					state.AddBalance(caddress, cadReward) //reward every cad node average
-					log.Trace("<<<<<<<<<<<<<<<reward prenode in the snapshot>>>>>>>>>>", "addr", caddress, "reward value", cadReward)
-				}
-			}
-
-			if number%consensus.HpbNodeCheckpointInterval == 0 && number <= consensus.NewContractVersion && number >= consensus.StageNumberII {
-				var errreward error
-				loopcount := 3
-			GETCONTRACTLOOP:
-				if errreward = c.rewardvotepercentcad(chain, header, state, bigA13, ether2weisfloat, csnap, hpsnap); errreward != nil {
-					log.Info("rewardvotepercent get contract fail", "info", errreward)
-					loopcount -= 1
-					if 0 != loopcount {
-						goto GETCONTRACTLOOP
-					}
-				}
-				return errreward
-			}
-			if number%consensus.HpbNodeCheckpointInterval == 0 && number > consensus.NewContractVersion {
-				var errreward error
-				loopcount := 3
-				for i := 0; i < loopcount; i++ {
-					errreward = c.rewardvotepercentcadByNewContrac(chain, header, state, bigA13, ether2weisfloat, csnap, hpsnap)
-					if errreward == nil {
-						break
-					}
-				}
-				return errreward
-			}
-		}
-	} else {
-		return err
-	}
 	return nil
 }
 
@@ -514,10 +241,6 @@ func (c *Prometheus) APIs(chain consensus.ChainReader) []rpc.API {
 		Service:   &API{chain: chain, prometheus: c},
 		Public:    false,
 	}}
-}
-
-func (c *Prometheus) rewardvotepercentcad(chain consensus.ChainReader, header *types.Header, state *state.StateDB, bigA13 *big.Float, ether2weisfloat *big.Float, csnap *snapshots.CadNodeSnap, hpsnap *snapshots.HpbNodeSnap) error {
-	return errors.New("unsupported function")
 }
 
 func (c *Prometheus) GetVoteRes(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (error, *big.Int, map[common.Address]big.Int) {
@@ -695,60 +418,4 @@ func (c *Prometheus) GetVoteResFromNewContract(chain consensus.ChainReader, head
  */
 func (c *Prometheus) GetNodeinfoFromNewContract(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (error, []p2p.HwPair) {
 	return errors.New("unsupported function"), nil
-}
-
-func (c *Prometheus) rewardvotepercentcadByNewContrac(chain consensus.ChainReader, header *types.Header, state *state.StateDB, bigA13 *big.Float, ether2weisfloat *big.Float, csnap *snapshots.CadNodeSnap, hpsnap *snapshots.HpbNodeSnap) error {
-
-	if csnap == nil {
-		return errors.New("input param csnap is nil")
-	}
-	if hpsnap == nil {
-		return errors.New("input param hpsnap is nil")
-	}
-	err, voteres := c.GetVoteResFromNewContract(chain, header, state)
-	if err != nil {
-		return err
-	}
-	VotePercents := make(map[common.Address]int64)
-	for _, v := range csnap.CanAddresses {
-		VotePercents[v] = 1
-	}
-
-	for addr := range voteres {
-		_, ok1 := VotePercents[addr]
-		_, ok2 := hpsnap.Signers[addr]
-		if !ok1 && !ok2 {
-			delete(voteres, addr)
-		}
-	}
-
-	// get all the voting result
-	votecounts := new(big.Int)
-	for _, votes := range voteres {
-		votecounts.Add(votecounts, &votes)
-	}
-
-	if votecounts.Cmp(big.NewInt(0)) == 0 {
-		return nil
-	}
-	votecountsfloat := new(big.Float)
-	votecountsfloat.SetInt(votecounts)
-
-	bigA13.Quo(bigA13, big.NewFloat(2))
-	bigA13.Mul(bigA13, ether2weisfloat)
-	bigA13.Mul(bigA13, big.NewFloat(float64(consensus.HpbNodeCheckpointInterval))) //mul interval number
-	log.Trace("Reward vote", "totalvote", votecountsfloat, "total reawrd", bigA13)
-	for addr, votes := range voteres {
-		tempaddrvotefloat := new(big.Float)
-		tempreward := new(big.Int)
-		tempaddrvotefloat.SetInt(&votes)
-		tempaddrvotefloat.Quo(tempaddrvotefloat, votecountsfloat)
-		log.Trace("Reward percent", "votes", votes, "percent", tempaddrvotefloat)
-		tempaddrvotefloat.Mul(tempaddrvotefloat, bigA13)
-		tempaddrvotefloat.Int(tempreward)
-		state.AddBalance(addr, tempreward) //reward every cad node by vote percent
-		log.Trace("++++++++++reward node with the vote contract++++++++++++", "addr", addr, "reward float", tempaddrvotefloat, "reward value", tempreward)
-	}
-
-	return nil
 }

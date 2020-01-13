@@ -42,7 +42,6 @@ import (
 	//"io/ioutil"
 	"github.com/hpb-project/sphinx/blockchain"
 	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/consensus/snapshots"
 	"github.com/hpb-project/sphinx/node/db"
 )
 
@@ -63,20 +62,6 @@ This is a destructive action and changes the network in which you will be
 participating.
 
 It expects the genesis file as argument.`,
-	}
-
-	initcadCommand = cli.Command{
-		Action:    utils.MigrateFlags(initCadNodes),
-		Name:      "initcad",
-		Usage:     "Bootstrap and initialize a random string",
-		ArgsUsage: "<initcad>",
-		Flags: []cli.Flag{
-			utils.DataDirFlag,
-			utils.LightModeFlag,
-		},
-		Category: "BLOCKCHAIN COMMANDS",
-		Description: `
-The init command initializes a new random string and definition for the network.`,
 	}
 
 	importCommand = cli.Command{
@@ -198,30 +183,6 @@ func initGenesis(ctx *cli.Context) error {
 		log.Info("Successfully wrote genesis state", "database", name, "hash", hash)
 	}
 	return nil
-}
-
-func initCadNodes(ctx *cli.Context) error {
-	// Make sure we have a valid genesis JSON
-
-	genesisPath := ctx.Args().First()
-	if len(genesisPath) == 0 {
-		utils.Fatalf("Must supply path to genesis JSON file")
-	}
-	file, err := os.Open(genesisPath)
-	if err != nil {
-		utils.Fatalf("Failed to read genesis file: %v", err)
-	}
-	defer file.Close()
-
-	var cNodes []snapshots.CadWinner
-	if err := json.NewDecoder(file).Decode(&cNodes); err != nil {
-		utils.Fatalf("invalid genesis file: %v", err)
-	}
-
-	MakeConfigNode(ctx)
-
-	return nil
-
 }
 
 func importChain(ctx *cli.Context) error {

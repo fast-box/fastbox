@@ -142,13 +142,6 @@ type ConfigCompatError struct {
 	RewindTo uint64
 }
 
-// GasTable returns the gas table corresponding to the current phase (homestead or homestead reprice).
-//
-// The returned GasTable's fields shouldn't, under any circumstances, be changed.
-func (c *ChainConfig) GasTable(num *big.Int) GasTable {
-	return GasTableEIP158
-}
-
 // String implements the fmt.Stringer interface.
 func (c *ChainConfig) String() string {
 	return fmt.Sprintf("{ChainID: %v Engine: %v}",

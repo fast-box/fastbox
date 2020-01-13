@@ -19,19 +19,13 @@ import (
 	"bytes"
 	"errors"
 	"math/big"
-	"strings"
 	"time"
 
-	"github.com/hpb-project/sphinx/blockchain/state"
 	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto"
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/consensus/snapshots"
-	"github.com/hpb-project/sphinx/consensus/voting"
-	"github.com/hpb-project/sphinx/network/p2p"
 )
 
 // Verify one header
@@ -59,18 +53,7 @@ func (c *Prometheus) VerifyHeaders(chain consensus.ChainReader, headers []*types
 }
 
 func (c *Prometheus) SetNetTopology(chain consensus.ChainReader, headers []*types.Header) {
-	c.SetNetTypeByOneHeader(chain, headers[len(headers)-1], nil)
-}
 
-func (c *Prometheus) SetNetTypeByOneHeader(chain consensus.ChainReader, header *types.Header, parents []*types.Header) {
-	number := header.Number.Uint64()
-	// Retrieve the getHpbNodeSnap needed to verify this header and cache it
-	snap, err := voting.GetHpbNodeSnap(c.db, c.recents, c.signatures, c.config, chain, number, header.ParentHash, parents)
-	if err != nil || len(snap.Signers) == 0 {
-		log.Warn("-------------------snap retrieve fail-------------------------")
-		return
-	}
-	SetNetNodeType(snap)
 }
 
 func (c *Prometheus) verifyHeader(chain consensus.ChainReader, header *types.Header, parents []*types.Header, mode config.SyncMode) error {
@@ -153,20 +136,6 @@ func (c *Prometheus) verifyCascadingFields(chain consensus.ChainReader, header *
 		return consensus.ErrInvalidTimestamp
 	}
 
-	if number > consensus.StageNumberIII && mode == config.FullSync {
-
-		lastheader := chain.GetHeader(header.ParentHash, number-1)
-		state, _ := chain.StateAt(lastheader.Root)
-		if cadWinner, err := c.GetSelectPrehp(state, chain, header, number, true); nil == err {
-			if bytes.Compare(cadWinner[0].Address[:], header.CandAddress[:]) != 0 {
-				log.Error("BAD COIN BASE", "miner", header.Coinbase.String(), "local", cadWinner[0].Address[:], "header", header.CandAddress[:])
-				return consensus.ErrInvalidCadaddr
-			}
-		} else {
-			return err
-		}
-	}
-
 	// All basic checks passed, verify the seal and return
 	return c.verifySeal(chain, header, parents, mode)
 }
@@ -194,157 +163,5 @@ func (c *Prometheus) verifySeal(chain consensus.ChainReader, header *types.Heade
 	if number == 0 {
 		return consensus.ErrUnknownBlock
 	}
-
-	// Resolve the authorization key and check against signers
-	signer, err := consensus.Ecrecover(header, c.signatures)
-	if err != nil {
-		return err
-	}
-
-	var snap *snapshots.HpbNodeSnap
-	if mode == config.FullSync {
-		snap, err = voting.GetHpbNodeSnap(c.db, c.recents, c.signatures, c.config, chain, number, header.ParentHash, nil)
-		if err != nil {
-			log.Debug("verifySeal GetHpbNodeSnap fail", "err", err)
-			return consensus.ErrInvalidblockbutnodrop
-		}
-		if _, ok := snap.Signers[signer]; !ok {
-			for _, v := range snap.Signers {
-				log.Trace("verify fail consensus.ErrUnauthorized", "snap.Signer", v)
-			}
-			return consensus.ErrUnauthorized
-		}
-	}
-
-	if config.GetHpbConfigInstance().Network.RoleType != "synnode" && config.GetHpbConfigInstance().Network.RoleType != "bootnode" && number >= consensus.StageNumberII {
-		// Retrieve the getHpbNodeSnap needed to verify this header and cache it
-		if mode == config.FullSync {
-			//Ensure that the difficulty corresponds to the turn-ness of the signerHash
-			inturn := snap.CalculateCurrentMinerorigin(new(big.Int).SetBytes(header.HardwareRandom).Uint64(), signer)
-			if inturn {
-				if header.Difficulty.Cmp(diffInTurn) != 0 {
-					return consensus.ErrInvalidDifficulty
-				}
-			} else { //inturn is false
-				if header.Difficulty.Cmp(diffNoTurn) != 0 {
-					return consensus.ErrInvalidDifficulty
-				}
-			}
-		}
-
-	}
 	return nil
-}
-
-func (c *Prometheus) GetSelectPrehp(state *state.StateDB, chain consensus.ChainReader, header *types.Header, number uint64, verify bool) ([]*snapshots.CadWinner, error) {
-
-	if state == nil {
-		return nil, errors.New("chain stateAt return nil")
-	}
-	var err error
-	var bootnodeinfp []p2p.HwPair
-	log.Debug("GetSelectPrehp", "number", header.Number.Uint64(), "consensus.NewContractVersion", consensus.NewContractVersion)
-	if header.Number.Uint64() > consensus.NewContractVersion {
-		err, bootnodeinfp = c.GetNodeinfoFromNewContract(chain, header, state)
-	} else {
-		err, bootnodeinfp = c.GetNodeinfoFromContract(chain, header, state)
-	}
-	if nil != err || len(bootnodeinfp) == 0 || bootnodeinfp == nil {
-		log.Debug("GetNodeinfoFromContract err", "value", err)
-	GETBOOTNODEINFO:
-		bootnodeinfp = p2p.PeerMgrInst().GetHwInfo()
-		if bootnodeinfp == nil || len(bootnodeinfp) == 0 {
-			goto GETBOOTNODEINFO
-		}
-		err, bootnodeinfp = PreDealNodeInfo(bootnodeinfp)
-		if nil != err {
-			return nil,  err
-		}
-	} else {
-		err, bootnodeinfp = PreDealNodeInfo(bootnodeinfp)
-		if nil != err {
-			return nil, err
-		}
-		err = p2p.PeerMgrInst().SetHwInfo(bootnodeinfp)
-		if nil != err {
-			log.Debug("VerifySelectPrehp get node info from contract, p2p.PeerMgrInst().SetHwInfo set fail ", "err", err)
-			return nil, err
-		}
-	}
-	addrlist := make([]common.Address, 0, len(bootnodeinfp))
-	for _, v := range bootnodeinfp {
-		addrlist = append(addrlist, common.HexToAddress(strings.Replace(v.Adr, " ", "", -1)))
-	}
-
-	if len(addrlist) == 0 {
-		return nil, errors.New("forbid mining before successfully connect with bootnode")
-	}
-
-	if verify == true {
-		comaddrinboot := false
-		for _, v := range bootnodeinfp {
-			addr := common.HexToAddress(v.Adr)
-			if bytes.Compare(addr[:], header.ComdAddress[:]) == 0 {
-				comaddrinboot = true
-				break
-			}
-		}
-
-		if !comaddrinboot {
-			return nil, errors.New("comaddress invalid")
-		}
-	}
-
-	//get all votes
-	var voteres map[common.Address]big.Int
-	if header.Number.Uint64() > consensus.NewContractVersion {
-		err, voteres = c.GetVoteResFromNewContract(chain, header, state)
-	} else {
-		err, _, voteres = c.GetVoteRes(chain, header, state)
-	}
-	if nil != err {
-		log.Debug("GetVoteRes return err, please deploy contract!")
-		voteres = make(map[common.Address]big.Int)
-		for _, v := range addrlist {
-			voteres[v] = *big.NewInt(0)
-		}
-	}
-	//get votes ranking res
-	voterank, errvote := c.GetRankingRes(voteres, addrlist)
-	//get bandwith ranking res
-	//bandrank, errbandwith := c.GetBandwithRes(addrlist, chain, number-1)
-	//get all balances
-	var allbalances map[common.Address]big.Int
-	if header.Number.Uint64() > consensus.NewContractVersion {
-		errs, hpblist, coinaddresslist := c.GetCoinAddressFromNewContract(chain, header, state)
-		if errs != nil || coinaddresslist == nil || len(coinaddresslist) == 0 || hpblist == nil || len(hpblist) == 0 {
-			log.Error("CoinAddress ERR", "errs", errs)
-		}
-		log.Debug("GetCoinAddressFromContract", "lenhpblist", len(hpblist), "coinaddresslist", len(coinaddresslist))
-		allbalances, err = c.GetAllBalancesByCoin(hpblist, coinaddresslist, state)
-	} else {
-		allbalances, err = c.GetAllBalances(addrlist, state)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	//get balance ranking res
-	balancerank, errbalance := c.GetRankingRes(allbalances, addrlist)
-	if errvote != nil || errbalance != nil {
-		return nil, errors.New("get ranking fail")
-	}
-	rankingmap := make(map[common.Address]float64)
-	for _, v := range addrlist {
-		rankingmap[v] = float64(balancerank[v])*0.30 + float64(voterank[v])*0.35
-		log.Trace("**********************+three item ranking info******************", "addr", v,  "balance", balancerank[v], "vote", voterank[v], "number", number)
-	}
-
-	random := crypto.Keccak256(header.Number.Bytes())
-	// Get the best peer from the network
-	if cadWinner, err := voting.GetCadNodeFromNetwork(random, rankingmap); err == nil {
-		return cadWinner, nil
-	} else {
-		return nil, err
-	}
 }
