@@ -30,14 +30,12 @@ import (
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/event/sub"
 	"github.com/hpb-project/sphinx/network/rpc"
-	"github.com/hpb-project/sphinx/node/gasprice"
 	"github.com/hpb-project/sphinx/synctrl"
 )
 
 // HpbApiBackend implements ethapi.Backend for full nodes
 type HpbApiBackend struct {
 	hpb *Node
-	gpo *gasprice.Oracle
 }
 
 func (b *HpbApiBackend) ChainConfig() *config.ChainConfig {
@@ -168,10 +166,6 @@ func (b *HpbApiBackend) Downloader() *synctrl.Syncer {
 
 func (b *HpbApiBackend) ProtocolVersion() int {
 	return b.hpb.EthVersion()
-}
-
-func (b *HpbApiBackend) SuggestPrice(ctx context.Context) (*big.Int, error) {
-	return b.gpo.SuggestPrice(ctx)
 }
 
 func (b *HpbApiBackend) ChainDb() hpbdb.Database {

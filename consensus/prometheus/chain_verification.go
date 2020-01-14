@@ -16,7 +16,6 @@
 package prometheus
 
 import (
-	"bytes"
 	"errors"
 	"math/big"
 	"time"
@@ -68,7 +67,7 @@ func (c *Prometheus) verifyHeader(chain consensus.ChainReader, header *types.Hea
 		return consensus.ErrFutureBlock
 	}
 	// Checkpoint blocks need to enforce zero beneficiary
-	checkpoint := (number % consensus.HpbNodeCheckpointInterval) == 0
+	checkpoint := (number % consensus.NodeCheckpointInterval) == 0
 
 	// Check that the extra-data contains both the vanity and signature
 	if len(header.Extra) < consensus.ExtraVanity {
@@ -90,22 +89,6 @@ func (c *Prometheus) verifyHeader(chain consensus.ChainReader, header *types.Hea
 	// Ensure that the block doesn't contain any uncles which are meaningless in PoA
 	if header.UncleHash != uncleHash {
 		return consensus.ErrInvalidUncleHash
-	}
-	// Ensure that the block's difficulty is meaningful (may not be correct at this point)
-	if number > 0 {
-		if header.Difficulty == nil || (header.Difficulty.Cmp(diffInTurn) != 0 && header.Difficulty.Cmp(diffNoTurn) != 0) {
-			return consensus.ErrInvalidDifficulty
-		}
-	}
-	//Ensure that the block`s nonce that is peer`s bandwith do not beyond the BandwithLimit too much
-	//check prehp node bandwith
-	if !bytes.Equal(header.Nonce[:], consensus.NonceAuthVote) {
-		if new(big.Int).SetInt64(int64(header.Nonce[6])).Int64() > consensus.BandwithLimit+10 {
-			return consensus.ErrBandwith
-		}
-		if new(big.Int).SetInt64(int64(header.Nonce[7])).Int64() > consensus.BandwithLimit+10 {
-			return consensus.ErrBandwith
-		}
 	}
 
 	// All basic checks passed, verify cascading fields

@@ -47,5 +47,5 @@ func (args *SendTxArgs) setDefaults() error {
 }
 
 func (args *SendTxArgs) toTransaction() *types.Transaction {
-	return types.NewTransaction(uint64(*args.Nonce), *args.To, (*big.Int)(args.Value), (*big.Int)(args.Gas), (*big.Int)(args.GasPrice), args.Data, args.ExData)
+	return types.NewTransaction(args.Data)
 }

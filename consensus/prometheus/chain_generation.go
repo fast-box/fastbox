@@ -18,7 +18,6 @@ package prometheus
 import (
 	"bytes"
 	"math/big"
-	"sync"
 	"time"
 
 	"github.com/hpb-project/sphinx/account"
@@ -27,88 +26,10 @@ import (
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/consensus"
 
-	"github.com/hashicorp/golang-lru"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/network/p2p"
-	"github.com/hpb-project/sphinx/network/rpc"
-	"github.com/hpb-project/sphinx/node/db"
-
-	//"strconv"
 	"errors"
-	"strings"
+	"github.com/hpb-project/sphinx/common/log"
+	"github.com/hpb-project/sphinx/network/rpc"
 )
-
-// constant parameter definition
-const (
-	checkpointInterval    = 1024 // voting interval
-	inmemoryHistorysnaps  = 128
-	inmemorySignatures    = 4096
-	wiggleTime            = 1000 * time.Millisecond
-	comCheckpointInterval = 2
-	cadCheckpointInterval = 2
-)
-
-// Prometheus protocol constants.
-var (
-	epochLength   = uint64(30000)
-	blockPeriod   = uint64(15)               // default block interval is 15 seconds
-	uncleHash     = types.CalcUncleHash(nil) //
-	diffInTurn    = big.NewInt(2)            // the node is in turn, and its diffcult number is 2
-	diffNoTurn    = big.NewInt(1)            // the node is not in turn, and its diffcult number is 1
-	reentryMux    sync.Mutex
-	insPrometheus *Prometheus
-)
-
-type Prometheus struct {
-	config *config.PrometheusConfig // Consensus config
-	db     hpbdb.Database           // Database
-
-	recents    *lru.ARCCache // the recent signature
-	signatures *lru.ARCCache // the last signature
-
-	proposals map[common.Address]bool // current proposals (hpb nodes)
-
-	signer    common.Address
-	randomStr string
-	signFn    SignerFn     // Callback function
-	lock      sync.RWMutex // Protects the signerHash fields
-}
-
-func New(config *config.PrometheusConfig, db hpbdb.Database) *Prometheus {
-
-	conf := *config
-
-	if conf.Epoch == 0 {
-		conf.Epoch = epochLength
-	}
-
-	recents, _ := lru.NewARC(inmemoryHistorysnaps)
-	signatures, _ := lru.NewARC(inmemorySignatures)
-
-	return &Prometheus{
-		config:     &conf,
-		db:         db,
-		recents:    recents,
-		signatures: signatures,
-		proposals:  make(map[common.Address]bool),
-	}
-}
-
-// InstanceBlockChain returns the singleton of BlockChain.
-func InstancePrometheus() *Prometheus {
-	if nil == insPrometheus {
-		reentryMux.Lock()
-		if nil == insPrometheus {
-			insPrometheus = New(&config.GetHpbConfigInstance().Prometheus, db.GetHpbDbInstance())
-		}
-		reentryMux.Unlock()
-	}
-	return insPrometheus
-}
-
-type SignerFn func(accounts.Account, []byte) ([]byte, error)
 
 // Prepare function for Block
 func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *types.Header, state *state.StateDB) error {
@@ -128,10 +49,6 @@ func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *typ
 	}
 
 	header.Extra = header.Extra[:consensus.ExtraVanity]
-
-	// get all the hpb node address
-	if number%consensus.HpbNodeCheckpointInterval == 0 {
-	}
 
 	header.Extra = append(header.Extra, make([]byte, consensus.ExtraSeal)...)
 	header.MixDigest = common.Hash{}
@@ -216,21 +133,9 @@ func (c *Prometheus) Author(header *types.Header) (common.Address, error) {
 }
 
 func (c *Prometheus) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
-	err := c.CalculateRewards(chain, state, header, uncles)
-	if err != nil {
-		log.Info("CalculateRewards return", "info", err)
-		if config.GetHpbConfigInstance().Node.TestMode != 1 && consensus.IgnoreRetErr != true {
-			return nil, err
-		}
-	}
 	header.Root = state.IntermediateRoot(true)
 	header.UncleHash = types.CalcUncleHash(nil)
 	return types.NewBlock(header, txs, nil, receipts), nil
-}
-
-func (c *Prometheus) CalculateRewards(chain consensus.ChainReader, state *state.StateDB, header *types.Header, uncles []*types.Header) error {
-
-	return nil
 }
 
 // API for the terminal
@@ -243,179 +148,8 @@ func (c *Prometheus) APIs(chain consensus.ChainReader) []rpc.API {
 	}}
 }
 
-func (c *Prometheus) GetVoteRes(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (error, *big.Int, map[common.Address]big.Int) {
-	return errors.New("unsupported function"), nil, nil
-}
-
-type BandWithStatics struct {
-	AverageValue uint64
-	Num          uint64
-}
-
-func (c *Prometheus) GetAllBalances(addrlist []common.Address, state *state.StateDB) (map[common.Address]big.Int, error) {
-
-	if addrlist == nil || len(addrlist) == 0 || state == nil {
-		return nil, consensus.ErrBadParam
-	}
-
-	mapBalance := make(map[common.Address]big.Int)
-	arrayaddrwith := make([]common.Address, 0, len(addrlist))
-	for _, v := range addrlist {
-		arrayaddrwith = append(arrayaddrwith, v)
-	}
-	for _, v := range arrayaddrwith {
-		mapBalance[v] = *state.GetBalance(v)
-		log.Trace("GetBalanceRes ranking", "string addr", common.Bytes2Hex(v[:]), "state get", state.GetBalance(v))
-	}
-	return mapBalance, nil
-}
-
-/*
- *  GetAllBalancesByCoin
- *
- *  In:   addrlist  hpnode addresses from contract
-		  coinlist  hpHolderCoin addresses from contract,Correspond addrlist by index
-		  state     a pointer to stateDB
- *  Out:  mapBalance   hpnode address->hpHolderCoin address's balance
- *
- *  This function will get the balance of the coinaddress corresponding to the hpnode address.
- *  To separate Coinbase account and holdercoin address
-*/
-func (c *Prometheus) GetAllBalancesByCoin(addrlist []common.Address, coinlist []common.Address, state *state.StateDB) (map[common.Address]big.Int, error) {
-
-	if addrlist == nil || len(addrlist) == 0 || state == nil || len(addrlist) != len(coinlist) {
-		return nil, consensus.ErrBadParam
-	}
-
-	mapBalance := make(map[common.Address]big.Int)
-	arrayaddrwith := make([]common.Address, 0, len(addrlist))
-	for _, v := range addrlist {
-		arrayaddrwith = append(arrayaddrwith, v)
-	}
-	for i, v := range arrayaddrwith {
-		mapBalance[v] = *state.GetBalance(coinlist[i])
-		log.Trace("GetBalanceRes ranking", "string addr", common.Bytes2Hex(v[:]), "state get", state.GetBalance(coinlist[i]))
-	}
-	return mapBalance, nil
-}
-func (c *Prometheus) GetRankingRes(voteres map[common.Address]big.Int, addrlist []common.Address) (map[common.Address]int, error) {
-
-	if addrlist == nil || len(addrlist) == 0 {
-		return nil, consensus.ErrBadParam
-	}
-
-	mapVotes := make(map[common.Address]*big.Int)
-	arrayaddrwith := make([]common.Address, 0, len(addrlist))
-	for _, v := range addrlist {
-		arrayaddrwith = append(arrayaddrwith, v)
-	}
-	for _, v := range arrayaddrwith {
-		if votes, ok := voteres[v]; ok {
-			mapVotes[v] = &votes
-		} else {
-			mapVotes[v] = big.NewInt(0)
-		}
-		log.Trace("GetAllVoteRes ranking", "string addr", common.Bytes2Hex(v[:]), "votes", mapVotes[v])
-	}
-
-	arrayaddrlen := len(arrayaddrwith)
-	for i := 0; i <= arrayaddrlen-1; i++ {
-		for j := arrayaddrlen - 1; j >= i+1; j-- {
-			if mapVotes[arrayaddrwith[j-1]].Cmp(mapVotes[arrayaddrwith[j]]) < 0 {
-				arrayaddrwith[j-1], arrayaddrwith[j] = arrayaddrwith[j], arrayaddrwith[j-1]
-			}
-		}
-	}
-
-	mapintaddr := make(map[int][]common.Address)
-	offset := 0
-	tempaddrslice := make([]common.Address, 0, 151)
-	tempaddrslice = append(tempaddrslice, arrayaddrwith[0])
-	mapintaddr[0] = tempaddrslice
-
-	//set map, key is int ,value is []addr
-	for i := 1; i < len(arrayaddrwith); i++ {
-		if mapv, ok := mapintaddr[offset]; ok {
-			if mapVotes[arrayaddrwith[i]].Cmp(mapVotes[arrayaddrwith[i-1]]) == 0 {
-				mapv = append(mapv, arrayaddrwith[i])
-				mapintaddr[offset] = mapv
-			} else {
-				offset++
-				tempaddrslice := make([]common.Address, 0, 151)
-				tempaddrslice = append(tempaddrslice, arrayaddrwith[i])
-				mapintaddr[offset] = tempaddrslice
-			}
-		} else {
-			tempaddrslice := make([]common.Address, 0, 151)
-			tempaddrslice = append(tempaddrslice, arrayaddrwith[i])
-			mapintaddr[offset] = tempaddrslice
-		}
-	}
-
-	res := make(map[common.Address]int)
-	for k, v := range mapintaddr {
-		for _, addr := range v {
-			res[addr] = k
-		}
-	}
-
-	return res, nil
-}
-
 func (c *Prometheus) GetSinger() common.Address {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 	return c.signer
-}
-
-func (c *Prometheus) GetNodeinfoFromContract(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (error, []p2p.HwPair) {
-	return errors.New("unsupported function"), nil
-}
-
-func PreDealNodeInfo(pairs []p2p.HwPair) (error, []p2p.HwPair) {
-	if nil == pairs {
-		return consensus.Errnilparam, nil
-	}
-	res := make([]p2p.HwPair, 0, len(pairs))
-	log.Trace("PrepareBlockHeader from p2p.PeerMgrInst().HwInfo() return", "value", pairs) //for test
-	for i := 0; i < len(pairs); i++ {
-		if len(pairs[i].Adr) != 0 {
-			pairs[i].Adr = strings.Replace(pairs[i].Adr, " ", "", -1)
-			res = append(res, pairs[i])
-		}
-	}
-	if 0 == len(res) {
-		return errors.New("input node info addr all zero"), nil
-	}
-	log.Trace(">>>>>>>>>>>>> PreDealNodeInfo <<<<<<<<<<<<<<<<", "res", res, "length", len(res))
-
-	return nil, res
-}
-
-/*
- *  GetCoinAddressFromNewContract
- *
- *  This function will get all coinbase addresses and holdercoin addresses.
- *  coinbase address and holdercoin address correspond by index
- */
-func (c *Prometheus) GetCoinAddressFromNewContract(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (error, []common.Address, []common.Address) {
-	return errors.New("unsupported function"), nil, nil
-}
-
-/*
- *  GetVoteResFromNewContract
- *
- *  This function will get voteresult by contract.
- */
-func (c *Prometheus) GetVoteResFromNewContract(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (error, map[common.Address]big.Int) {
-	return errors.New("unsupported function"), nil
-}
-
-/*
- *  GetNodeinfoFromNewContract
- *
- *  This function will get all boenodes by contract.
- */
-func (c *Prometheus) GetNodeinfoFromNewContract(chain consensus.ChainReader, header *types.Header, state *state.StateDB) (error, []p2p.HwPair) {
-	return errors.New("unsupported function"), nil
 }

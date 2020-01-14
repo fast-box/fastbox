@@ -39,7 +39,6 @@ type Backend interface {
 	// general Hpb API
 	Downloader() *synctrl.Syncer
 	ProtocolVersion() int
-	SuggestPrice(ctx context.Context) (*big.Int, error)
 	ChainDb() hpbdb.Database
 	EventMux() *sub.TypeMux
 	AccountManager() *accounts.Manager

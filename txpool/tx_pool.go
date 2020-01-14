@@ -277,9 +277,8 @@ func (pool *TxPool) reset(oldHead, newHead *types.Header) {
 		mu, _ := pool.userlock.Load(addr)
 		if userl, ok := mu.(*sync.RWMutex); ok {
 			userl.Lock()
-			txs := list.Flatten()
+			list.Flatten()
 			userl.Unlock()
-			pool.pendingState.SetNonce(addr, txs[len(txs)-1].Nonce()+1)
 		}
 		return true
 	})
@@ -294,47 +293,6 @@ func (pool *TxPool) softvalidateTx(tx *types.Transaction) error {
 	if tx.Size() > maxTransactionSize {
 		log.Trace("ErrOversizedData maxTransactionSize", "ErrOversizedData", ErrOversizedData)
 		return ErrOversizedData
-	}
-	// Transactions can't be negative. This may never happen using RLP decoded
-	// transactions but may occur if you create a transaction using the RPC.
-	if tx.Value().Sign() < 0 {
-		log.Trace("ErrNegativeValue", "ErrNegativeValue", ErrNegativeValue)
-		return ErrNegativeValue
-	}
-
-	// Call recover sender.
-	from, err := types.Sender(pool.signer, tx)
-	if err != nil {
-		log.Error("validateTx Sender ErrInvalidSender", "ErrInvalidSender", ErrInvalidSender, "tx.hash", tx.Hash())
-		return ErrInvalidSender
-	}
-
-	// Ensure the transaction doesn't exceed the current block limit gas.
-	if pool.currentMaxGas.Cmp(tx.Gas()) < 0 {
-		log.Trace("ErrGasLimit", "ErrGasLimit", ErrGasLimit)
-		return ErrGasLimit
-	}
-
-	// Check gasPrice.
-	if pool.gasPrice.Cmp(tx.GasPrice()) > 0 {
-		log.Trace("ErrUnderpriced", "ErrUnderpriced", ErrUnderpriced)
-		return ErrUnderpriced
-	}
-	// Ensure the transaction adheres to nonce ordering
-	if pool.currentState.GetNonce(from) > tx.Nonce() {
-		log.Trace("ErrNonceTooLow", "tx.Nonce()", tx.Nonce())
-		return ErrNonceTooLow
-	}
-	// Transactor should have enough funds to cover the costs
-	// cost == V + GP * GL
-	if pool.currentState.GetBalance(from).Cmp(tx.Cost()) < 0 {
-		log.Trace("ErrInsufficientFunds", "ErrInsufficientFunds", ErrInsufficientFunds)
-		return ErrInsufficientFunds
-	}
-	intrGas := types.IntrinsicGas(tx.Data(), tx.To() == nil)
-	if tx.Gas().Cmp(intrGas) < 0 {
-		log.Trace("ErrIntrinsicGas", "ErrIntrinsicGas", ErrIntrinsicGas)
-		return ErrIntrinsicGas
 	}
 	return nil
 }
@@ -370,7 +328,7 @@ func (pool *TxPool) AddTx(tx *types.Transaction) error {
 	// If the transaction txpool pending is full
 	if uint64(pendingCnt) >= pool.config.GlobalSlots {
 		log.Warn("TxPool pending is full", "pending size", pendingCnt,
-			"max size", pool.config.GlobalSlots, "Hash", tx.Hash(), "to", tx.To())
+			"max size", pool.config.GlobalSlots, "Hash", tx.Hash())
 		return fmt.Errorf("the transaction txpool pending is full: %x", tx.Hash())
 	}
 
@@ -470,7 +428,7 @@ func (pool *TxPool) add(tx *types.Transaction) (bool, error) {
 	if uint64(allCnt) > pool.config.GlobalQueue || uint64(allCnt) > pool.config.GlobalSlots {
 		if uint64(allCnt) >= (pool.config.GlobalSlots + pool.config.GlobalQueue) {
 			log.Warn("TxPool is full, reject tx", "current size", allCnt,
-				"max size", pool.config.GlobalSlots+pool.config.GlobalQueue, "hash", hash, "from", from, "to", tx.To())
+				"max size", pool.config.GlobalSlots+pool.config.GlobalQueue, "hash", hash, "from", from)
 			return false, ErrTxPoolFull
 		}
 	}
@@ -499,7 +457,7 @@ func (pool *TxPool) add(tx *types.Transaction) (bool, error) {
 
 			pool.tmpqueue.Store(tx.Hash(), tx)
 
-			log.Trace("Pooled new executable transaction", "hash", hash, "from", from, "to", tx.To())
+			log.Trace("Pooled new executable transaction", "hash", hash, "from", from)
 			return old != nil, nil
 		}
 	}
@@ -508,7 +466,7 @@ func (pool *TxPool) add(tx *types.Transaction) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	log.Trace("Pooled new future transaction", "hash", hash, "from", from, "to", tx.To())
+	log.Trace("Pooled new future transaction", "hash", hash, "from", from)
 	return replace, nil
 }
 
@@ -735,9 +693,7 @@ func (pool *TxPool) promoteTx(addr common.Address, hash common.Hash, tx *types.T
 
 	// Set the potentially new pending nonce and notify any subsystems of the new tx
 	pool.beats.Store(addr, time.Now())
-	pool.pendingState.SetNonce(addr, tx.Nonce()+1)
 	go pool.txFeed.Send(bc.TxPreEvent{tx})
-	log.Trace("send txpre event-------", "tx.once", tx.Nonce(), "acc-addr", addr, "hash", hash)
 }
 
 //If the pending limit is overflown, start equalizing allowances
@@ -800,7 +756,6 @@ func (pool *TxPool) keepFitSend() {
 									hash := tx.Hash()
 									pool.all.Delete(hash)
 									atomic.AddInt64(&allCnt, -1)
-									log.Trace("Removed fairness-exceeding pending keepFitsend transaction ", "tx.Nonce()", tx.Nonce(), "hash", hash)
 								}
 							}
 							userLock.Unlock()
@@ -832,7 +787,6 @@ func (pool *TxPool) keepFitSend() {
 							hash := tx.Hash()
 							pool.all.Delete(hash)
 							atomic.AddInt64(&allCnt, -1)
-							log.Trace("Removed fairness-exceeding keepFitsned pending transaction", "tx.Nonce()", tx.Nonce(), "hash", hash)
 						}
 					}
 					userlk.Unlock()
@@ -952,12 +906,6 @@ func (pool *TxPool) keepFit() {
 									hash := tx.Hash()
 									pool.all.Delete(hash)
 									atomic.AddInt64(&allCnt, -1)
-
-									// Update the account nonce to the dropped transaction
-									if nonce := tx.Nonce(); pool.pendingState.GetNonce(offenders[i]) > nonce {
-										pool.pendingState.SetNonce(offenders[i], nonce)
-									}
-									log.Trace("Removed fairness-exceeding pending transaction", "tx.Nonce()", tx.Nonce(), "hash", hash)
 								}
 							}
 						}
@@ -993,11 +941,6 @@ func (pool *TxPool) keepFit() {
 								pool.all.Delete(hash)
 								atomic.AddInt64(&allCnt, -1)
 
-								// Update the account nonce to the dropped transaction
-								if nonce := tx.Nonce(); pool.pendingState.GetNonce(addr) > nonce {
-									pool.pendingState.SetNonce(addr, nonce)
-								}
-								log.Trace("Removed fairness-exceeding pending transaction", "tx.Nonce()", tx.Nonce(), "hash", hash)
 							}
 						}
 					}
@@ -1097,10 +1040,6 @@ func (pool *TxPool) removeTx(hash common.Hash, userLock *sync.RWMutex) {
 			for _, tx := range invalids {
 				pool.enqueueTxLocked(tx.Hash(), tx)
 			}
-			// Update the account nonce if needed
-			if nonce := tx.Nonce(); pool.pendingState.GetNonce(addr) > nonce {
-				pool.pendingState.SetNonce(addr, nonce)
-			}
 			return
 		}
 	}
@@ -1137,10 +1076,6 @@ func (pool *TxPool) removeTxLocked(hash common.Hash) {
 
 			for _, tx := range invalids {
 				pool.enqueueTxLocked(tx.Hash(), tx)
-			}
-			// Update the account nonce if needed
-			if nonce := tx.Nonce(); pool.pendingState.GetNonce(addr) > nonce {
-				pool.pendingState.SetNonce(addr, nonce)
 			}
 			return
 		}

@@ -49,7 +49,6 @@ import (
 	"github.com/hpb-project/sphinx/network/p2p"
 	"github.com/hpb-project/sphinx/network/rpc"
 	"github.com/hpb-project/sphinx/node/db"
-	"github.com/hpb-project/sphinx/node/gasprice"
 	"github.com/hpb-project/sphinx/synctrl"
 	"github.com/hpb-project/sphinx/txpool"
 	"github.com/hpb-project/sphinx/worker"
@@ -182,14 +181,13 @@ func New(conf *config.HpbConfig) (*Node, error) {
 	hpbtxpool := txpool.GetTxPool()
 
 	hpbnode.Hpbtxpool = hpbtxpool
-	hpbnode.ApiBackend = &HpbApiBackend{hpbnode, nil}
+	hpbnode.ApiBackend = &HpbApiBackend{hpbnode}
 
 	gpoParams := conf.Node.GPO
 	if gpoParams.Default == nil {
 		gpoParams.Default = conf.Node.GasPrice
 	}
 
-	hpbnode.ApiBackend.gpo = gasprice.NewOracle(hpbnode.ApiBackend, gpoParams)
 	hpbnode.bloomIndexer = NewBloomIndexer(hpbdatabase, params.BloomBitsBlocks)
 	return hpbnode, nil
 }
@@ -257,8 +255,6 @@ func parseConsensusConfigFile(conf *config.HpbConfig) {
 		return
 	}
 
-	consensus.HpbNodenumber = cfgfile.HpNodesNum
-	consensus.NumberPrehp = cfgfile.HpVotingRndScope
 	consensus.IgnoreRetErr = cfgfile.FinalizeRetErrIg
 	conf.Prometheus.Period = uint64(cfgfile.Time)
 
@@ -273,13 +269,6 @@ func (hpbnode *Node) Start(conf *config.HpbConfig) error {
 	if conf.Node.FNameConsensusCfg != "" {
 		parseConsensusConfigFile(conf)
 	}
-
-	if config.GetHpbConfigInstance().Node.TestCodeParam == 1 {
-		consensus.SetTestParam()
-	}
-
-	log.Info("consensus.HpbNodenumber", "value", consensus.HpbNodenumber)
-	log.Info("consensus.NumberPrehp", "value", consensus.NumberPrehp)
 	log.Info("consensus.IgnoreRetErr", "value", consensus.IgnoreRetErr)
 	log.Info("conf.Prometheus.Period", "value", conf.Prometheus.Period)
 	for _, v := range config.MainnetBootnodes {

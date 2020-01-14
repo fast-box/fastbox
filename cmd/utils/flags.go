@@ -880,22 +880,6 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.HpbConfig) {
 	if ctx.GlobalBool(TestModeFlag.Name) {
 		cfg.Node.TestMode = 1
 	}
-	if ctx.GlobalIsSet(TestCodeStageFlag.Name) {
-		res := ctx.GlobalIntSlice(TestCodeStageFlag.Name)
-		if nil == res || len(res) < 2 {
-			cfg.Node.TestCodeParam = 1
-		} else {
-			consensus.StageNumberII = uint64(res[0])
-			consensus.StageNumberIII = uint64(res[1])
-		}
-
-		if nil != res || len(res) == 3 {
-			consensus.StageNumberII = uint64(res[0])
-			consensus.StageNumberIII = uint64(res[1])
-			consensus.StageNumberIV = uint64(res[2])
-		}
-
-	}
 	if ctx.GlobalIsSet(ConfigFileFlag.Name) {
 		res := ctx.GlobalString(ConfigFileFlag.Name)
 		if res != "" {
@@ -927,14 +911,6 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.HpbConfig) {
 		cfg.Node.DataDir = absdatadir
 	}
 
-	if ctx.GlobalIsSet(HpNumFlag.Name) {
-		res := ctx.GlobalInt(HpNumFlag.Name)
-		consensus.HpbNodenumber = res
-	}
-	if ctx.GlobalIsSet(HpVoteRndSelScpFlag.Name) {
-		res := ctx.GlobalInt(HpVoteRndSelScpFlag.Name)
-		consensus.NumberPrehp = res
-	}
 	if ctx.GlobalIsSet(IgnRewardRetErrFlag.Name) {
 		res := ctx.GlobalBool(IgnRewardRetErrFlag.Name)
 		consensus.IgnoreRetErr = res

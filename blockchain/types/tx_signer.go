@@ -213,11 +213,6 @@ func (s QSSigner) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big.Int
 // It does not uniquely identify the transaction.
 func (s QSSigner) Hash(tx *Transaction) common.Hash {
 	return rlpHash([]interface{}{
-		tx.data.AccountNonce,
-		tx.data.Price,
-		tx.data.GasLimit,
-		tx.data.Recipient,
-		tx.data.Amount,
 		tx.data.Payload,
 		s.chainId, uint(0), uint(0),
 	})
@@ -226,11 +221,6 @@ func (s QSSigner) Hash(tx *Transaction) common.Hash {
 // CompableHash returns the hash with tx.ChainId(), used to recover the pubkey , can't use to signTx.
 func (s QSSigner) CompableHash(tx *Transaction) common.Hash {
 	return rlpHash([]interface{}{
-		tx.data.AccountNonce,
-		tx.data.Price,
-		tx.data.GasLimit,
-		tx.data.Recipient,
-		tx.data.Amount,
 		tx.data.Payload,
 		tx.ChainId(), uint(0), uint(0),
 	})

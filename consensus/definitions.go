@@ -29,49 +29,10 @@ import (
 	"github.com/hpb-project/sphinx/common/rlp"
 )
 
-const HpbNodeCheckpointInterval = 200
-const HpbNodeBacktrackingNumber = 100
-const Nodenumfirst = 151
-const StepLength = 4
-const FechHpbBallotAddrABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"roundNum\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"contractAddr\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"deleteAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_contractAddr\",\"type\":\"address\"}],\"name\":\"setContractAddr\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_funStr\",\"type\":\"string\"}],\"name\":\"setFunStr\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"addAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"funStr\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getContractAddr\",\"outputs\":[{\"name\":\"_contractAddr\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getRoundNum\",\"outputs\":[{\"name\":\"_roundNum\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"adminMap\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_roundNum\",\"type\":\"uint256\"}],\"name\":\"setRoundNum\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getFunStr\",\"outputs\":[{\"name\":\"_funStr\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_contractAddr\",\"type\":\"address\"}],\"name\":\"SetContractAddr\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_funStr\",\"type\":\"string\"}],\"name\":\"SetFunStr\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_roundNum\",\"type\":\"uint256\"}],\"name\":\"SetRoundNum\",\"type\":\"event\"}]"
-const Fechcontractaddr = "0x43f75fc8c4fc623b8ddf0039ee76e9d4ca9ca7b3"
-
-const BootnodeInfoContractABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"coinbases\",\"type\":\"address[]\"}],\"name\":\"deleteHpbNodeBatch\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"coinbase\",\"type\":\"address\"},{\"name\":\"cid1\",\"type\":\"bytes32\"},{\"name\":\"cid2\",\"type\":\"bytes32\"},{\"name\":\"hid\",\"type\":\"bytes32\"}],\"name\":\"updateHpbNode\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentStageNum\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"nodeStages\",\"outputs\":[{\"name\":\"blockNumber\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"coinbases\",\"type\":\"address[]\"},{\"name\":\"cid1s\",\"type\":\"bytes32[]\"},{\"name\":\"cid2s\",\"type\":\"bytes32[]\"},{\"name\":\"hids\",\"type\":\"bytes32[]\"}],\"name\":\"addHpbNodeBatch\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_stageNum\",\"type\":\"uint256\"}],\"name\":\"getAllHpbNodesByStageNum\",\"outputs\":[{\"name\":\"coinbases\",\"type\":\"address[]\"},{\"name\":\"cid1s\",\"type\":\"bytes32[]\"},{\"name\":\"cid2s\",\"type\":\"bytes32[]\"},{\"name\":\"hids\",\"type\":\"bytes32[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"coinbases\",\"type\":\"address[]\"},{\"name\":\"cid1s\",\"type\":\"bytes32[]\"},{\"name\":\"cid2s\",\"type\":\"bytes32[]\"},{\"name\":\"hids\",\"type\":\"bytes32[]\"}],\"name\":\"updateHpbNodeBatch\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"stageNum\",\"type\":\"uint256\"}],\"name\":\"copyAllHpbNodesByStageNum\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"addStage\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"coinbase\",\"type\":\"address\"}],\"name\":\"deleteHpbNode\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getAllHpbNodes\",\"outputs\":[{\"name\":\"Coinbases\",\"type\":\"address[]\"},{\"name\":\"Cid1s\",\"type\":\"bytes32[]\"},{\"name\":\"Cid2s\",\"type\":\"bytes32[]\"},{\"name\":\"Hids\",\"type\":\"bytes32[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"coinbase\",\"type\":\"address\"},{\"name\":\"cid1\",\"type\":\"bytes32\"},{\"name\":\"cid2\",\"type\":\"bytes32\"},{\"name\":\"hid\",\"type\":\"bytes32\"}],\"name\":\"addHpbNode\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"}],\"name\":\"TransferOwnership\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"stageNum\",\"type\":\"uint256\"}],\"name\":\"ChangeStage\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"stageNum\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"coinbase\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"cid1\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"cid2\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"hid\",\"type\":\"bytes32\"}],\"name\":\"AddHpbNode\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"stageNum\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"coinbase\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"cid1\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"cid2\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"hid\",\"type\":\"bytes32\"}],\"name\":\"UpdateHpbNode\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"coinbase\",\"type\":\"address\"}],\"name\":\"DeleteHpbNode\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"stageNum\",\"type\":\"uint256\"}],\"name\":\"CopyAllHpbNodesByStageNum\",\"type\":\"event\"}]"
-const BootnodeInfoContractAddr = "0x2251a2533556e7c6243a73f015eb96aa155c5791" //mainnet nodeinfo contract addr
-const BootnodeInfoContractMethodName = "getAllHpbNodes"
-
-const NewContractAddr = "0x5f1fbc00690f2cba74985126cae1b9e0bc09cdc8"
-const NewContractABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"invokeIndex\",\"type\":\"uint256\"}],\"name\":\"getInvokeContract\",\"outputs\":[{\"name\":\"contractAddr\",\"type\":\"address\"},{\"name\":\"methodId\",\"type\":\"bytes4\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
-
-const NewContractMethod = "getInvokeContract"
-const NewfetchAllHolderAddrs = "fetchAllHolderAddrs"
-const NewfetchAllVoteResult = "fetchAllVoteResult"
-const NewgetAllHpbNodes = "getAllHpbNodes"
-
-const NewContractInterfaceABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"fetchAllVoteResult\",\"outputs\":[{\"name\":\"candidateAddrs\",\"type\":\"address[]\"},{\"name\":\"nums\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"fetchAllHolderAddrs\",\"outputs\":[{\"name\":\"coinbases\",\"type\":\"address[]\"},{\"name\":\"_holderAddrs\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getAllHpbNodes\",\"outputs\":[{\"name\":\"coinbases\",\"type\":\"address[]\"},{\"name\":\"cid1s\",\"type\":\"bytes32[]\"},{\"name\":\"cid2s\",\"type\":\"bytes32[]\"},{\"name\":\"hids\",\"type\":\"bytes32[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
-
-const InvokeIndexOne = 1
-const InvokeIndexTwo = 2
-const InvokeIndexThree = 3
-
-const Hpcalclookbackround = 3
-const BandwithLimit = 200       //200M
-const NumberBackBandwith = 1100 //bandwith statistic block num + 100
+const NodeCheckpointInterval = 200
 
 var (
-	HpbNodenumber = 31    //hpb nodes number
-	NumberPrehp   = 20    //nodes num from 151 nodes select
-	IgnoreRetErr  = false //ignore finalize return err
-
-	StageNumberII  uint64 = 260000
-	StageNumberIII uint64 = 1200000
-	StageNumberIV  uint64 = 2560000
-	StageNumberV   uint64 = 999999000000 // no use
-	StageNumberVI  uint64 = 2561790
-	StageNumberVII uint64 = 2896000
-
-	NewContractVersion        uint64 = 3788000
-	CadNodeCheckpointInterval uint64 = 200
+	IgnoreRetErr = false //ignore finalize return err
 )
 
 var (
@@ -94,19 +55,11 @@ var (
 
 	ErrExtraSigners = errors.New("non-checkpoint block contains extra signer list")
 
-	// invalid signer list on checkpoint block
-	ErrInvalidCheckpointSigners = errors.New("invalid signer list on checkpoint block")
-
 	ErrInvalidMixDigest = errors.New("non-zero mix digest")
 
 	ErrInvalidUncleHash = errors.New("non empty uncle hash")
 
-	// invalid difficulty, only 1 or 2 allowed
-	ErrInvalidDifficulty = errors.New("invalid difficulty")
-
 	ErrInvalidTimestamp = errors.New("invalid timestamp")
-
-	ErrInvalidVotingChain = errors.New("invalid voting chain")
 
 	ErrUnauthorized = errors.New("unauthorized")
 
@@ -122,18 +75,10 @@ var (
 	ErrInvalidCheckpointVote = errors.New("vote nonce in checkpoint block non-zero")
 	// reject block but do not drop peer
 	ErrInvalidblockbutnodrop = errors.New("reject block but do not drop peer")
-	// boe hecheck err
-	Errboehwcheck = errors.New("boe hwcheck err")
-	// verify header random err
-	Errrandcheck = errors.New("verify header random err")
-	// bandwith err
-	ErrBandwith = errors.New("verify header bandwith beyond the limit")
 	// bad param
-	ErrBadParam = errors.New("input bad param")
-	// invalid cadaddress
-	ErrInvalidCadaddr = errors.New("invalid cadaddress")
-	Errnilparam       = errors.New("input param is nil")
-	ErrNoLastBlock    = errors.New("No Last Block when verify during the fullsync")
+	ErrBadParam    = errors.New("input bad param")
+	Errnilparam    = errors.New("input param is nil")
+	ErrNoLastBlock = errors.New("No Last Block when verify during the fullsync")
 )
 
 var (
@@ -191,10 +136,4 @@ func SigHash(header *types.Header) (hash common.Hash) {
 	})
 	hasher.Sum(hash[:0])
 	return hash
-}
-
-func SetTestParam() {
-	StageNumberII = 1
-	StageNumberIII = 0
-	StageNumberIV = 1
 }

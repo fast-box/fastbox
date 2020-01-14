@@ -30,7 +30,6 @@ import (
 	"github.com/hpb-project/sphinx/blockchain/storage"
 	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto"
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/common/mclock"
 	"github.com/hpb-project/sphinx/common/metrics"
@@ -701,20 +700,12 @@ func (bc *BlockChain) Rollback(chain []common.Hash) {
 
 // SetReceiptsData computes all the non-consensus fields of the receipts
 func SetReceiptsData(config *config.ChainConfig, block *types.Block, receipts types.Receipts) {
-	signer := types.MakeSigner(config)
-
 	transactions, logIndex := block.Transactions(), uint(0)
 
 	for j := 0; j < len(receipts); j++ {
 		// The transaction hash can be retrieved from the transaction itself
 		receipts[j].TxHash = transactions[j].Hash()
 
-		// The contract address can be derived from the transaction itself
-		if transactions[j].To() == nil {
-			// Deriving the signer is expensive, only do if it's actually needed
-			from, _ := types.Sender(signer, transactions[j])
-			receipts[j].ContractAddress = crypto.CreateAddress(from, transactions[j].Nonce())
-		}
 		// The used gas can be calculated based on previous receipts
 		if j == 0 {
 			receipts[j].GasUsed = new(big.Int).Set(receipts[j].CumulativeGasUsed)
@@ -857,7 +848,7 @@ func (bc *BlockChain) WriteBlockAndState(block *types.Block, receipts []*types.R
 
 	var breorg bool
 	breorg = false
-	if block.Number().Uint64()%consensus.HpbNodeCheckpointInterval == 199 {
+	if block.Number().Uint64()%consensus.NodeCheckpointInterval == 199 {
 		breorg = true
 		log.Warn("WriteBlockAndState breorg is true", "block number", block.Number())
 	}

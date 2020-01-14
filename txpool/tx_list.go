@@ -18,7 +18,6 @@ package txpool
 
 import (
 	"container/heap"
-	"math"
 	"math/big"
 	"sort"
 
@@ -69,11 +68,12 @@ func (m *txSortedMap) Get(nonce uint64) *types.Transaction {
 // Put inserts a new transaction into the map, also updating the map's nonce
 // index. If a transaction already exists with the same nonce, it's overwritten.
 func (m *txSortedMap) Put(tx *types.Transaction) {
-	nonce := tx.Nonce()
-	if m.items[nonce] == nil {
-		heap.Push(m.index, nonce)
+	data := tx.Data()
+	dlen := uint64(len(data))
+	if m.items[dlen] == nil {
+		heap.Push(m.index, dlen)
 	}
-	m.items[nonce], m.cache = tx, nil
+	m.items[dlen], m.cache = tx, nil
 }
 
 // Forward removes all transactions from the map with a nonce lower than the
@@ -205,7 +205,7 @@ func (m *txSortedMap) Flatten() types.Transactions {
 		for _, tx := range m.items {
 			m.cache = append(m.cache, tx)
 		}
-		sort.Sort(types.TxByNonce(m.cache))
+		sort.Sort(types.TxByPayload(m.cache))
 	}
 	// Copy the cache to prevent accidental modifications
 	txs := make(types.Transactions, len(m.cache))
@@ -239,7 +239,7 @@ func newTxList(strict bool) *txList {
 // Overlaps returns whether the transaction specified has the same nonce as one
 // already contained within the list.
 func (l *txList) Overlaps(tx *types.Transaction) bool {
-	return l.txs.Get(tx.Nonce()) != nil
+	return false
 }
 
 // Add tries to insert a new transaction into the list, returning whether the
@@ -248,23 +248,9 @@ func (l *txList) Overlaps(tx *types.Transaction) bool {
 // If the new transaction is accepted into the list, the lists' cost and gas
 // thresholds are also potentially updated.
 func (l *txList) Add(tx *types.Transaction, priceBump uint64) (bool, *types.Transaction) {
-	// If there's an older better transaction, abort
-	old := l.txs.Get(tx.Nonce())
-	if old != nil {
-		threshold := new(big.Int).Div(new(big.Int).Mul(old.GasPrice(), big.NewInt(100+int64(priceBump))), big.NewInt(100))
-		if threshold.Cmp(tx.GasPrice()) >= 0 {
-			return false, nil
-		}
-	}
 	// Otherwise overwrite the old transaction with the current one
 	l.txs.Put(tx)
-	if cost := tx.Cost(); l.costcap.Cmp(cost) < 0 {
-		l.costcap = cost
-	}
-	if gas := tx.Gas(); l.gascap.Cmp(gas) < 0 {
-		l.gascap = gas
-	}
-	return true, old
+	return true, nil
 }
 
 // Forward removes all transactions from the list with a nonce lower than the
@@ -284,29 +270,7 @@ func (l *txList) Forward(threshold uint64) types.Transactions {
 // is lower than the costgas cap, the caps will be reset to a new high after removing
 // the newly invalidated transactions.
 func (l *txList) Filter(costLimit, gasLimit *big.Int) (types.Transactions, types.Transactions) {
-	// If all transactions are below the threshold, short circuit
-	if l.costcap.Cmp(costLimit) <= 0 && l.gascap.Cmp(gasLimit) <= 0 {
-		return nil, nil
-	}
-	l.costcap = new(big.Int).Set(costLimit) // Lower the caps to the thresholds
-	l.gascap = new(big.Int).Set(gasLimit)
-
-	// Filter out all the transactions above the account's funds
-	removed := l.txs.Filter(func(tx *types.Transaction) bool { return tx.Cost().Cmp(costLimit) > 0 || tx.Gas().Cmp(gasLimit) > 0 })
-
-	// If the list was strict, filter anything above the lowest nonce
-	var invalids types.Transactions
-
-	if l.strict && len(removed) > 0 {
-		lowest := uint64(math.MaxUint64)
-		for _, tx := range removed {
-			if nonce := tx.Nonce(); lowest > nonce {
-				lowest = nonce
-			}
-		}
-		invalids = l.txs.Filter(func(tx *types.Transaction) bool { return tx.Nonce() > lowest })
-	}
-	return removed, invalids
+	return nil, nil
 }
 
 // Cap places a hard limit on the number of items, returning all transactions
@@ -319,15 +283,6 @@ func (l *txList) Cap(threshold int) types.Transactions {
 // transaction was found, and also returning any transaction invalidated due to
 // the deletion (strict mode only).
 func (l *txList) Remove(tx *types.Transaction) (bool, types.Transactions) {
-	// Remove the transaction from the set
-	nonce := tx.Nonce()
-	if removed := l.txs.Remove(nonce); !removed {
-		return false, nil
-	}
-	// In strict mode, filter out non-executable transactions
-	if l.strict {
-		return true, l.txs.Filter(func(tx *types.Transaction) bool { return tx.Nonce() > nonce })
-	}
 	return true, nil
 }
 
