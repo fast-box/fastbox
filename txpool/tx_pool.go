@@ -70,7 +70,6 @@ type TxPool struct {
 	txPreTrigger *event.Trigger
 	signer       types.Signer
 	config       config.TxPoolConfiguration
-	gasPrice     *big.Int
 
 	// use sync.map instead of map.
 	beats    sync.Map //map[common.Address]time.Time  	   Last heartbeat from each known account
@@ -102,7 +101,6 @@ func NewTxPool(config config.TxPoolConfiguration, chainConfig *config.ChainConfi
 	//2.Create the transaction pool with its initial settings
 	pool := &TxPool{
 		config:      config,
-		gasPrice:    new(big.Int).SetUint64(config.PriceLimit),
 		chain:       blockChain,
 		signer:      types.NewQSSigner(chainConfig.ChainId),
 		chainHeadCh: make(chan bc.ChainHeadEvent, chanHeadBuffer),
@@ -1201,16 +1199,6 @@ func (pool *TxPool) Content() (map[common.Address]types.Transactions, map[common
 
 func (pool *TxPool) SubscribeTxPreEvent(ch chan<- bc.TxPreEvent) sub.Subscription {
 	return pool.scope.Track(pool.txFeed.Subscribe(ch))
-}
-
-// SetGasPrice updates the minimum price required by the transaction pool for a
-// new transaction
-func (pool *TxPool) SetGasPrice(price *big.Int) {
-	pool.smu.Lock()
-	defer pool.smu.Unlock()
-
-	pool.gasPrice = price
-	log.Info("Transaction pool price threshold updated", "price", price)
 }
 
 // For test code.

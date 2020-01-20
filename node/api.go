@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math/big"
 	"os"
 	"strings"
 	"time"
@@ -102,11 +101,6 @@ func (api *PrivateMinerAPI) Start(threads *int) error {
 	// Start the miner and return
 	if !api.e.IsMining() {
 		// Propagate the initial price point to the transaction pool
-		api.e.lock.RLock()
-		price := api.e.gasPrice
-		api.e.lock.RUnlock()
-
-		api.e.Hpbtxpool.SetGasPrice(price)
 		return api.e.StartMining(true)
 	}
 	return nil
@@ -130,16 +124,6 @@ func (api *PrivateMinerAPI) SetExtra(extra string) (bool, error) {
 		return false, err
 	}
 	return true, nil
-}
-
-// SetGasPrice sets the minimum accepted gas price for the miner.
-func (api *PrivateMinerAPI) SetGasPrice(gasPrice hexutil.Big) bool {
-	api.e.lock.Lock()
-	api.e.gasPrice = (*big.Int)(&gasPrice)
-	api.e.lock.Unlock()
-
-	api.e.Hpbtxpool.SetGasPrice((*big.Int)(&gasPrice))
-	return true
 }
 
 // SetHpberbase sets the hpberbase of the miner

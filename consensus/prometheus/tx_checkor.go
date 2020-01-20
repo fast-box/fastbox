@@ -2,6 +2,11 @@ package prometheus
 
 import "github.com/hpb-project/sphinx/blockchain/types"
 
+// step 1. verify tx.
+// step 2. dup tx detect.
+// step 3. append tx to txpool.
+// step 4. sign pooled txs Merkle-Tree root and broadcast to other peers.
+
 func VerifyTx(tx *types.Transaction) bool {
 	return true
 }

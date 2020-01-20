@@ -115,8 +115,6 @@ type Signer interface {
 	SignatureValues(tx *Transaction, sig []byte) (r, s, v *big.Int, err error)
 	// Hash returns the hash to be signed.
 	Hash(tx *Transaction) common.Hash
-	// Compable Hash, returns the hash with tx.ChainId(), only used to recover pubkey, can't used to signTx.
-	CompableHash(tx *Transaction) common.Hash
 	// Equal returns true if the given signer is the same as the receiver.
 	Equal(Signer) bool
 }
@@ -160,17 +158,9 @@ func (s QSSigner) Sender(tx *Transaction) (common.Address, error) {
 	if !CheckChainIdCompatible(tx.ChainId()) && (tx.ChainId().Cmp(s.chainId) != 0) {
 		return common.Address{}, ErrInvalidChainId
 	}
-	if compableV(tx.data.V) {
-		compableChainId := config.CompatibleChainId
-		compableChainIdMul := new(big.Int).Mul(compableChainId, big.NewInt(2))
-		V := new(big.Int).Sub(tx.data.V, compableChainIdMul)
-		V.Sub(V, big8)
-		return recoverPlain(s.CompableHash(tx), tx.data.R, tx.data.S, V)
-	} else {
-		V := new(big.Int).Sub(tx.data.V, s.chainIdMul)
-		V.Sub(V, big8)
-		return recoverPlain(s.Hash(tx), tx.data.R, tx.data.S, V)
-	}
+	V := new(big.Int).Sub(tx.data.V, s.chainIdMul)
+	V.Sub(V, big8)
+	return recoverPlain(s.Hash(tx), tx.data.R, tx.data.S, V)
 }
 
 func (s QSSigner) ASynSender(tx *Transaction) (common.Address, error) {
@@ -178,19 +168,9 @@ func (s QSSigner) ASynSender(tx *Transaction) (common.Address, error) {
 		log.Warn("ASynSender tx.Protected()")
 		return common.Address{}, ErrInvalidChainId
 	}
-
-	if compableV(tx.data.V) {
-		compableChainId := config.CompatibleChainId
-		compableChainIdMul := new(big.Int).Mul(compableChainId, big.NewInt(2))
-		V := new(big.Int).Sub(tx.data.V, compableChainIdMul)
-		V.Sub(V, big8)
-		return ASynrecoverPlain(tx.Hash(), s.CompableHash(tx), tx.data.R, tx.data.S, V)
-	} else {
-		V := new(big.Int).Sub(tx.data.V, s.chainIdMul)
-		V.Sub(V, big8)
-		return ASynrecoverPlain(tx.Hash(), s.Hash(tx), tx.data.R, tx.data.S, V)
-	}
-
+	V := new(big.Int).Sub(tx.data.V, s.chainIdMul)
+	V.Sub(V, big8)
+	return ASynrecoverPlain(tx.Hash(), s.Hash(tx), tx.data.R, tx.data.S, V)
 }
 
 // WithSignature returns a new transaction with the given signature. This signature
@@ -215,14 +195,6 @@ func (s QSSigner) Hash(tx *Transaction) common.Hash {
 	return rlpHash([]interface{}{
 		tx.data.Payload,
 		s.chainId, uint(0), uint(0),
-	})
-}
-
-// CompableHash returns the hash with tx.ChainId(), used to recover the pubkey , can't use to signTx.
-func (s QSSigner) CompableHash(tx *Transaction) common.Hash {
-	return rlpHash([]interface{}{
-		tx.data.Payload,
-		tx.ChainId(), uint(0), uint(0),
 	})
 }
 

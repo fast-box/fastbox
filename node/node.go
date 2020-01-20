@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math/big"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -81,7 +80,6 @@ type Node struct {
 	stopDbUpgrade func() error // stop chain db sequential key upgrade
 
 	miner     *worker.Miner
-	gasPrice  *big.Int
 	hpberbase common.Address
 
 	ephemeralKeystore string         // if non-empty, the key directory that will be removed by Stop
@@ -136,7 +134,6 @@ func New(conf *config.HpbConfig) (*Node, error) {
 		accman:      nil,
 		Hpbengine:   nil,
 
-		gasPrice:      conf.Node.GasPrice,
 		hpberbase:     common.Address{},
 		bloomRequests: make(chan chan *bloombits.Retrieval),
 		bloomIndexer:  nil,

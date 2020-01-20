@@ -20,8 +20,8 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
 )
 
 // senderFromServer is a types.Signer that remembers the sender address returned by the RPC
@@ -62,9 +62,5 @@ func (s *senderFromServer) Hash(tx *types.Transaction) common.Hash {
 	panic("can't sign with senderFromServer")
 }
 func (s *senderFromServer) SignatureValues(tx *types.Transaction, sig []byte) (R, S, V *big.Int, err error) {
-	panic("can't sign with senderFromServer")
-}
-// Compable Hash, returns the hash with tx.ChainId(), only used to recover pubkey, can't used to signTx.
-func (s *senderFromServer)CompableHash(tx *types.Transaction) common.Hash {
 	panic("can't sign with senderFromServer")
 }

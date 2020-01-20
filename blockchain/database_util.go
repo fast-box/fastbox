@@ -44,25 +44,24 @@ type DatabaseDeleter interface {
 }
 
 var (
-	voteResultKey   = []byte("vote-result-key")
+	voteResultKey = []byte("vote-result-key")
 
 	headHeaderKey = []byte("LastHeader")
 	headBlockKey  = []byte("LastBlock")
 	headFastKey   = []byte("LastFast")
 
 	// Data item prefixes (use single byte to avoid mixing data types, avoid `i`).
-	headerPrefix        = []byte("h") // headerPrefix + num (uint64 big endian) + hash -> header
-	tdSuffix            = []byte("t") // headerPrefix + num (uint64 big endian) + hash + tdSuffix -> td
-	numSuffix           = []byte("n") // headerPrefix + num (uint64 big endian) + numSuffix -> hash
-	blockHashPrefix     = []byte("H") // blockHashPrefix + hash -> num (uint64 big endian)
-	bodyPrefix          = []byte("b") // bodyPrefix + num (uint64 big endian) + hash -> block body
-	blockReceiptsPrefix = []byte("r") // blockReceiptsPrefix + num (uint64 big endian) + hash -> block receipts
-	lookupPrefix        = []byte("l") // lookupPrefix + hash -> transaction/receipt lookup metadata
-	bloomBitsPrefix     = []byte("B") // bloomBitsPrefix + bit (uint16 big endian) + section (uint64 big endian) + hash -> bloom bits
+	headerPrefix        = []byte("h")      // headerPrefix + num (uint64 big endian) + hash -> header
+	tdSuffix            = []byte("t")      // headerPrefix + num (uint64 big endian) + hash + tdSuffix -> td
+	numSuffix           = []byte("n")      // headerPrefix + num (uint64 big endian) + numSuffix -> hash
+	blockHashPrefix     = []byte("H")      // blockHashPrefix + hash -> num (uint64 big endian)
+	bodyPrefix          = []byte("b")      // bodyPrefix + num (uint64 big endian) + hash -> block body
+	blockReceiptsPrefix = []byte("r")      // blockReceiptsPrefix + num (uint64 big endian) + hash -> block receipts
+	lookupPrefix        = []byte("l")      // lookupPrefix + hash -> transaction/receipt lookup metadata
+	bloomBitsPrefix     = []byte("B")      // bloomBitsPrefix + bit (uint16 big endian) + section (uint64 big endian) + hash -> bloom bits
 	randomPrefix        = []byte("random") // randomPrefix + num (uint64 big endian) + hash -> header
 
-
-	preimagePrefix = "secure-key-"              // preimagePrefix + hash -> preimage
+	preimagePrefix = "secure-key-"         // preimagePrefix + hash -> preimage
 	configPrefix   = []byte("hpb-config-") // config prefix for the db
 
 	// Chain index prefixes (use `i` + single byte to avoid mixing data types).
@@ -102,14 +101,14 @@ func GetCanonicalHash(db DatabaseReader, number uint64) common.Hash {
 	return common.BytesToHash(data)
 }
 
-func StoreCadNodes(db hpbdb.Putter,blob []byte, Hash common.Hash) error {
+func StoreCadNodes(db hpbdb.Putter, blob []byte, Hash common.Hash) error {
 	return db.Put(append([]byte("codnodesnap-"), Hash[:]...), blob)
 }
 
 // GetRandom
 func GetRandom(db DatabaseReader) string {
 	data, _ := db.Get(randomPrefix)
-	
+
 	if len(data) == 0 {
 		return ""
 	}
@@ -124,35 +123,7 @@ func WriteRandom(db hpbdb.Putter, rand string) error {
 	return nil
 }
 
-
-func GetVoteResult(db DatabaseReader) *types.VoteResult {
-	data, _ := db.Get(voteResultKey)
-	if len(data) == 0 {
-		return nil
-	}
-
-	rst := new(types.VoteResult)
-	err := json.Unmarshal(data, rst)
-	if err != nil {
-		return nil
-	}
-
-	return rst
-}
-
-func WriteVoteResult(db hpbdb.Putter, voteRst *types.VoteResult) error {
-	rst , err := json.Marshal(voteRst)
-	if err != nil {
-		fmt. Println ( "error:" , err )
-	}
-
-	if err := db.Put(voteResultKey, rst); err != nil {
-		log.Crit("Failed to store vote result", "err", err)
-	}
-	return nil
-}
-
-func DeleteVoteResult(db DatabaseDeleter)  {
+func DeleteVoteResult(db DatabaseDeleter) {
 	db.Delete(voteResultKey)
 }
 
@@ -636,7 +607,7 @@ func WriteBlockChainVersion(db hpbdb.Putter, vsn int) {
 func WriteChainConfig(db hpbdb.Putter, hash common.Hash, cfg *config.ChainConfig) error {
 	// short circuit and ignore if nil config. GetChainConfig
 	// will return a default.
-	
+
 	if cfg == nil {
 		return nil
 	}
