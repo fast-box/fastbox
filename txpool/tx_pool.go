@@ -17,6 +17,7 @@
 package txpool
 
 import (
+	"errors"
 	"fmt"
 	"github.com/hpb-project/sphinx/blockchain"
 	"github.com/hpb-project/sphinx/blockchain/state"
@@ -26,8 +27,6 @@ import (
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/event"
 	"github.com/hpb-project/sphinx/event/sub"
-	"github.com/pkg/errors"
-	"math"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -146,20 +145,13 @@ func (pool *TxPool) loop() {
 	evict := time.NewTicker(evictionInterval)
 	defer evict.Stop()
 
-	// Track the previous head headers for transaction reorgs
-	head := pool.chain.CurrentBlock()
-
 	// Keep waiting for and reacting to the various events
 	for {
 		select {
 		// Handle ChainHeadEvent
 		case ev := <-pool.chainHeadCh:
 			if ev.Block != nil {
-				pool.smu.Lock()
-				pool.reset(head.Header(), ev.Block.Header())
-				head = ev.Block
-
-				pool.smu.Unlock()
+				pool.JustPending(ev.Block)
 			}
 		// Handle onChain tx over block count.
 		case <-evict.C:
@@ -296,9 +288,8 @@ func (pool *TxPool) AddTxs(txs []*types.Transaction) error {
 }
 
 // reset move package in block transactions from pending to onChain.
-func (pool *TxPool) JustPending(newHead *types.Header) {
-	newchainBlock := pool.chain.GetBlock(newHead.Hash(), newHead.Number.Uint64())
-	newChainTxs := newchainBlock.Transactions()
+func (pool *TxPool) JustPending(newblock *types.Block) {
+	newChainTxs := newblock.Transactions()
 	for _, tx := range newChainTxs {
 		pool.onChain.Store(tx.Hash(), tx)
 		pool.pending.Delete(tx.Hash())

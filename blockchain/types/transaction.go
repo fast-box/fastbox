@@ -357,7 +357,7 @@ type TransactionsByPayload struct {
 //
 // Note, the input map is reowned so the caller should not interact any more with
 // if after providing it to the constructor.
-func NewTransactionsByPayload(signer Signer, txs map[common.Address]Transactions) *TransactionsByPayload {
+func NewTransactionsByPayload(signer Signer, txs Transactions) *TransactionsByPayload {
 	// Initialize a price based heap with the head transactions
 	var block_max_txs = 50000
 	var cnt = 0

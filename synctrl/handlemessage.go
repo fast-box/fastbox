@@ -455,7 +455,6 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
 
-	go txpool.GetTxPool().GoTxsAsynSender(txs)
 	for i, tx := range txs {
 		// Validate and mark the remote transaction
 		if tx == nil {
@@ -466,7 +465,7 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 		if nil != txpool.GetTxPool().GetTxByHash(tx.Hash()) {
 			continue
 		} else {
-			go func(){
+			go func() {
 				poolTxsCh <- tx
 			}()
 		}

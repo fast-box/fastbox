@@ -420,7 +420,7 @@ func (self *worker) startNewMinerRound() {
 	}
 	// Create the current work task and check any fork transitions needed
 	work := self.current
-	pending, err := txpool.GetTxPool().Pending()
+	txs, err := txpool.GetTxPool().Pending(10000)
 	if err != nil {
 		log.Error("Failed to fetch pending transactions", "err", err)
 		return
