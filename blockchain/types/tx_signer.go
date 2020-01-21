@@ -67,7 +67,7 @@ func Sender(signer Signer, tx *Transaction) (common.Address, error) {
 		sigCache := sc.(sigCache)
 		// If the signer used to derive from in a previous
 		// call is not the same as used current, invalidate
-		// the cache.2
+		// the cache.
 		if sigCache.signer.Equal(signer) {
 			return sigCache.from, nil
 		}
@@ -87,6 +87,7 @@ func Sender(signer Signer, tx *Transaction) (common.Address, error) {
 
 	return addr, nil
 }
+
 func ASynSender(signer Signer, tx *Transaction) (common.Address, error) {
 
 	if sc := tx.from.Load(); sc != nil {
@@ -124,10 +125,6 @@ type QSSigner struct {
 	chainId, chainIdMul *big.Int
 }
 
-func CheckChainIdCompatible(chainId *big.Int) bool {
-	return chainId.Cmp(config.CompatibleChainId) == 0
-}
-
 func NewQSSigner(chainId *big.Int) QSSigner {
 	if chainId == nil {
 		chainId = new(big.Int)
@@ -143,19 +140,13 @@ func NewQSSigner(chainId *big.Int) QSSigner {
 func (s QSSigner) Equal(s2 Signer) bool {
 	eip155, ok := s2.(QSSigner)
 
-	return ok && (CheckChainIdCompatible(eip155.chainId) || (eip155.chainId.Cmp(s.chainId) == 0))
+	return ok && (eip155.chainId.Cmp(s.chainId) == 0)
 }
 
 var big8 = big.NewInt(8)
 
-func compableV(v *big.Int) bool {
-	// we compable the transaction with chainId = 1,
-	// so matched v value is 37 or 38. (v = chainId * 2 + 35 or v = chainId * 2 + 36)
-	return (v.Cmp(big.NewInt(37)) == 0) || (v.Cmp(big.NewInt(38)) == 0)
-}
-
 func (s QSSigner) Sender(tx *Transaction) (common.Address, error) {
-	if !CheckChainIdCompatible(tx.ChainId()) && (tx.ChainId().Cmp(s.chainId) != 0) {
+	if tx.ChainId().Cmp(s.chainId) != 0 {
 		return common.Address{}, ErrInvalidChainId
 	}
 	V := new(big.Int).Sub(tx.data.V, s.chainIdMul)
@@ -164,7 +155,7 @@ func (s QSSigner) Sender(tx *Transaction) (common.Address, error) {
 }
 
 func (s QSSigner) ASynSender(tx *Transaction) (common.Address, error) {
-	if !CheckChainIdCompatible(tx.ChainId()) && (tx.ChainId().Cmp(s.chainId) != 0) {
+	if tx.ChainId().Cmp(s.chainId) != 0 {
 		log.Warn("ASynSender tx.Protected()")
 		return common.Address{}, ErrInvalidChainId
 	}

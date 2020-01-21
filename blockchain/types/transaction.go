@@ -30,7 +30,6 @@ import (
 	"github.com/hpb-project/sphinx/common/crypto/sha3"
 	"github.com/hpb-project/sphinx/common/hexutil"
 	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/config"
 )
 
 //go:generate gencodec -type txdata -field-override txdataMarshaling -out gen_tx_json.go
@@ -124,32 +123,6 @@ func (tx *Transaction) DecodeRLP(s *rlp.Stream) error {
 	}
 
 	return err
-}
-
-// IntrinsicGas computes the 'intrinsic gas' for a message
-// with the given data.
-func IntrinsicGas(data []byte, contractCreation bool) *big.Int {
-	igas := new(big.Int)
-	if contractCreation {
-		igas.SetUint64(config.TxGasContractCreation)
-	} else {
-		igas.SetUint64(config.TxGas)
-	}
-	if len(data) > 0 {
-		var nz int64
-		for _, byt := range data {
-			if byt != 0 {
-				nz++
-			}
-		}
-		m := big.NewInt(nz)
-		m.Mul(m, new(big.Int).SetUint64(config.TxDataNonZeroGas))
-		igas.Add(igas, m)
-		m.SetInt64(int64(len(data)) - nz)
-		m.Mul(m, new(big.Int).SetUint64(config.TxDataZeroGas))
-		igas.Add(igas, m)
-	}
-	return igas
 }
 
 func (t txdata) MarshalJSON() ([]byte, error) {

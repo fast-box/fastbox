@@ -10,7 +10,7 @@ import "github.com/hpb-project/sphinx/blockchain/types"
 func VerifyTx(tx *types.Transaction) bool {
 	return true
 }
-func RoutineTxVarify(from chan types.Transaction, to chan types.Transaction, errCh chan interface{}) {
+func RoutineTxVarify(from chan *types.Transaction, to chan *types.Transaction, errCh chan interface{}) {
 	for {
 		select {
 		case tx, ok := <-from:
@@ -18,7 +18,7 @@ func RoutineTxVarify(from chan types.Transaction, to chan types.Transaction, err
 				// channel closed.
 				return
 			}
-			if VerifyTx(&tx) {
+			if VerifyTx(tx) {
 				to <- tx
 			} else {
 				errCh <- tx
@@ -30,7 +30,7 @@ func RoutineTxVarify(from chan types.Transaction, to chan types.Transaction, err
 func DupDetect(tx *types.Transaction) bool {
 	return false
 }
-func RoutineTxDupDetect(from chan types.Transaction, to chan types.Transaction, dupCh chan interface{}) {
+func RoutineTxDupDetect(from chan *types.Transaction, to chan *types.Transaction, dupCh chan interface{}) {
 	for {
 		select {
 		case tx, ok := <-from:
@@ -38,7 +38,7 @@ func RoutineTxDupDetect(from chan types.Transaction, to chan types.Transaction, 
 				// channel closed.
 				return
 			}
-			if DupDetect(&tx) {
+			if DupDetect(tx) {
 				dupCh <- tx
 			} else {
 				to <- tx
