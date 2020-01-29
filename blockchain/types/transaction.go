@@ -347,9 +347,7 @@ func (s *TxByPayload) Pop() interface{} {
 }
 
 type TransactionsByPayload struct {
-	txs    map[common.Address]Transactions // Per account nonce-sorted list of transactions
-	heads  TxByPayload                     // Next transaction for each unique account (price heap)
-	signer Signer                          // Signer for the set of transactions
+	heads TxByPayload // Next transaction for each unique account (price heap)
 }
 
 // NewTransactionsByPayload creates a transaction set that can retrieve
@@ -359,28 +357,15 @@ type TransactionsByPayload struct {
 // if after providing it to the constructor.
 func NewTransactionsByPayload(signer Signer, txs Transactions) *TransactionsByPayload {
 	// Initialize a price based heap with the head transactions
-	var block_max_txs = 50000
-	var cnt = 0
 	heads := make(TxByPayload, 0, len(txs))
-	for _, accTxs := range txs {
-		cnt += 1
-		if cnt >= block_max_txs {
-			break
-		}
-		if accTxs != nil && len(accTxs) > 0 {
-			heads = append(heads, accTxs[0])
-			// Ensure the sender address is from the signer
-			acc, _ := Sender(signer, accTxs[0])
-			txs[acc] = accTxs[1:]
-		}
+	for _, tx := range txs {
+		heads = append(heads, tx)
 	}
 	heap.Init(&heads)
 
 	// Assemble and return the transaction set
 	return &TransactionsByPayload{
-		txs:    txs,
-		heads:  heads,
-		signer: signer,
+		heads: heads,
 	}
 }
 
@@ -394,13 +379,7 @@ func (t *TransactionsByPayload) Peek() *Transaction {
 
 // Shift replaces the current best head with the next one from the same account.
 func (t *TransactionsByPayload) Shift() {
-	acc, _ := Sender(t.signer, t.heads[0])
-	if txs, ok := t.txs[acc]; ok && len(txs) > 0 {
-		t.heads[0], t.txs[acc] = txs[0], txs[1:]
-		heap.Fix(&t.heads, 0)
-	} else {
-		heap.Pop(&t.heads)
-	}
+	heap.Pop(&t.heads)
 }
 
 // Pop removes the best transaction, *not* replacing it with the next one from

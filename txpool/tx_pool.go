@@ -206,6 +206,10 @@ func (pool *TxPool) dupTx(tx *types.Transaction) error {
 }
 
 func (pool *TxPool) verifyTx(tx *types.Transaction) bool {
+	if _, err := types.Sender(pool.signer, tx); err != nil {
+		log.Error("verifyTx Sender ErrInvalidSender", "tx.hash", tx.Hash())
+		return false
+	}
 	return true
 }
 
@@ -345,6 +349,15 @@ func (pool *TxPool) Pending(maxtxs int) (pending types.Transactions, err error) 
 			return
 		}
 	}
+	return
+}
+
+func (pool *TxPool) Pended() (pending types.Transactions, err error) {
+	pool.pending.Range(func(k, v interface{}) bool {
+		tx := v.(*types.Transaction)
+		pending = append(pending, tx)
+		return true
+	})
 	return
 }
 

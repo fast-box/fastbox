@@ -120,19 +120,14 @@ func SigHash(header *types.Header) (hash common.Hash) {
 
 	rlp.Encode(hasher, []interface{}{
 		header.ParentHash,
-		header.UncleHash,
 		header.Root,
 		header.TxHash,
 		header.ReceiptHash,
 		header.Bloom,
 		header.Difficulty,
 		header.Number,
-		header.GasLimit,
-		header.GasUsed,
 		header.Time,
 		header.Extra[:len(header.Extra)-65],
-		header.MixDigest,
-		header.Nonce,
 	})
 	hasher.Sum(hash[:0])
 	return hash

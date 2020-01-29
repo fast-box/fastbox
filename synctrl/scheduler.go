@@ -435,7 +435,7 @@ func (this *scheduler) ReserveHeaders(p *peerConnection, count int) *fetchReques
 // returns a flag whether empty blocks were queued requiring processing.
 func (this *scheduler) ReserveBodies(p *peerConnection, count int) (*fetchRequest, bool, error) {
 	isNoop := func(header *types.Header) bool {
-		return header.TxHash == types.EmptyRootHash && header.UncleHash == types.EmptyUncleHash
+		return header.TxHash == types.EmptyRootHash
 	}
 	this.lock.Lock()
 	defer this.lock.Unlock()
@@ -759,7 +759,7 @@ func (this *scheduler) DeliverBodies(id string, txLists [][]*types.Transaction, 
 	defer this.lock.Unlock()
 
 	reconstruct := func(header *types.Header, index int, result *fetchResult) error {
-		if types.DeriveSha(types.Transactions(txLists[index])) != header.TxHash || types.CalcUncleHash(uncleLists[index]) != header.UncleHash {
+		if types.DeriveSha(types.Transactions(txLists[index])) != header.TxHash {
 			return errInvalidBody
 		}
 		result.Transactions = txLists[index]

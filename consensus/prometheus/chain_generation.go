@@ -33,8 +33,6 @@ import (
 
 // Prepare function for Block
 func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *types.Header, state *state.StateDB) error {
-
-	header.Nonce = types.BlockNonce{}
 	number := header.Number.Uint64()
 
 	parentnum := number - 1
@@ -51,7 +49,6 @@ func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *typ
 	header.Extra = header.Extra[:consensus.ExtraVanity]
 
 	header.Extra = append(header.Extra, make([]byte, consensus.ExtraSeal)...)
-	header.MixDigest = common.Hash{}
 
 	parent := chain.GetHeader(header.ParentHash, number-1)
 	if parent == nil {
@@ -134,7 +131,6 @@ func (c *Prometheus) Author(header *types.Header) (common.Address, error) {
 
 func (c *Prometheus) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	header.Root = state.IntermediateRoot(true)
-	header.UncleHash = types.CalcUncleHash(nil)
 	return types.NewBlock(header, txs, nil, receipts), nil
 }
 

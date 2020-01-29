@@ -129,15 +129,12 @@ func (b *HpbApiBackend) SendTx(ctx context.Context, signedTx *types.Transaction)
 }
 
 func (b *HpbApiBackend) GetPoolTransactions() (types.Transactions, error) {
-	pending, err := b.hpb.TxPool().Pending()
+	pending, err := b.hpb.TxPool().Pended()
 	if err != nil {
 		return nil, err
 	}
-	var txs types.Transactions
-	for _, batch := range pending {
-		txs = append(txs, batch...)
-	}
-	return txs, nil
+
+	return pending, nil
 }
 
 func (b *HpbApiBackend) GetPoolTransaction(hash common.Hash) *types.Transaction {

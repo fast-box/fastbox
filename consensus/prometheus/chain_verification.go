@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/consensus"
@@ -80,15 +79,6 @@ func (c *Prometheus) verifyHeader(chain consensus.ChainReader, header *types.Hea
 	signersBytes := len(header.Extra) - consensus.ExtraVanity - consensus.ExtraSeal
 	if !checkpoint && signersBytes != 0 {
 		return consensus.ErrExtraSigners
-	}
-
-	// Ensure that the mix digest is zero as we don't have fork protection currently
-	if header.MixDigest != (common.Hash{}) {
-		return consensus.ErrInvalidMixDigest
-	}
-	// Ensure that the block doesn't contain any uncles which are meaningless in PoA
-	if header.UncleHash != uncleHash {
-		return consensus.ErrInvalidUncleHash
 	}
 
 	// All basic checks passed, verify cascading fields

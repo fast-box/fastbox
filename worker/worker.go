@@ -366,6 +366,101 @@ func (self *worker) calMaxTxs(parent *types.Block) int {
 	return blockMaxTxs
 }
 
+func (self *worker) PreMiner() {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	self.uncleMu.Lock()
+	defer self.uncleMu.Unlock()
+	self.currentMu.Lock()
+	defer self.currentMu.Unlock()
+
+	tstart := time.Now()
+	parent := self.chain.CurrentBlock()
+	log.Debug("worker startNewMinerRound", "time", tstart.Unix())
+
+	tstamp := tstart.Unix()
+	if parent.Time().Cmp(new(big.Int).SetInt64(tstamp)) >= 0 {
+		tstamp = parent.Time().Int64() + 1
+	}
+	// this will ensure we're not going off too far in the future
+	if now := time.Now().Unix(); tstamp > now+1 {
+		wait := time.Duration(tstamp-now) * time.Second
+		log.Info("Mining too far in the future", "wait", common.PrettyDuration(wait))
+		time.Sleep(wait)
+	}
+
+	num := parent.Number()
+	header := &types.Header{
+		ParentHash: parent.Hash(),
+		Number:     num.Add(num, common.Big1),
+		Extra:      self.extra,
+		Time:       big.NewInt(tstamp),
+	}
+	// Only set the coinbase if we are mining (avoid spurious block rewards)
+	if atomic.LoadInt32(&self.mining) == 1 {
+		header.Coinbase = self.coinbase
+	}
+	pstate, _ := self.chain.StateAt(parent.Root())
+	log.Debug("worker startNewMinerRound before PrepareBlockHeader", "number", header.Number.Uint64(), "time", time.Now().Unix())
+	if err := self.engine.PrepareBlockHeader(self.chain, header, pstate); err != nil {
+		log.Debug("Failed to prepare header for mining", "err", err)
+		return
+	}
+
+	err := self.makeCurrent(parent, header)
+	if err != nil {
+		log.Error("Failed to create mining context", "err", err)
+		return
+	}
+	if p2p.PeerMgrInst().GetLocalType() == discover.PreNode {
+		return
+	}
+	// Create the current work task and check any fork transitions needed
+	work := self.current
+	pending, err := txpool.GetTxPool().Pending(10000)
+	if err != nil {
+		log.Error("Failed to fetch pending transactions", "err", err)
+		return
+	}
+	txs := types.NewTransactionsByPayload(self.current.signer, pending)
+	maxtxs := self.calMaxTxs(parent)
+	work.commitTransactions(self.mux, txs, self.coinbase, maxtxs)
+	log.Debug("worker startNewMinerRound after commitTransactions", "time", time.Now().Unix())
+	// compute uncles for the new block.
+	var (
+		uncles    []*types.Header
+		badUncles []common.Hash
+	)
+	for hash, uncle := range self.possibleUncles {
+		if len(uncles) == 2 {
+			break
+		}
+		if err := self.commitUncle(work, uncle.Header()); err != nil {
+			log.Trace("Bad uncle found and will be removed", "hash", hash)
+			log.Trace(fmt.Sprint(uncle))
+
+			badUncles = append(badUncles, hash)
+		} else {
+			log.Debug("Committing new uncle to block", "hash", hash)
+			uncles = append(uncles, uncle.Header())
+		}
+	}
+	for _, hash := range badUncles {
+		delete(self.possibleUncles, hash)
+	}
+	// Create the new block to seal with the consensus engine
+	if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, uncles, work.receipts); err != nil {
+		log.Error("Failed to finalize block for sealing", "err", err)
+		return
+	}
+	// We only care about logging if we're actually mining.
+	if atomic.LoadInt32(&self.mining) == 1 {
+		log.Info("Commit new mining work", "number", work.Block.Number(), "txs", work.tcount, "uncles", len(uncles), "elapsed", common.PrettyDuration(time.Since(tstart)))
+		self.unconfirmed.Shift(work.Block.NumberU64() - 1)
+	}
+	self.push(work)
+}
+
 func (self *worker) startNewMinerRound() {
 	self.mu.Lock()
 	defer self.mu.Unlock()
@@ -394,8 +489,6 @@ func (self *worker) startNewMinerRound() {
 	header := &types.Header{
 		ParentHash: parent.Hash(),
 		Number:     num.Add(num, common.Big1),
-		GasLimit:   bc.CalcGasLimit(parent),
-		GasUsed:    new(big.Int),
 		Extra:      self.extra,
 		Time:       big.NewInt(tstamp),
 	}
@@ -420,7 +513,7 @@ func (self *worker) startNewMinerRound() {
 	}
 	// Create the current work task and check any fork transitions needed
 	work := self.current
-	txs, err := txpool.GetTxPool().Pending(10000)
+	pending, err := txpool.GetTxPool().Pending(10000)
 	if err != nil {
 		log.Error("Failed to fetch pending transactions", "err", err)
 		return
@@ -480,8 +573,6 @@ func (self *worker) commitUncle(work *Work, uncle *types.Header) error {
 }
 
 func (env *Work) commitTransactions(mux *sub.TypeMux, txs *types.TransactionsByPayload, coinbase common.Address, maxTxs int) {
-	gp := new(bc.GasPool).AddGas(env.header.GasLimit)
-
 	var coalescedLogs []*types.Log
 	var capTxs int
 	if maxTxs > blockMaxTxs || maxTxs < 0 {
@@ -508,7 +599,7 @@ func (env *Work) commitTransactions(mux *sub.TypeMux, txs *types.TransactionsByP
 		// Start executing the transaction
 		env.state.Prepare(tx.Hash(), common.Hash{}, env.tcount)
 
-		err, logs := env.commitTransaction(tx, coinbase, gp)
+		err, logs := env.commitTransaction(tx, coinbase)
 		switch err {
 		case bc.ErrGasLimitReached:
 			// Pop the current out-of-gas transaction without shifting in the next from the account
@@ -549,14 +640,14 @@ func (env *Work) commitTransactions(mux *sub.TypeMux, txs *types.TransactionsByP
 	}
 }
 
-func (env *Work) commitTransaction(tx *types.Transaction, coinbase common.Address, gp *bc.GasPool) (error, []*types.Log) {
+func (env *Work) commitTransaction(tx *types.Transaction, coinbase common.Address) (error, []*types.Log) {
 	var receipt *types.Receipt
 	var err error
 	snap := env.state.Snapshot()
 	blockchain := bc.InstanceBlockChain()
 
 	//Todo: change to new ApplyTransaction for sphinx
-	receipt, _, err = bc.ApplyTransactionNonContract(env.config, blockchain, &coinbase, gp, env.state, env.header, tx, env.header.GasUsed)
+	receipt, _, err = bc.ApplyTransactionNonContract(env.config, blockchain, &coinbase, env.state, env.header, tx)
 	if err != nil {
 		env.state.RevertToSnapshot(snap)
 		return err, nil

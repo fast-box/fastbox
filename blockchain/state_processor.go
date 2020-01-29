@@ -53,15 +53,13 @@ func NewStateProcessor(config *config.ChainConfig, bc *BlockChain, engine consen
 // Process returns the receipts and logs accumulated during the process and
 // returns the amount of gas that was used in the process. If any of the
 // transactions failed to execute due to insufficient gas it will return an error.
-func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (types.Receipts, []*types.Log, *big.Int, error) {
+func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (types.Receipts, []*types.Log, error) {
 	var (
-		receipts     types.Receipts
-		receipt      *types.Receipt
-		errs         error
-		totalUsedGas = big.NewInt(0)
-		header       = block.Header()
-		allLogs      []*types.Log
-		gp           = new(GasPool).AddGas(block.GasLimit())
+		receipts types.Receipts
+		receipt  *types.Receipt
+		errs     error
+		header   = block.Header()
+		allLogs  []*types.Log
 	)
 	synsigner := types.MakeSigner(p.config)
 	go func(txs types.Transactions) {
@@ -76,9 +74,9 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
 
 		// Todo: chang to new ApplyTransaction for sphinx
-		receipt, _, errs = ApplyTransactionNonContract(p.config, p.bc, &author, gp, statedb, header, tx, totalUsedGas)
+		receipt, _, errs = ApplyTransactionNonContract(p.config, p.bc, &author, statedb, header, tx)
 		if errs != nil {
-			return nil, nil, nil, errs
+			return nil, nil, errs
 		}
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)
@@ -86,16 +84,16 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
 	if _, errfinalize := p.engine.Finalize(p.bc, header, statedb, block.Transactions(), block.Uncles(), receipts); nil != errfinalize {
-		return nil, nil, nil, errfinalize
+		return nil, nil, errfinalize
 	}
 
-	return receipts, allLogs, totalUsedGas, nil
+	return receipts, allLogs, nil
 }
 
 // ApplyTransaction attempts to apply a transaction to the given state database
 // and uses the input parameters for its environment. It returns the receipt
 // for the transaction, gas used and an error if the transaction failed,
 // indicating the block was invalid.
-func ApplyTransactionNonContract(config *config.ChainConfig, bc *BlockChain, author *common.Address, gp *GasPool, statedb *state.StateDB, header *types.Header, tx *types.Transaction, usedGas *big.Int) (*types.Receipt, *big.Int, error) {
+func ApplyTransactionNonContract(config *config.ChainConfig, bc *BlockChain, author *common.Address, statedb *state.StateDB, header *types.Header, tx *types.Transaction) (*types.Receipt, *big.Int, error) {
 	return nil, nil, errors.New("need change to new ApplyTransaction for sphinx")
 }

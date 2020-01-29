@@ -67,25 +67,16 @@ func (n *BlockNonce) UnmarshalText(input []byte) error {
 
 // Header represents a block header in the Hpb blockchain.
 type Header struct {
-	ParentHash     common.Hash    `json:"parentHash"       gencodec:"required"`
-	UncleHash      common.Hash    `json:"sha3Uncles"       gencodec:"required"`
-	Coinbase       common.Address `json:"miner"            gencodec:"required"`
-	CandAddress    common.Address `json:"candAddress"      gencodec:"required"`
-	ComdAddress    common.Address `json:"comdAddress"      gencodec:"required"`
-	VoteIndex      *big.Int       `json:"voteIndex"        gencodec:"required"`
-	Root           common.Hash    `json:"stateRoot"        gencodec:"required"`
-	TxHash         common.Hash    `json:"transactionsRoot" gencodec:"required"`
-	ReceiptHash    common.Hash    `json:"receiptsRoot"     gencodec:"required"`
-	Bloom          Bloom          `json:"logsBloom"        gencodec:"required"`
-	Difficulty     *big.Int       `json:"difficulty"       gencodec:"required"`
-	Number         *big.Int       `json:"number"           gencodec:"required"`
-	GasLimit       *big.Int       `json:"gasLimit"         gencodec:"required"`
-	GasUsed        *big.Int       `json:"gasUsed"          gencodec:"required"`
-	Time           *big.Int       `json:"timestamp"        gencodec:"required"`
-	Extra          []byte         `json:"extraData"        gencodec:"required"`
-	MixDigest      common.Hash    `json:"mixHash"          gencodec:"required"`
-	Nonce          BlockNonce     `json:"nonce"            gencodec:"required"`
-	HardwareRandom []byte         `json:"hardwareRandom"   gencodec:"required"`
+	ParentHash  common.Hash    `json:"parentHash"       gencodec:"required"`
+	Coinbase    common.Address `json:"miner"            gencodec:"required"`
+	Root        common.Hash    `json:"stateRoot"        gencodec:"required"`
+	TxHash      common.Hash    `json:"transactionsRoot" gencodec:"required"`
+	ReceiptHash common.Hash    `json:"receiptsRoot"     gencodec:"required"`
+	Bloom       Bloom          `json:"logsBloom"        gencodec:"required"`
+	Difficulty  *big.Int       `json:"difficulty"       gencodec:"required"`
+	Number      *big.Int       `json:"number"           gencodec:"required"`
+	Time        *big.Int       `json:"timestamp"        gencodec:"required"`
+	Extra       []byte         `json:"extraData"        gencodec:"required"`
 }
 
 // field type overrides for gencodec
@@ -109,7 +100,6 @@ func (h *Header) Hash() common.Hash {
 func (h *Header) HashNoNonce() common.Hash {
 	return rlpHash([]interface{}{
 		h.ParentHash,
-		h.UncleHash,
 		h.Coinbase,
 		h.Root,
 		h.TxHash,
@@ -117,8 +107,6 @@ func (h *Header) HashNoNonce() common.Hash {
 		h.Bloom,
 		h.Difficulty,
 		h.Number,
-		h.GasLimit,
-		h.GasUsed,
 		h.Time,
 		h.Extra,
 	})
@@ -205,16 +193,6 @@ func NewBlock(header *Header, txs []*Transaction, uncles []*Header, receipts []*
 		b.header.Bloom = CreateBloom(receipts)
 	}
 
-	if len(uncles) == 0 {
-		b.header.UncleHash = EmptyUncleHash
-	} else {
-		b.header.UncleHash = CalcUncleHash(uncles)
-		b.uncles = make([]*Header, len(uncles))
-		for i := range uncles {
-			b.uncles[i] = CopyHeader(uncles[i])
-		}
-	}
-
 	return b
 }
 
@@ -237,28 +215,15 @@ func CopyHeader(h *Header) *Header {
 	if cpy.Time = new(big.Int); h.Time != nil {
 		cpy.Time.Set(h.Time)
 	}
-	if cpy.VoteIndex = new(big.Int); h.VoteIndex != nil {
-		cpy.VoteIndex.Set(h.VoteIndex)
-	}
 	if cpy.Difficulty = new(big.Int); h.Difficulty != nil {
 		cpy.Difficulty.Set(h.Difficulty)
 	}
 	if cpy.Number = new(big.Int); h.Number != nil {
 		cpy.Number.Set(h.Number)
 	}
-	if cpy.GasLimit = new(big.Int); h.GasLimit != nil {
-		cpy.GasLimit.Set(h.GasLimit)
-	}
-	if cpy.GasUsed = new(big.Int); h.GasUsed != nil {
-		cpy.GasUsed.Set(h.GasUsed)
-	}
 	if len(h.Extra) > 0 {
 		cpy.Extra = make([]byte, len(h.Extra))
 		copy(cpy.Extra, h.Extra)
-	}
-	if len(h.HardwareRandom) > 0 {
-		cpy.HardwareRandom = make([]byte, len(h.HardwareRandom))
-		copy(cpy.HardwareRandom, h.HardwareRandom)
 	}
 	return &cpy
 }
@@ -307,23 +272,17 @@ func (b *Block) Transaction(hash common.Hash) *Transaction {
 }
 
 func (b *Block) Number() *big.Int     { return new(big.Int).Set(b.header.Number) }
-func (b *Block) GasLimit() *big.Int   { return new(big.Int).Set(b.header.GasLimit) }
-func (b *Block) GasUsed() *big.Int    { return new(big.Int).Set(b.header.GasUsed) }
 func (b *Block) Difficulty() *big.Int { return new(big.Int).Set(b.header.Difficulty) }
 func (b *Block) Time() *big.Int       { return new(big.Int).Set(b.header.Time) }
 
 func (b *Block) NumberU64() uint64        { return b.header.Number.Uint64() }
-func (b *Block) MixDigest() common.Hash   { return b.header.MixDigest }
-func (b *Block) Nonce() uint64            { return binary.BigEndian.Uint64(b.header.Nonce[:]) }
 func (b *Block) Bloom() Bloom             { return b.header.Bloom }
 func (b *Block) Coinbase() common.Address { return b.header.Coinbase }
 func (b *Block) Root() common.Hash        { return b.header.Root }
 func (b *Block) ParentHash() common.Hash  { return b.header.ParentHash }
 func (b *Block) TxHash() common.Hash      { return b.header.TxHash }
 func (b *Block) ReceiptHash() common.Hash { return b.header.ReceiptHash }
-func (b *Block) UncleHash() common.Hash   { return b.header.UncleHash }
 func (b *Block) Extra() []byte            { return common.CopyBytes(b.header.Extra) }
-func (b *Block) Hardwarerandom() []byte   { return common.CopyBytes(b.header.HardwareRandom) }
 
 func (b *Block) Header() *Header { return CopyHeader(b.header) }
 
@@ -402,25 +361,16 @@ func (h *Header) String() string {
 	return fmt.Sprintf(`Header(%x):
 [
 	ParentHash:	    %x
-	UncleHash:	    %x
 	Coinbase:	    %x
-    CandAddress:    %x
-	ComdAddress:    %x
-    VoteIndex:      %x
 	Root:		    %x
 	TxSha		    %x
 	ReceiptSha:	    %x
 	Bloom:		    %x
 	Difficulty:	    %v
 	Number:		    %v
-	GasLimit:	    %v
-	GasUsed:	    %v
 	Time:		    %v
 	Extra:		    %s
-	MixDigest:      %x
-	Nonce:		    %x
-	hardwarerandom: %x
-]`, h.Hash(), h.ParentHash, h.UncleHash, h.Coinbase, h.CandAddress, h.ComdAddress, h.VoteIndex, h.Root, h.TxHash, h.ReceiptHash, h.Bloom, h.Difficulty, h.Number, h.GasLimit, h.GasUsed, h.Time, h.Extra, h.MixDigest, h.Nonce, h.HardwareRandom)
+]`, h.Hash(), h.ParentHash, h.Coinbase, h.Root, h.TxHash, h.ReceiptHash, h.Bloom, h.Difficulty, h.Number, h.Time, h.Extra)
 }
 
 type Blocks []*Block

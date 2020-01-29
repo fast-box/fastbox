@@ -361,50 +361,7 @@ func handleKnownBlocksAdd(hash common.Hash) {
 
 // HandleNewBlockMsg deal received NewBlockMsg
 func HandleNewHashBlockMsg(p *p2p.Peer, msg p2p.Msg) error {
-	// Retrieve and decode the propagated block
-	var request newBlockHashData
-	if err := msg.Decode(&request); err != nil {
-		return p2p.ErrResp(p2p.ErrDecode, "%v: %v", msg, err)
-	}
-	txs := make([]*types.Transaction, 0, len(request.BlockH.TxsHash))
-	for _, txhs := range request.BlockH.TxsHash {
-		//get tx data from txpool
-		tx := txpool.GetTxPool().GetTxByHash(txhs)
-		txs = append(txs, tx)
-	}
-	newBlock := types.BuildBlock(request.BlockH.Header, txs, request.BlockH.Uncles, request.BlockH.Td)
-
-	newBlock.ReceivedAt = msg.ReceivedAt
-	newBlock.ReceivedFrom = p
-	////////////////////////////////////////////////
-
-	////////////////////////////////////////////////
-	// Mark the peer as owning the block and schedule it for import
-	p.KnownBlockAdd(newBlock.Hash())
-	if handleKnownBlocks.Has(newBlock.Hash()) {
-		return nil
-	} else {
-		handleKnownBlocksAdd(newBlock.Hash())
-	}
-	InstanceSynCtrl().puller.Enqueue(p.GetID(), newBlock)
-
-	// Assuming the block is importable by the peer, but possibly not yet done so,
-	// calculate the head hash and TD that the peer truly must have.
-	var (
-		trueHead = newBlock.ParentHash()
-		trueTD   = new(big.Int).Sub(request.BlockH.Td, newBlock.Difficulty())
-	)
-	// Update the peers total difficulty if better than the previous
-	if _, td := p.Head(); trueTD.Cmp(td) > 0 {
-		p.SetHead(trueHead, trueTD)
-
-		// Schedule a sync if above ours. Note, this will not fire a sync for a gap of
-		// a singe block (as the true TD is below the propagated block), however this
-		// scenario should easily be covered by the fetcher.
-		currentBlock := bc.InstanceBlockChain().CurrentBlock()
-		if trueTD.Cmp(bc.InstanceBlockChain().GetTd(currentBlock.Hash(), currentBlock.NumberU64())) > 0 {
-		}
-	}
+	// unused current.
 	return nil
 }
 
