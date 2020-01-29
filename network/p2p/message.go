@@ -63,6 +63,7 @@ const (
 	ReceiptsMsg        uint64 = 0x201c
 
 	NewHashBlockMsg uint64 = 0x2020
+	SignedTxsMsg    uint64 = 0x2022
 )
 
 // Msg defines the structure of a p2p message.

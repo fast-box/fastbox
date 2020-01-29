@@ -430,3 +430,38 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 
 	return nil
 }
+
+
+// TODO: lqh
+func HandleSignedTxMsg(p *p2p.Peer, msg p2p.Msg) error {
+	// Transactions arrived, make sure we have a valid and fresh chain to handle them
+	// Don't change this code if you don't understand it
+	if atomic.LoadUint32(&InstanceSynCtrl().AcceptTxs) == 0 {
+		return nil
+	}
+
+	// Transactions can be processed, parse all of them and deliver to the pool
+	var txs []*types.Transaction
+	if err := msg.Decode(&txs); err != nil {
+		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
+	}
+
+	for i, tx := range txs {
+		// Validate and mark the remote transaction
+		if tx == nil {
+			return p2p.ErrResp(p2p.ErrDecode, "transaction %d is nil", i)
+		}
+		p.KnownTxsAdd(tx.Hash())
+
+		if nil != txpool.GetTxPool().GetTxByHash(tx.Hash()) {
+			continue
+		} else {
+			go func() {
+				poolTxsCh <- tx
+			}()
+		}
+	}
+
+	return nil
+}
+

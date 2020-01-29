@@ -243,7 +243,7 @@ func (hp *HpbProto) handleMsg(p *Peer) error {
 		}
 		return nil
 
-	case NewBlockHashesMsg,NewBlockMsg,NewHashBlockMsg,TxMsg:
+	case NewBlockHashesMsg,NewBlockMsg,NewHashBlockMsg,TxMsg,SignedTxsMsg:
 		if cb := hp.msgProcess[msg.Code]; cb != nil{
 			err := cb(p,msg)
 			p.log.Trace("Process syn new msg","msg",msg,"err",err)

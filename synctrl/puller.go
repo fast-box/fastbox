@@ -94,7 +94,7 @@ type bodyFilterTask struct {
 	peer         string                 // The source peer of block bodies
 	transactions [][]*types.Transaction // Collection of transactions per block bodies
 	uncles       [][]*types.Header      // Collection of uncles per block bodies
-	time         time.Time              // Arrival time of the blocks' contents
+	time         time.Time              // Arrival time of the blocks' contentsK
 }
 
 // inject represents a schedules import operation.

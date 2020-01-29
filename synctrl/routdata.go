@@ -191,3 +191,10 @@ func sendTransactions(peer *p2p.Peer, txs types.Transactions) error {
 	}
 	return p2p.SendData(peer, p2p.TxMsg, txs)
 }
+
+func sendTransactionsBySigned(peer *p2p.Peer, txs types.Transactions) error {
+	for _, tx := range txs {
+		peer.KnownTxsAdd(tx.Hash())
+	}
+	return p2p.SendData(peer, p2p.SignedTxsMsg, txs)
+}
