@@ -149,3 +149,29 @@ func (c *Prometheus) GetSinger() common.Address {
 	defer c.lock.RUnlock()
 	return c.signer
 }
+func MixHash(first, second common.Hash) common.Hash {
+	var result common.Hash
+	for i := 0; i < common.HashLength; i++ {
+		result[i] = first[i] ^ second[i]
+	}
+	return result
+}
+
+func (c *Prometheus) GenProof(txs types.Transactions) (proof *types.WorkProof, err error) {
+	rootHash := make([]byte, 0, common.HashLength) // get local latest hash
+	latestHash, err := c.db.Get(rootHash)
+	if err != nil {
+		return nil, err
+	}
+
+	txroot := types.DeriveSha(txs)
+	var lhash common.Hash
+	lhash.SetBytes(latestHash)
+	proofHash := MixHash(lhash, txroot)
+	signer, signFn := c.signer, c.signFn
+	sighash, err := signFn(accounts.Account{Address: signer}, proofHash.Bytes())
+	if err != nil {
+		return nil, err
+	}
+	return &types.WorkProof{sighash, txs}, nil
+}

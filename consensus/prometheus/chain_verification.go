@@ -16,6 +16,10 @@
 package prometheus
 
 import (
+	"bytes"
+	"errors"
+	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/crypto"
 	"math/big"
 	"time"
 
@@ -127,4 +131,21 @@ func (c *Prometheus) verifySeal(chain consensus.ChainReader, header *types.Heade
 		return consensus.ErrUnknownBlock
 	}
 	return nil
+}
+
+func (c *Prometheus) VerifyProof(lHash common.Hash, address common.Address, proof *types.WorkProof) error {
+	txroot := types.DeriveSha(proof.Txs)
+	proofHash := MixHash(lHash, txroot)
+
+	if pub, err := crypto.Ecrecover(proofHash.Bytes(), proof.Signature); err == nil {
+		var addr common.Address
+		copy(addr[:], crypto.Keccak256(pub[1:])[12:])
+		if bytes.Compare(addr.Bytes(), address.Bytes()) != 0 {
+			return errors.New("Invalid proof")
+		} else {
+			return nil
+		}
+	} else {
+		return errors.New("Invalid proof")
+	}
 }
