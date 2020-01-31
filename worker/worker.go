@@ -97,8 +97,6 @@ type worker struct {
 	txpool       *txpool.TxPool
 	chainHeadCh  chan bc.ChainHeadEvent
 	chainHeadSub sub.Subscription
-	chainSideCh  chan bc.ChainSideEvent
-	chainSideSub sub.Subscription
 	wg           sync.WaitGroup
 
 	producers map[Producer]struct{}
@@ -114,9 +112,6 @@ type worker struct {
 	currentMu sync.Mutex
 	current   *Work
 
-	uncleMu        sync.Mutex
-	possibleUncles map[common.Hash]*types.Block
-
 	unconfirmed *unconfirmedBlocks // set of locally mined blocks pending canonicalness confirmations
 
 	// atomic status counters
@@ -126,24 +121,21 @@ type worker struct {
 
 func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase common.Address /*eth Backend,*/, mux *sub.TypeMux) *worker {
 	worker := &worker{
-		config:         config,
-		engine:         engine,
-		mux:            mux,
-		chainHeadCh:    make(chan bc.ChainHeadEvent, chainHeadChanSize),
-		chainSideCh:    make(chan bc.ChainSideEvent, chainSideChanSize),
-		chainDb:        nil,
-		recv:           make(chan *Result, resultQueueSize),
-		chain:          bc.InstanceBlockChain(),
-		proc:           bc.InstanceBlockChain().Validator(),
-		possibleUncles: make(map[common.Hash]*types.Block),
-		coinbase:       coinbase,
-		producers:      make(map[Producer]struct{}),
-		unconfirmed:    newUnconfirmedBlocks(bc.InstanceBlockChain(), miningLogAtDepth),
+		config:      config,
+		engine:      engine,
+		mux:         mux,
+		chainHeadCh: make(chan bc.ChainHeadEvent, chainHeadChanSize),
+		chainDb:     nil,
+		recv:        make(chan *Result, resultQueueSize),
+		chain:       bc.InstanceBlockChain(),
+		proc:        bc.InstanceBlockChain().Validator(),
+		coinbase:    coinbase,
+		producers:   make(map[Producer]struct{}),
+		unconfirmed: newUnconfirmedBlocks(bc.InstanceBlockChain(), miningLogAtDepth),
 	}
 
 	worker.txpool = txpool.GetTxPool()
 	worker.chainHeadSub = bc.InstanceBlockChain().SubscribeChainHeadEvent(worker.chainHeadCh)
-	worker.chainSideSub = bc.InstanceBlockChain().SubscribeChainSideEvent(worker.chainSideCh)
 	// goto listen the event
 	go worker.eventListener()
 	go worker.handlerSelfMinedBlock()
@@ -235,7 +227,6 @@ func (self *worker) eventListener() {
 
 	//defer self.txSub.Unsubscribe()
 	defer self.chainHeadSub.Unsubscribe()
-	defer self.chainSideSub.Unsubscribe()
 
 	for {
 		// A real event arrived, process interesting content
@@ -244,15 +235,7 @@ func (self *worker) eventListener() {
 		case <-self.chainHeadCh:
 			self.startNewMinerRound()
 
-		// Handle ChainSideEvent
-		case ev := <-self.chainSideCh:
-			self.uncleMu.Lock()
-			self.possibleUncles[ev.Block.Hash()] = ev.Block
-			self.uncleMu.Unlock()
-
 		case <-self.chainHeadSub.Err():
-			return
-		case <-self.chainSideSub.Err():
 			return
 		}
 	}
@@ -364,8 +347,6 @@ func (self *worker) calMaxTxs(parent *types.Block) int {
 func (self *worker) PreMiner() {
 	self.mu.Lock()
 	defer self.mu.Unlock()
-	self.uncleMu.Lock()
-	defer self.uncleMu.Unlock()
 	self.currentMu.Lock()
 	defer self.currentMu.Unlock()
 
@@ -438,8 +419,6 @@ func (self *worker) PreMiner() {
 func (self *worker) startNewMinerRound() {
 	self.mu.Lock()
 	defer self.mu.Unlock()
-	self.uncleMu.Lock()
-	defer self.uncleMu.Unlock()
 	self.currentMu.Lock()
 	defer self.currentMu.Unlock()
 
