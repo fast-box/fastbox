@@ -15,9 +15,7 @@ GO ?= latest
 ghpb:
 	build/env.sh go run build/ci.go install ./cmd/ghpb
 	@echo "Done building."
-	@echo "Run \"$(GOBIN)/geth\" to launch geth."
-	cp "$(GOHPB)/network/p2p/binding.json" "$(GOBIN)/binding.json"
-	cp "$(GOHPB)/network/p2p/config.json" "$(GOBIN)/config.json"
+	@echo "Run \"$(GOBIN)/ghpb\" to launch ghpb."
 
 promfile:
 	build/env.sh go run build/ci.go install ./consensus/promfile
