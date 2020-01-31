@@ -16,7 +16,6 @@
 package prometheus
 
 import (
-	"errors"
 	"math/big"
 	"time"
 
@@ -111,15 +110,6 @@ func (c *Prometheus) verifyCascadingFields(chain consensus.ChainReader, header *
 
 	// All basic checks passed, verify the seal and return
 	return c.verifySeal(chain, header, parents, mode)
-}
-
-// VerifyUncles implements consensus.Engine, always returning an error for any
-// uncles as this consensus mechanism doesn't permit uncles.
-func (c *Prometheus) VerifyUncles(chain consensus.ChainReader, block *types.Block) error {
-	if len(block.Uncles()) > 0 {
-		return errors.New("uncles not allowed")
-	}
-	return nil
 }
 
 // VerifySeal implements consensus.Engine, checking whether the signature contained

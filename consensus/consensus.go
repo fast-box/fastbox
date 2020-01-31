@@ -71,10 +71,6 @@ type Engine interface {
 	//set net node type
 	SetNetTopology(chain ChainReader, headers []*types.Header)
 
-	// VerifyUncles verifies that the given block's uncles conform to the consensus
-	// rules of a given engine.
-	VerifyUncles(chain ChainReader, block *types.Block) error
-
 	// VerifySeal checks whether the crypto seal on a header is valid according to
 	// the consensus rules of the given engine.
 	VerifySeal(chain ChainReader, header *types.Header) error
@@ -86,7 +82,7 @@ type Engine interface {
 	// Note: The block header and state database might be updated to reflect any
 	// consensus rules that happen at finalization (e.g. block rewards).
 	Finalize(chain ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction,
-		uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error)
+		receipts []*types.Receipt) (*types.Block, error)
 
 	// Seal generates a new block for the given input block with the local miner's
 	// seal place on top.

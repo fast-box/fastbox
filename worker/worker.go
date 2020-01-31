@@ -17,7 +17,6 @@
 package worker
 
 import (
-	"fmt"
 	"math/big"
 	"sync"
 	"sync/atomic"
@@ -71,7 +70,6 @@ type Work struct {
 	state     *state.StateDB // apply state changes here
 	ancestors *set.Set       // ancestor set (used for checking uncle parent validity)
 	family    *set.Set       // family set (used for checking uncle invalidity)
-	uncles    *set.Set       // uncle set
 	tcount    int            // tx count in cycle
 
 	Block *types.Block // the new block
@@ -96,7 +94,7 @@ type worker struct {
 	mu sync.Mutex
 
 	mux          *sub.TypeMux
-	pool         *txpool.TxPool
+	txpool       *txpool.TxPool
 	chainHeadCh  chan bc.ChainHeadEvent
 	chainHeadSub sub.Subscription
 	chainSideCh  chan bc.ChainSideEvent
@@ -143,7 +141,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 		unconfirmed:    newUnconfirmedBlocks(bc.InstanceBlockChain(), miningLogAtDepth),
 	}
 
-	worker.pool = txpool.GetTxPool()
+	worker.txpool = txpool.GetTxPool()
 	worker.chainHeadSub = bc.InstanceBlockChain().SubscribeChainHeadEvent(worker.chainHeadCh)
 	worker.chainSideSub = bc.InstanceBlockChain().SubscribeChainSideEvent(worker.chainSideCh)
 	// goto listen the event
@@ -173,7 +171,6 @@ func (self *worker) pending() (*types.Block, *state.StateDB) {
 		return types.NewBlock(
 			self.current.header,
 			self.current.txs,
-			nil,
 			self.current.receipts,
 		), self.current.state.Copy()
 	}
@@ -188,7 +185,6 @@ func (self *worker) pendingBlock() *types.Block {
 		return types.NewBlock(
 			self.current.header,
 			self.current.txs,
-			nil,
 			self.current.receipts,
 		)
 	}
@@ -342,7 +338,6 @@ func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error
 		state:     state,
 		ancestors: set.New(),
 		family:    set.New(),
-		uncles:    set.New(),
 		header:    header,
 		createdAt: time.Now(),
 	}
@@ -426,36 +421,15 @@ func (self *worker) PreMiner() {
 	maxtxs := self.calMaxTxs(parent)
 	work.commitTransactions(self.mux, txs, self.coinbase, maxtxs)
 	log.Debug("worker startNewMinerRound after commitTransactions", "time", time.Now().Unix())
-	// compute uncles for the new block.
-	var (
-		uncles    []*types.Header
-		badUncles []common.Hash
-	)
-	for hash, uncle := range self.possibleUncles {
-		if len(uncles) == 2 {
-			break
-		}
-		if err := self.commitUncle(work, uncle.Header()); err != nil {
-			log.Trace("Bad uncle found and will be removed", "hash", hash)
-			log.Trace(fmt.Sprint(uncle))
 
-			badUncles = append(badUncles, hash)
-		} else {
-			log.Debug("Committing new uncle to block", "hash", hash)
-			uncles = append(uncles, uncle.Header())
-		}
-	}
-	for _, hash := range badUncles {
-		delete(self.possibleUncles, hash)
-	}
 	// Create the new block to seal with the consensus engine
-	if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, uncles, work.receipts); err != nil {
+	if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, work.receipts); err != nil {
 		log.Error("Failed to finalize block for sealing", "err", err)
 		return
 	}
 	// We only care about logging if we're actually mining.
 	if atomic.LoadInt32(&self.mining) == 1 {
-		log.Info("Commit new mining work", "number", work.Block.Number(), "txs", work.tcount, "uncles", len(uncles), "elapsed", common.PrettyDuration(time.Since(tstart)))
+		log.Info("Commit new mining work", "number", work.Block.Number(), "txs", work.tcount, "elapsed", common.PrettyDuration(time.Since(tstart)))
 		self.unconfirmed.Shift(work.Block.NumberU64() - 1)
 	}
 	self.push(work)
@@ -522,54 +496,18 @@ func (self *worker) startNewMinerRound() {
 	maxtxs := self.calMaxTxs(parent)
 	work.commitTransactions(self.mux, txs, self.coinbase, maxtxs)
 	log.Debug("worker startNewMinerRound after commitTransactions", "time", time.Now().Unix())
-	// compute uncles for the new block.
-	var (
-		uncles    []*types.Header
-		badUncles []common.Hash
-	)
-	for hash, uncle := range self.possibleUncles {
-		if len(uncles) == 2 {
-			break
-		}
-		if err := self.commitUncle(work, uncle.Header()); err != nil {
-			log.Trace("Bad uncle found and will be removed", "hash", hash)
-			log.Trace(fmt.Sprint(uncle))
 
-			badUncles = append(badUncles, hash)
-		} else {
-			log.Debug("Committing new uncle to block", "hash", hash)
-			uncles = append(uncles, uncle.Header())
-		}
-	}
-	for _, hash := range badUncles {
-		delete(self.possibleUncles, hash)
-	}
 	// Create the new block to seal with the consensus engine
-	if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, uncles, work.receipts); err != nil {
+	if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, work.receipts); err != nil {
 		log.Error("Failed to finalize block for sealing", "err", err)
 		return
 	}
 	// We only care about logging if we're actually mining.
 	if atomic.LoadInt32(&self.mining) == 1 {
-		log.Info("Commit new mining work", "number", work.Block.Number(), "txs", work.tcount, "uncles", len(uncles), "elapsed", common.PrettyDuration(time.Since(tstart)))
+		log.Info("Commit new mining work", "number", work.Block.Number(), "txs", work.tcount, "elapsed", common.PrettyDuration(time.Since(tstart)))
 		self.unconfirmed.Shift(work.Block.NumberU64() - 1)
 	}
 	self.push(work)
-}
-
-func (self *worker) commitUncle(work *Work, uncle *types.Header) error {
-	hash := uncle.Hash()
-	if work.uncles.Has(hash) {
-		return fmt.Errorf("uncle not unique")
-	}
-	if !work.ancestors.Has(uncle.ParentHash) {
-		return fmt.Errorf("uncle's parent unknown (%x)", uncle.ParentHash[0:4])
-	}
-	if work.family.Has(hash) {
-		return fmt.Errorf("uncle already in family (%x)", hash)
-	}
-	work.uncles.Add(uncle.Hash())
-	return nil
 }
 
 func (env *Work) commitTransactions(mux *sub.TypeMux, txs *types.TransactionsByPayload, coinbase common.Address, maxTxs int) {

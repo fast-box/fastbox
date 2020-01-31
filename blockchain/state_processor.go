@@ -83,7 +83,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 	}
 
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
-	if _, errfinalize := p.engine.Finalize(p.bc, header, statedb, block.Transactions(), block.Uncles(), receipts); nil != errfinalize {
+	if _, errfinalize := p.engine.Finalize(p.bc, header, statedb, block.Transactions(), receipts); nil != errfinalize {
 		return nil, nil, errfinalize
 	}
 

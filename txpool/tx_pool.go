@@ -223,7 +223,7 @@ func (pool *TxPool) sendToVerify(tx *types.Transaction) error {
 	return nil
 }
 
-func (pool *TxPool) DealTxRouint() {
+func (pool *TxPool) DealTxRoutine() {
 	pool.dealwg.Add(1)
 	go func() {
 		defer pool.dealwg.Done()
