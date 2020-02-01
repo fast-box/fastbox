@@ -47,82 +47,64 @@ func routBlock(block *types.Block, propagate bool) {
 		// Send the block to a subset of our peers
 		transfer := peers[:int(math.Sqrt(float64(len(peers))))]
 		for _, peer := range transfer {
-			switch peer.RemoteType() {
-			case discover.MineNode:
-				sendNewBlock(peer, block, td)
+			switch peer.LocalType() {
+			case discover.PreNode:
+				switch peer.RemoteType() {
+				case discover.PreNode:
+					sendNewBlock(peer, block, td)
+					break
+				default:
+					break
+				}
+				break
+			case discover.HpNode:
+				switch peer.RemoteType() {
+				case discover.PreNode:
+					sendNewBlock(peer, block, td)
+					break
+				case discover.HpNode:
+					sendNewBlock(peer, block, td)
+					break
+				default:
+					break
+				}
 				break
 			default:
 				break
 			}
 		}
-		//for _, peer := range transfer {
-		//	switch peer.LocalType() {
-		//	case discover.PreNode:
-		//		switch peer.RemoteType() {
-		//		case discover.PreNode:
-		//			sendNewBlock(peer, block, td)
-		//			break
-		//		default:
-		//			break
-		//		}
-		//		break
-		//	case discover.HpNode:
-		//		switch peer.RemoteType() {
-		//		case discover.PreNode:
-		//			sendNewBlock(peer, block, td)
-		//			break
-		//		case discover.HpNode:
-		//			sendNewBlock(peer, block, td)
-		//			break
-		//		default:
-		//			break
-		//		}
-		//		break
-		//	default:
-		//		break
-		//	}
-		//}
 		log.Trace("Propagated block", "hash", hash, "recipients", len(peers), "duration", common.PrettyDuration(time.Since(block.ReceivedAt)))
 		return
 	}
 	// Otherwise if the block is indeed in out own chain, announce it
 	if bc.InstanceBlockChain().HasBlock(hash, block.NumberU64()) {
 		for _, peer := range peers {
-			switch peer.RemoteType() {
-			case discover.MineNode:
-				sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
+			switch peer.LocalType() {
+			case discover.PreNode:
+				switch peer.RemoteType() {
+				case discover.PreNode:
+					sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
+					break
+				default:
+					break
+				}
+				break
+			case discover.HpNode:
+				switch peer.RemoteType() {
+				case discover.PreNode:
+					sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
+					break
+				case discover.HpNode:
+					sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
+					break
+				default:
+					break
+				}
 				break
 			default:
 				break
 			}
 		}
-		//for _, peer := range peers {
-		//	switch peer.LocalType() {
-		//	case discover.PreNode:
-		//		switch peer.RemoteType() {
-		//		case discover.PreNode:
-		//			sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
-		//			break
-		//		default:
-		//			break
-		//		}
-		//		break
-		//	case discover.HpNode:
-		//		switch peer.RemoteType() {
-		//		case discover.PreNode:
-		//			sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
-		//			break
-		//		case discover.HpNode:
-		//			sendNewBlockHashes(peer, []common.Hash{hash}, []uint64{block.NumberU64()})
-		//			break
-		//		default:
-		//			break
-		//		}
-		//		break
-		//	default:
-		//		break
-		//	}
-		//}
 		log.Trace("Announced block", "hash", hash, "recipients", len(peers), "duration", common.PrettyDuration(time.Since(block.ReceivedAt)))
 	}
 }
@@ -133,78 +115,75 @@ func routTx(hash common.Hash, tx *types.Transaction) {
 	// Broadcast transaction to a batch of peers not knowing about it
 
 	if tx.IsForward() {
-		//routForwardTx(hash,tx)
+		routForwardTx(hash,tx)
 	} else {
 		tx.SetForward(true)
-		routNativeTx(hash, tx)
+		routNativeTx(hash,tx)
 	}
 }
 
 func routNativeTx(hash common.Hash, tx *types.Transaction) {
 	peers := p2p.PeerMgrInst().PeersWithoutTx(hash)
-	if len(peers) == 0 {
-		return
-	}
+	if len(peers) == 0 { return }
 
 	switch p2p.PeerMgrInst().GetLocalType() {
-	case discover.MineNode:
+	case discover.HpNode:
 		for _, peer := range peers {
 			switch peer.RemoteType() {
-			case discover.MineNode:
+			case discover.HpNode:
 				sendTransactions(peer, types.Transactions{tx})
 				break
 			}
 		}
 		break
-		//case discover.PreNode:
-		//	for _, peer := range peers {
-		//		switch peer.RemoteType() {
-		//		case discover.HpNode:
-		//			sendTransactions(peer, types.Transactions{tx})
-		//			break
-		//		}
-		//	}
-		//
-		//	toPreCount := 0
-		//	for _, peer := range peers {
-		//		switch peer.RemoteType() {
-		//		case discover.PreNode:
-		//			sendTransactions(peer, types.Transactions{tx})
-		//			toPreCount += 1
-		//			break
-		//		}
-		//		if toPreCount >= 1 {
-		//			break
-		//		}
-		//	}
-		//
-		//	break
-		//
+	case discover.PreNode:
+		for _, peer := range peers {
+			switch peer.RemoteType() {
+			case discover.HpNode:
+				sendTransactions(peer, types.Transactions{tx})
+				break
+			}
+		}
+
+		toPreCount := 0
+		for _, peer := range peers {
+			switch peer.RemoteType() {
+			case discover.PreNode:
+				sendTransactions(peer, types.Transactions{tx})
+				toPreCount += 1
+				break
+			}
+			if toPreCount >= 1 {
+				break
+			}
+		}
+
+		break
+
 	}
 	log.Trace("Broadcast transaction", "hash", hash, "recipients", len(peers))
 }
 
-//
-//func routForwardTx(hash common.Hash, tx *types.Transaction) {
-//	peers := p2p.PeerMgrInst().PeersWithoutTx(hash)
-//	if len(peers) == 0 { return }
-//
-//	switch p2p.PeerMgrInst().GetLocalType() {
-//	case discover.HpNode:
-//		break
-//	case discover.PreNode:
-//		for _, peer := range peers {
-//			switch peer.RemoteType() {
-//			case discover.HpNode:
-//				sendTransactions(peer, types.Transactions{tx})
-//				break
-//			}
-//		}
-//		break
-//	}
-//
-//	log.Trace("Broadcast transaction", "hash", hash, "recipients", len(peers))
-//}
+func routForwardTx(hash common.Hash, tx *types.Transaction) {
+	peers := p2p.PeerMgrInst().PeersWithoutTx(hash)
+	if len(peers) == 0 { return }
+
+	switch p2p.PeerMgrInst().GetLocalType() {
+	case discover.HpNode:
+		break
+	case discover.PreNode:
+		for _, peer := range peers {
+			switch peer.RemoteType() {
+			case discover.HpNode:
+				sendTransactions(peer, types.Transactions{tx})
+				break
+			}
+		}
+		break
+	}
+
+	log.Trace("Broadcast transaction", "hash", hash, "recipients", len(peers))
+}
 
 func sendTransactions(peer *p2p.Peer, txs types.Transactions) error {
 	for _, tx := range txs {

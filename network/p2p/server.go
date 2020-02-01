@@ -872,7 +872,7 @@ func (srv *Server) runPeer(p *PeerBase) {
 func (srv *Server) setPeerInitType(p *PeerBase, isboe bool) {
 
 	p.localType = srv.localType
-	p.remoteType = discover.MineNode
+	p.remoteType = discover.PreNode
 
 	for _, n := range srv.BootstrapNodes {
 		if n.ID == p.ID() {
@@ -882,23 +882,23 @@ func (srv *Server) setPeerInitType(p *PeerBase, isboe bool) {
 		}
 	}
 
-	//if isboe {
-	//	p.remoteType = discover.PreNode
-	//	p.log.Info("P2P set init peer remote type prenode")
-	//	return
-	//}
+	if isboe {
+		p.remoteType = discover.PreNode
+		p.log.Info("P2P set init peer remote type prenode")
+		return
+	}
 
-	//if srv.TestMode {
-	//	p.remoteType = discover.MineNode
-	//	for _, spid := range srv.synPid {
-	//		if spid.PID == p.ID().TerminalString() {
-	//			p.remoteType = discover.MineNode
-	//			p.log.Info("P2P set init peer remote type synnode (TestMode)")
-	//			return
-	//		}
-	//	}
-	//	p.log.Info("P2P set init peer remote type prenode (TestMode)")
-	//}
+	if srv.TestMode {
+		p.remoteType = discover.PreNode
+		for _, spid := range srv.synPid {
+			if spid.PID == p.ID().TerminalString() {
+				p.remoteType = discover.PreNode
+				p.log.Info("P2P set init peer remote type synnode (TestMode)")
+				return
+			}
+		}
+		p.log.Info("P2P set init peer remote type prenode (TestMode)")
+	}
 
 }
 
