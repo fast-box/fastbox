@@ -388,7 +388,7 @@ func (self *worker) PreMiner() {
 		log.Error("Failed to create mining context", "err", err)
 		return
 	}
-	if p2p.PeerMgrInst().GetLocalType() == discover.PreNode {
+	if p2p.PeerMgrInst().GetLocalType() == discover.BootNode {
 		return
 	}
 	// Create the current work task and check any fork transitions needed
