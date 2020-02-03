@@ -34,6 +34,11 @@ var (
 	insPrometheus *Prometheus
 )
 
+type PeerProof struct {
+	Latest   int64 //time stamp for update.
+	RootHash common.Hash
+}
+
 type Prometheus struct {
 	config *config.PrometheusConfig // Consensus config
 	db     hpbdb.Database           // Database
@@ -42,9 +47,8 @@ type Prometheus struct {
 	signatures *lru.ARCCache // the last signature
 
 	proposals map[common.Address]bool // current proposals (hpb nodes)
-
+	proofs    sync.Map                // map[common.Address]PeerProof
 	signer    common.Address
-	randomStr string
 	signFn    SignerFn     // Callback function
 	lock      sync.RWMutex // Protects the signerHash fields
 }

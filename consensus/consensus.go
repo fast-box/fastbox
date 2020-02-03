@@ -41,7 +41,7 @@ type ChainReader interface {
 	// GetHeaderByNumber retrieves a block header from the database by number.
 	GetHeaderByNumber(number uint64) *types.Header
 
-	// GetHeaderByHash retrieves a block header from the database by its hash.
+	// GetHeaderByash retrieves a block header from the database by its hash.
 	GetHeaderByHash(hash common.Hash) *types.Header
 
 	// GetBlock retrieves a block from the database by hash and number.
@@ -52,6 +52,9 @@ type ChainReader interface {
 
 // Engine is an algorithm agnostic consensus engine.
 type Engine interface {
+	// update peer proof info.
+	UpdateProof(addr common.Address, hash common.Hash)
+
 	// Author retrieves the Hpb address of the account that minted the given
 	// block, which may be different from the header's coinbase if a consensus
 	// engine is based on signatures.

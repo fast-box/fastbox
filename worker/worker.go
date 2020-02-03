@@ -47,8 +47,6 @@ const (
 	txChanSize = 100000
 	// chainHeadChanSize is the size of channel listening to ChainHeadEvent.
 	chainHeadChanSize = 10
-	// chainSideChanSize is the size of channel listening to ChainSideEvent.
-	chainSideChanSize = 10
 
 	blockMaxTxs = 5000 * 10
 )
@@ -352,18 +350,7 @@ func (self *worker) PreMiner() {
 
 	tstart := time.Now()
 	parent := self.chain.CurrentBlock()
-	log.Debug("worker startNewMinerRound", "time", tstart.Unix())
-
 	tstamp := tstart.Unix()
-	if parent.Time().Cmp(new(big.Int).SetInt64(tstamp)) >= 0 {
-		tstamp = parent.Time().Int64() + 1
-	}
-	// this will ensure we're not going off too far in the future
-	if now := time.Now().Unix(); tstamp > now+1 {
-		wait := time.Duration(tstamp-now) * time.Second
-		log.Info("Mining too far in the future", "wait", common.PrettyDuration(wait))
-		time.Sleep(wait)
-	}
 
 	num := parent.Number()
 	header := &types.Header{
@@ -377,7 +364,7 @@ func (self *worker) PreMiner() {
 		header.Coinbase = self.coinbase
 	}
 	pstate, _ := self.chain.StateAt(parent.Root())
-	log.Debug("worker startNewMinerRound before PrepareBlockHeader", "number", header.Number.Uint64(), "time", time.Now().Unix())
+
 	if err := self.engine.PrepareBlockHeader(self.chain, header, pstate); err != nil {
 		log.Debug("Failed to prepare header for mining", "err", err)
 		return

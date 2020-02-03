@@ -752,16 +752,13 @@ func (s *PublicTransactionPoolAPI) GetTransactionReceipt(hash common.Hash) (map[
 	from, _ := types.Sender(signer, tx)
 
 	fields := map[string]interface{}{
-		"blockHash":         blockHash,
-		"blockNumber":       hexutil.Uint64(blockNumber),
-		"transactionHash":   hash,
-		"transactionIndex":  hexutil.Uint64(index),
-		"from":              from,
-		"gasUsed":           (*hexutil.Big)(receipt.GasUsed),
-		"cumulativeGasUsed": (*hexutil.Big)(receipt.CumulativeGasUsed),
-		"contractAddress":   nil,
-		"logs":              receipt.Logs,
-		"logsBloom":         receipt.Bloom,
+		"blockHash":        blockHash,
+		"blockNumber":      hexutil.Uint64(blockNumber),
+		"transactionHash":  hash,
+		"transactionIndex": hexutil.Uint64(index),
+		"from":             from,
+		"logs":             receipt.Logs,
+		"logsBloom":        receipt.Bloom,
 	}
 
 	// Assign receipt status or post state.
@@ -772,10 +769,6 @@ func (s *PublicTransactionPoolAPI) GetTransactionReceipt(hash common.Hash) (map[
 	}
 	if receipt.Logs == nil {
 		fields["logs"] = [][]*types.Log{}
-	}
-	// If the ContractAddress is 20 0x0 bytes, assume it is not a contract creation
-	if receipt.ContractAddress != (common.Address{}) {
-		fields["contractAddress"] = receipt.ContractAddress
 	}
 	return fields, nil
 }

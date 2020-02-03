@@ -141,11 +141,11 @@ func (c *Prometheus) VerifyProof(lHash common.Hash, address common.Address, proo
 		var addr common.Address
 		copy(addr[:], crypto.Keccak256(pub[1:])[12:])
 		if bytes.Compare(addr.Bytes(), address.Bytes()) != 0 {
-			return errors.New("Invalid proof")
+			return errors.New("invalid proof")
 		} else {
 			return nil
 		}
 	} else {
-		return errors.New("Invalid proof")
+		return errors.New("invalid proof")
 	}
 }

@@ -702,13 +702,6 @@ func SetReceiptsData(config *config.ChainConfig, block *types.Block, receipts ty
 	for j := 0; j < len(receipts); j++ {
 		// The transaction hash can be retrieved from the transaction itself
 		receipts[j].TxHash = transactions[j].Hash()
-
-		// The used gas can be calculated based on previous receipts
-		if j == 0 {
-			receipts[j].GasUsed = new(big.Int).Set(receipts[j].CumulativeGasUsed)
-		} else {
-			receipts[j].GasUsed = new(big.Int).Sub(receipts[j].CumulativeGasUsed, receipts[j-1].CumulativeGasUsed)
-		}
 		// The derived log fields can simply be set from the block and transaction
 		for k := 0; k < len(receipts[j].Logs); k++ {
 			receipts[j].Logs[k].BlockNumber = block.NumberU64()
