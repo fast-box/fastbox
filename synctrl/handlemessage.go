@@ -185,7 +185,7 @@ func HandleBlockBodiesMsg(p *p2p.Peer, msg p2p.Msg) error {
 		trasactions, uncles = InstanceSynCtrl().puller.FilterBodies(p.GetID(), trasactions, uncles, time.Now())
 	}
 	if len(trasactions) > 0 || len(uncles) > 0 || !filter {
-		err := InstanceSynCtrl().syner.DeliverBodies(p.GetID(), trasactions, uncles)
+		err := InstanceSynCtrl().syner.DeliverBodies(p.GetID(), trasactions)
 		if err != nil {
 			log.Debug("Failed to deliver bodies", "err", err)
 		}

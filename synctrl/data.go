@@ -117,7 +117,7 @@ func sendNewHashBlock(peer *p2p.Peer, block *types.Block, td *big.Int) error {
 	for _, tx := range block.Transactions() {
 		txsHash = append(txsHash, tx.Hash())
 	}
-	hashBlock := &hashBlock{Header: block.Header(), Uncles: block.Uncles(), TxsHash: txsHash, Td: td, BlockHash: block.Hash()}
+	hashBlock := &hashBlock{Header: block.Header(), TxsHash: txsHash, Td: td, BlockHash: block.Hash()}
 
 	peer.KnownBlockAdd(block.Hash())
 	return p2p.SendData(peer, p2p.NewHashBlockMsg, []interface{}{hashBlock, td})

@@ -74,8 +74,8 @@ func (this *lightSync) deliverHeaders(id string, headers []*types.Header) (err e
 }
 
 // DeliverBodies injects a new batch of block bodies received from a remote node.
-func (this *lightSync) deliverBodies(id string, transactions [][]*types.Transaction, uncles [][]*types.Header) (err error) {
-	return this.deliver(id, this.bodyCh, &bodyPack{id, transactions, uncles}, bodyInMeter, bodyDropMeter)
+func (this *lightSync) deliverBodies(id string, transactions [][]*types.Transaction) (err error) {
+	return this.deliver(id, this.bodyCh, &bodyPack{id, transactions}, bodyInMeter, bodyDropMeter)
 }
 
 // DeliverReceipts injects a new batch of receipts received from a remote node.
@@ -629,7 +629,7 @@ func (this *lightSync) fetchBodies(from uint64) error {
 	var (
 		deliver = func(packet dataPack) (int, error) {
 			pack := packet.(*bodyPack)
-			return this.syncer.sch.DeliverBodies(pack.peerId, pack.transactions, pack.uncles)
+			return this.syncer.sch.DeliverBodies(pack.peerId, pack.transactions)
 		}
 		expire   = func() map[string]int { return this.syncer.sch.ExpireBodies(this.syncer.requestTTL()) }
 		fetch    = func(p *peerConnection, req *fetchRequest) error { return p.FetchBodies(req) }
