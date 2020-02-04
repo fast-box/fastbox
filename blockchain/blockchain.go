@@ -907,7 +907,6 @@ func (bc *BlockChain) InsertChain(chain types.Blocks) (int, error) {
 		for i, block := range chain {
 			headers[i] = block.Header()
 		}
-		bc.engine.SetNetTopology(bc, headers)
 	}
 	bc.PostChainEvents(events, logs)
 	return n, err
@@ -1336,9 +1335,6 @@ func (bc *BlockChain) InsertHeaderChain(chain []*types.Header, checkFreq int, mo
 	}
 
 	n, err := bc.hc.InsertHeaderChain(chain, whFunc, start)
-	if err == nil {
-		bc.engine.SetNetTopology(bc, chain)
-	}
 	return n, err
 }
 

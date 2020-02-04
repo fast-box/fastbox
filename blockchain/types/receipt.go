@@ -19,12 +19,10 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"math/big"
-
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/common/hexutil"
 	"github.com/hpb-project/sphinx/common/rlp"
+	"io"
 )
 
 //go:generate gencodec -type Receipt -field-override receiptMarshaling -out gen_receipt_json.go
@@ -47,7 +45,6 @@ type Receipt struct {
 	// Consensus fields
 	PostState         []byte   `json:"root"`
 	Status            uint     `json:"status"`
-	CumulativeGasUsed *big.Int `json:"cumulativeGasUsed" gencodec:"required"`
 	Bloom             Bloom    `json:"logsBloom"         gencodec:"required"`
 	Logs              []*Log   `json:"logs"              gencodec:"required"`
 
@@ -75,8 +72,8 @@ type receiptStorageRLP struct {
 }
 
 // NewReceipt creates a barebone transaction receipt, copying the init fields.
-func NewReceipt(root []byte, failed bool, cumulativeGasUsed *big.Int) *Receipt {
-	r := &Receipt{PostState: common.CopyBytes(root), CumulativeGasUsed: new(big.Int).Set(cumulativeGasUsed)}
+func NewReceipt(root []byte, failed bool) *Receipt {
+	r := &Receipt{PostState: common.CopyBytes(root)}
 	if failed {
 		r.Status = ReceiptStatusFailed
 	} else {
@@ -132,9 +129,9 @@ func (r *Receipt) statusEncoding() []byte {
 // String implements the Stringer interface.
 func (r *Receipt) String() string {
 	if len(r.PostState) == 0 {
-		return fmt.Sprintf("receipt{status=%d cgas=%v bloom=%x logs=%v}", r.Status, r.CumulativeGasUsed, r.Bloom, r.Logs)
+		return fmt.Sprintf("receipt{status=%d bloom=%x logs=%v}", r.Status, r.Bloom, r.Logs)
 	}
-	return fmt.Sprintf("receipt{med=%x cgas=%v bloom=%x logs=%v}", r.PostState, r.CumulativeGasUsed, r.Bloom, r.Logs)
+	return fmt.Sprintf("receipt{med=%x bloom=%x logs=%v}", r.PostState, r.Bloom, r.Logs)
 }
 
 // ReceiptForStorage is a wrapper around a Receipt that flattens and parses the

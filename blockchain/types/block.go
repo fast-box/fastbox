@@ -33,7 +33,6 @@ import (
 
 var (
 	EmptyRootHash  = DeriveSha(Transactions{})
-	EmptyUncleHash = CalcUncleHash(nil)
 )
 
 // A BlockNonce is a 64-bit hash which proves (combined with the
@@ -69,6 +68,7 @@ func (n *BlockNonce) UnmarshalText(input []byte) error {
 type Header struct {
 	ParentHash  common.Hash    `json:"parentHash"       gencodec:"required"`
 	Coinbase    common.Address `json:"miner"            gencodec:"required"`
+	ProofHash   common.Hash    `json:"proofHash"        gencodec:"required"`
 	Root        common.Hash    `json:"stateRoot"        gencodec:"required"`
 	TxHash      common.Hash    `json:"transactionsRoot" gencodec:"required"`
 	ReceiptHash common.Hash    `json:"receiptsRoot"     gencodec:"required"`
@@ -101,6 +101,7 @@ func (h *Header) HashNoNonce() common.Hash {
 	return rlpHash([]interface{}{
 		h.ParentHash,
 		h.Coinbase,
+		h.ProofHash,
 		h.Root,
 		h.TxHash,
 		h.ReceiptHash,
@@ -272,6 +273,7 @@ func (b *Block) Time() *big.Int       { return new(big.Int).Set(b.header.Time) }
 func (b *Block) NumberU64() uint64        { return b.header.Number.Uint64() }
 func (b *Block) Bloom() Bloom             { return b.header.Bloom }
 func (b *Block) Coinbase() common.Address { return b.header.Coinbase }
+func (b *Block) ProofHash() common.Hash { return b.header.ProofHash }
 func (b *Block) Root() common.Hash        { return b.header.Root }
 func (b *Block) ParentHash() common.Hash  { return b.header.ParentHash }
 func (b *Block) TxHash() common.Hash      { return b.header.TxHash }
@@ -295,10 +297,6 @@ func (b *Block) Size() common.StorageSize {
 	rlp.Encode(&c, b)
 	b.size.Store(common.StorageSize(c))
 	return common.StorageSize(c)
-}
-
-func CalcUncleHash(uncles []*Header) common.Hash {
-	return rlpHash(uncles)
 }
 
 // WithSeal returns a new block with the data from b but the header replaced with
@@ -349,6 +347,7 @@ func (h *Header) String() string {
 [
 	ParentHash:	    %x
 	Coinbase:	    %x
+	ProofHash:		%x
 	Root:		    %x
 	TxSha		    %x
 	ReceiptSha:	    %x
@@ -357,7 +356,7 @@ func (h *Header) String() string {
 	Number:		    %v
 	Time:		    %v
 	Extra:		    %s
-]`, h.Hash(), h.ParentHash, h.Coinbase, h.Root, h.TxHash, h.ReceiptHash, h.Bloom, h.Difficulty, h.Number, h.Time, h.Extra)
+]`, h.Hash(), h.ParentHash, h.Coinbase, h.ProofHash, h.Root, h.TxHash, h.ReceiptHash, h.Bloom, h.Difficulty, h.Number, h.Time, h.Extra)
 }
 
 type Blocks []*Block

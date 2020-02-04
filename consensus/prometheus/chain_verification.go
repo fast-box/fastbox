@@ -15,6 +15,7 @@
 // along with the go-hpb. If not, see <http://www.gnu.org/licenses/>.
 package prometheus
 
+import "C"
 import (
 	"bytes"
 	"errors"
@@ -135,7 +136,7 @@ func (c *Prometheus) verifySeal(chain consensus.ChainReader, header *types.Heade
 
 func (c *Prometheus) VerifyProof(lHash common.Hash, address common.Address, proof *types.WorkProof) error {
 	txroot := types.DeriveSha(proof.Txs)
-	proofHash := MixHash(lHash, txroot)
+	proofHash := c.MixHash(lHash, txroot)
 
 	if pub, err := crypto.Ecrecover(proofHash.Bytes(), proof.Signature); err == nil {
 		var addr common.Address

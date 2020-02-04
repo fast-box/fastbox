@@ -4,7 +4,6 @@ import (
 	"github.com/hashicorp/golang-lru"
 	"github.com/hpb-project/sphinx/account"
 	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/node/db"
@@ -27,7 +26,6 @@ const (
 var (
 	epochLength   = uint64(30000)
 	blockPeriod   = uint64(15)               // default block interval is 15 seconds
-	uncleHash     = types.CalcUncleHash(nil) //
 	diffInTurn    = big.NewInt(2)            // the node is in turn, and its diffcult number is 2
 	diffNoTurn    = big.NewInt(1)            // the node is not in turn, and its diffcult number is 1
 	reentryMux    sync.Mutex

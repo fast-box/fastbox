@@ -17,9 +17,6 @@
 package bc
 
 import (
-	"errors"
-	"math/big"
-
 	"github.com/hpb-project/sphinx/blockchain/state"
 	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
@@ -47,12 +44,9 @@ func NewStateProcessor(config *config.ChainConfig, bc *BlockChain, engine consen
 }
 
 // Process processes the state changes according to the Hpb rules by running
-// the transaction messages using the statedb and applying any rewards to both
-// the processor (coinbase) and any included uncles.
+// the transaction messages using the statedb.
 //
-// Process returns the receipts and logs accumulated during the process and
-// returns the amount of gas that was used in the process. If any of the
-// transactions failed to execute due to insufficient gas it will return an error.
+// Process returns the receipts and logs accumulated during the process.
 func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (types.Receipts, []*types.Log, error) {
 	var (
 		receipts types.Receipts
@@ -73,8 +67,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 	for i, tx := range block.Transactions() {
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
 
-		// Todo: chang to new ApplyTransaction for sphinx
-		receipt, _, errs = ApplyTransactionNonContract(p.config, p.bc, &author, statedb, header, tx)
+		receipt, errs = ApplyTransaction(p.config, p.bc, &author, statedb, header, tx)
 		if errs != nil {
 			return nil, nil, errs
 		}
@@ -82,7 +75,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 		allLogs = append(allLogs, receipt.Logs...)
 	}
 
-	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
+	// Finalize the block, applying any consensus engine specific extras.
 	if _, errfinalize := p.engine.Finalize(p.bc, header, statedb, block.Transactions(), receipts); nil != errfinalize {
 		return nil, nil, errfinalize
 	}
@@ -92,8 +85,11 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 
 // ApplyTransaction attempts to apply a transaction to the given state database
 // and uses the input parameters for its environment. It returns the receipt
-// for the transaction, gas used and an error if the transaction failed,
+// for the transaction and an error if the transaction failed,
 // indicating the block was invalid.
-func ApplyTransactionNonContract(config *config.ChainConfig, bc *BlockChain, author *common.Address, statedb *state.StateDB, header *types.Header, tx *types.Transaction) (*types.Receipt, *big.Int, error) {
-	return nil, nil, errors.New("need change to new ApplyTransaction for sphinx")
+func ApplyTransaction(config *config.ChainConfig, bc *BlockChain, author *common.Address, statedb *state.StateDB, header *types.Header, tx *types.Transaction) (*types.Receipt, error) {
+	// milestone 1, not need apply tx.
+	var root []byte
+	receipt := types.NewReceipt(root,false)
+	return receipt, nil
 }
