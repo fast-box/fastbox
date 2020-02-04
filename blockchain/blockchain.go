@@ -1046,14 +1046,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 			blockInsertTimer.UpdateSince(bstart)
 			events = append(events, ChainEvent{block, block.Hash(), logs})
 			lastCanon = block
-
-		case SideStatTy:
-			log.Debug("Inserted forked block", "number", block.Number(), "hash", block.Hash(), "diff", block.Difficulty(), "elapsed",
-				common.PrettyDuration(time.Since(bstart)), "txs", len(block.Transactions()))
-
-			blockInsertTimer.UpdateSince(bstart)
-			events = append(events, ChainSideEvent{block})
-
 		}
 		stats.processed++
 		stats.report(chain, i)
@@ -1217,13 +1209,6 @@ func (bc *BlockChain) reorg(oldBlock, newBlock *types.Block) error {
 	if len(deletedLogs) > 0 {
 		go bc.rmLogsFeed.Send(RemovedLogsEvent{deletedLogs})
 	}
-	if len(oldChain) > 0 {
-		go func() {
-			for _, block := range oldChain {
-				bc.chainSideFeed.Send(ChainSideEvent{Block: block})
-			}
-		}()
-	}
 
 	return nil
 }
@@ -1243,8 +1228,6 @@ func (bc *BlockChain) PostChainEvents(events []interface{}, logs []*types.Log) {
 		case ChainHeadEvent:
 			bc.chainHeadFeed.Send(ev)
 
-		case ChainSideEvent:
-			bc.chainSideFeed.Send(ev)
 		}
 	}
 }
@@ -1434,11 +1417,6 @@ func (bc *BlockChain) SubscribeChainEvent(ch chan<- ChainEvent) sub.Subscription
 // SubscribeChainHeadEvent registers a subscription of ChainHeadEvent.
 func (bc *BlockChain) SubscribeChainHeadEvent(ch chan<- ChainHeadEvent) sub.Subscription {
 	return bc.scope.Track(bc.chainHeadFeed.Subscribe(ch))
-}
-
-// SubscribeChainSideEvent registers a subscription of ChainSideEvent.
-func (bc *BlockChain) SubscribeChainSideEvent(ch chan<- ChainSideEvent) sub.Subscription {
-	return bc.scope.Track(bc.chainSideFeed.Subscribe(ch))
 }
 
 // SubscribeLogsEvent registers a subscription of []*types.Log.

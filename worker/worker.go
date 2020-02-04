@@ -326,13 +326,9 @@ func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error
 }
 
 func (self *worker) PreMiner() {
-	self.mu.Lock()
-	defer self.mu.Unlock()
-	self.currentMu.Lock()
-	defer self.currentMu.Unlock()
-
 
 }
+
 
 func (self *worker) RoutinePreMine() {
 	if p2p.PeerMgrInst().GetLocalType() == discover.BootNode {
@@ -381,9 +377,14 @@ func (self *worker) RoutinePreMine() {
 		work.commitTransactions(self.mux, txs, self.coinbase)
 
 		// generate workproof
-		//proof, err := self.engine.GenerateProof(self.chain, self.current.header, work.txs)
-		// broadcast proof.
+		proof, err := self.engine.GenerateProof(self.chain, self.current.header, work.txs)
+		if err != nil {
+			log.Error("Premine","GenerateProof failed, err", err, "headerNumber", header.Number)
+			continue
+		}
 
+		// broadcast proof.
+		self.mux.Post(bc.WorkProofEvent{Proof:proof})
 
 		// Create the new block to seal with the consensus engine
 		if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, work.receipts); err != nil {
@@ -441,16 +442,6 @@ func (env *Work) commitTransactions(mux *sub.TypeMux, txs *types.TransactionsByP
 		}
 	}
 
-	if env.tcount > 0 {
-		// make a copy, the state caches the logs and these logs get "upgraded" from pending to mined
-		// logs by filling in the block hash when the block was mined by the local miner. This can
-		// cause a race condition if a log was "upgraded" before the PendingLogsEvent is processed.
-		go func(tcount int) {
-			if tcount > 0 {
-				mux.Post(bc.PendingStateEvent{})
-			}
-		}(env.tcount)
-	}
 }
 
 func (env *Work) commitTransaction(tx *types.Transaction, coinbase common.Address) (error) {

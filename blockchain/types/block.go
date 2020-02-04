@@ -79,17 +79,6 @@ type Header struct {
 	Extra       []byte         `json:"extraData"        gencodec:"required"`
 }
 
-// field type overrides for gencodec
-type headerMarshaling struct {
-	Difficulty *hexutil.Big
-	Number     *hexutil.Big
-	GasLimit   *hexutil.Big
-	GasUsed    *hexutil.Big
-	Time       *hexutil.Big
-	Extra      hexutil.Bytes
-	Hash       common.Hash `json:"hash"` // adds call to Hash() in MarshalJSON
-}
-
 // Hash returns the block hash of the header, which is simply the keccak256 hash of its
 // RLP encoding.
 func (h *Header) Hash() common.Hash {

@@ -148,7 +148,7 @@ func newSynCtrl(cfg *config.ChainConfig, mode config.SyncMode, txpoolins *txpool
 	p2p.PeerMgrInst().RegMsgProcess(p2p.NewHashBlockMsg, HandleNewHashBlockMsg)
 
 	p2p.PeerMgrInst().RegMsgProcess(p2p.TxMsg, HandleTxMsg)
-	p2p.PeerMgrInst().RegMsgProcess(p2p.SignedTxsMsg, HandleSignedTxMsg)
+	p2p.PeerMgrInst().RegMsgProcess(p2p.WorkProofMsg, HandleSignedTxMsg)
 
 	p2p.PeerMgrInst().RegOnAddPeer(synctrl.RegisterNetPeer)
 	p2p.PeerMgrInst().RegOnDropPeer(synctrl.UnregisterNetPeer)
@@ -169,7 +169,7 @@ func (this *SynCtrl) Start() {
 	go this.txRoutingLoop()
 
 	// broadcast mined blocks
-	this.minedBlockSub = this.newBlockMux.Subscribe(bc.NewMinedBlockEvent{})
+	this.minedBlockSub = this.newBlockMux.Subscribe(bc.WorkProofEvent{})
 	go this.minedRoutingLoop()
 
 	// start sync handlers
@@ -203,9 +203,8 @@ func (this *SynCtrl) minedRoutingLoop() {
 	// automatically stops if unsubscribe
 	for obj := range this.minedBlockSub.Chan() {
 		switch ev := obj.Data.(type) {
-		case bc.NewMinedBlockEvent:
-			go routBlock(ev.Block, true)  // First propagate block to peers
-			routBlock(ev.Block, false) // Only then announce to the rest
+		case bc.WorkProofEvent:
+			go routProof(ev.Proof)
 		}
 	}
 }

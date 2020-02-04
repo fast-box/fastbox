@@ -52,7 +52,6 @@ type Backend interface {
 	GetTd(blockHash common.Hash) *big.Int
 	SubscribeChainEvent(ch chan<- bc.ChainEvent) sub.Subscription
 	SubscribeChainHeadEvent(ch chan<- bc.ChainHeadEvent) sub.Subscription
-	SubscribeChainSideEvent(ch chan<- bc.ChainSideEvent) sub.Subscription
 
 	// TxPool API
 	SendTx(ctx context.Context, signedTx *types.Transaction) error

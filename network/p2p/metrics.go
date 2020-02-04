@@ -138,7 +138,7 @@ func (rw *meteredMsgReadWriter) ReadMsg() (Msg, error) {
 		packets, traffic = propBlockInPacketsMeter, propBlockInTrafficMeter
 	case msg.Code == TxMsg:
 		packets, traffic = propTxnInPacketsMeter, propTxnInTrafficMeter
-	case msg.Code == SignedTxsMsg:
+	case msg.Code == WorkProofMsg:
 		packets, traffic = propTxnInPacketsMeter, propTxnInTrafficMeter
 	}
 	packets.Mark(1)
@@ -167,7 +167,7 @@ func (rw *meteredMsgReadWriter) WriteMsg(msg Msg) error {
 		packets, traffic = propBlockOutPacketsMeter, propBlockOutTrafficMeter
 	case msg.Code == TxMsg:
 		packets, traffic = propTxnOutPacketsMeter, propTxnOutTrafficMeter
-	case msg.Code == SignedTxsMsg:
+	case msg.Code == WorkProofMsg:
 		packets, traffic = propTxnOutPacketsMeter, propTxnOutTrafficMeter
 	}
 	packets.Mark(1)
