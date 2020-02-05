@@ -311,6 +311,7 @@ type PeerInfo struct {
 	Name    string `json:"name"`    // Name of the node, including client type, version, OS, custom data
 	Version string `json:"version"` // Ghpb version
 	Remote  string `json:"remote"`  // Remote node type
+	CoinBase string `json:"coinbase"` //Remote Node's CoinBase
 	Cap     string `json:"cap"`     // Sum-protocols advertised by this particular peer
 	Network struct {
 		Local  string `json:"local"`  // Local endpoint of the TCP data connection
@@ -347,6 +348,7 @@ func (prm *PeerManager) PeersInfo() []*PeerInfo {
 			Name:    p.Name(),
 			Version: p.Version(),
 			Remote:  p.remoteType.ToString(),
+			CoinBase:p.Address().String(),
 			Cap:     p.Caps()[0].String(),
 			Start:   p.beatStart.String(),
 			Beat:    strconv.FormatUint(p.count, 10),
