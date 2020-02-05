@@ -432,7 +432,6 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 }
 
 
-// TODO: lqh
 func HandleWorkProofMsg(p *p2p.Peer, msg p2p.Msg) error {
 	var proof types.WorkProof
 	if err := msg.Decode(&proof); err != nil {
@@ -441,4 +440,10 @@ func HandleWorkProofMsg(p *p2p.Peer, msg p2p.Msg) error {
 
 	return nil
 }
+
+func HandleProofResMsg(p *p2p.Peer, msg p2p.Msg) error {
+	//TODO:
+	return nil
+}
+
 

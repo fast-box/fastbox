@@ -169,6 +169,8 @@ func (rw *meteredMsgReadWriter) WriteMsg(msg Msg) error {
 		packets, traffic = propTxnOutPacketsMeter, propTxnOutTrafficMeter
 	case msg.Code == WorkProofMsg:
 		packets, traffic = propTxnOutPacketsMeter, propTxnOutTrafficMeter
+	case msg.Code == ProofResMsg:
+		packets, traffic = propTxnOutPacketsMeter, propTxnOutTrafficMeter
 	}
 	packets.Mark(1)
 	traffic.Mark(int64(msg.Size))
