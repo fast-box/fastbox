@@ -213,9 +213,12 @@ func sendTransactions(peer *p2p.Peer, txs types.Transactions) error {
 	return p2p.SendData(peer, p2p.TxMsg, txs)
 }
 
-func sendTransactionsBySigned(peer *p2p.Peer, txs types.Transactions) error {
-	for _, tx := range txs {
-		peer.KnownTxsAdd(tx.Hash())
+
+func routProof(proof *types.WorkProof) {
+	peers := p2p.PeerMgrInst().PeersAll()
+	for _, peer := range peers {
+		if peer.RemoteType() != discover.BootNode {
+			p2p.SendData(peer, p2p.WorkProofMsg,*proof)
+		}
 	}
-	return p2p.SendData(peer, p2p.SignedTxsMsg, txs)
 }

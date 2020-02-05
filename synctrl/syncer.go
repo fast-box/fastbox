@@ -146,7 +146,7 @@ type syncStrategy interface {
 	syncWithPeer(id string, p *peerConnection, hash common.Hash, td *big.Int) (err error)
 	cancel()
 	deliverHeaders(id string, headers []*types.Header) (err error)
-	deliverBodies(id string, transactions [][]*types.Transaction, uncles [][]*types.Header) (err error)
+	deliverBodies(id string, transactions [][]*types.Transaction) (err error)
 	deliverReceipts(id string, receipts [][]*types.Receipt) (err error)
 	deliverNodeData(id string, data [][]byte) (err error)
 }
@@ -354,8 +354,8 @@ func (this *Syncer) DeliverHeaders(id string, headers []*types.Header) (err erro
 }
 
 // DeliverBodies injects a new batch of block bodies received from a remote node.
-func (this *Syncer) DeliverBodies(id string, transactions [][]*types.Transaction, uncles [][]*types.Header) (err error) {
-	return this.strategy.deliverBodies(id, transactions, uncles)
+func (this *Syncer) DeliverBodies(id string, transactions [][]*types.Transaction) (err error) {
+	return this.strategy.deliverBodies(id, transactions)
 }
 
 // DeliverReceipts injects a new batch of receipts received from a remote node.

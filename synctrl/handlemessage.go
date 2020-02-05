@@ -185,7 +185,7 @@ func HandleBlockBodiesMsg(p *p2p.Peer, msg p2p.Msg) error {
 		trasactions, uncles = InstanceSynCtrl().puller.FilterBodies(p.GetID(), trasactions, uncles, time.Now())
 	}
 	if len(trasactions) > 0 || len(uncles) > 0 || !filter {
-		err := InstanceSynCtrl().syner.DeliverBodies(p.GetID(), trasactions, uncles)
+		err := InstanceSynCtrl().syner.DeliverBodies(p.GetID(), trasactions)
 		if err != nil {
 			log.Debug("Failed to deliver bodies", "err", err)
 		}
@@ -431,14 +431,14 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 	return nil
 }
 
-func HandleSignedTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 
-	//TODO:
-	return nil
-}
+// TODO: lqh
+func HandleWorkProofMsg(p *p2p.Peer, msg p2p.Msg) error {
+	var proof types.WorkProof
+	if err := msg.Decode(&proof); err != nil {
+		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
+	}
 
-func HandleProofResMsg(p *p2p.Peer, msg p2p.Msg) error {
-	//TODO:
 	return nil
 }
 

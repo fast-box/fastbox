@@ -116,10 +116,6 @@ func (b *HpbApiBackend) SubscribeChainHeadEvent(ch chan<- bc.ChainHeadEvent) sub
 	return b.hpb.BlockChain().SubscribeChainHeadEvent(ch)
 }
 
-func (b *HpbApiBackend) SubscribeChainSideEvent(ch chan<- bc.ChainSideEvent) sub.Subscription {
-	return b.hpb.BlockChain().SubscribeChainSideEvent(ch)
-}
-
 func (b *HpbApiBackend) SubscribeLogsEvent(ch chan<- []*types.Log) sub.Subscription {
 	return b.hpb.BlockChain().SubscribeLogsEvent(ch)
 }

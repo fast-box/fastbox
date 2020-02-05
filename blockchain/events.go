@@ -29,9 +29,6 @@ type PendingLogsEvent struct {
 	Logs []*types.Log
 }
 
-// PendingStateEvent is posted pre mining and notifies of pending state changes.
-type PendingStateEvent struct{}
-
 // NewMinedBlockEvent is posted when a block has been imported.
 type NewMinedBlockEvent struct{ Block *types.Block }
 
@@ -47,8 +44,6 @@ type ChainEvent struct {
 	Logs  []*types.Log
 }
 
-type ChainSideEvent struct {
-	Block *types.Block
-}
-
 type ChainHeadEvent struct{ Block *types.Block }
+
+type WorkProofEvent struct { Proof *types.WorkProof }

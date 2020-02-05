@@ -55,7 +55,6 @@ type fetchResult struct {
 	Pending int // Number of data fetches still pending
 
 	Header       *types.Header
-	Uncles       []*types.Header
 	Transactions types.Transactions
 	Receipts     types.Receipts
 }
@@ -754,7 +753,7 @@ func (this *scheduler) DeliverHeaders(id string, headers []*types.Header, header
 // DeliverBodies injects a block body retrieval response into the results queue.
 // The method returns the number of blocks bodies accepted from the delivery and
 // also wakes any threads waiting for data delivery.
-func (this *scheduler) DeliverBodies(id string, txLists [][]*types.Transaction, uncleLists [][]*types.Header) (int, error) {
+func (this *scheduler) DeliverBodies(id string, txLists [][]*types.Transaction) (int, error) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
@@ -763,7 +762,6 @@ func (this *scheduler) DeliverBodies(id string, txLists [][]*types.Transaction, 
 			return errInvalidBody
 		}
 		result.Transactions = txLists[index]
-		result.Uncles = uncleLists[index]
 		return nil
 	}
 	return this.deliver(id, this.blockTaskPool, this.blockTaskQueue, this.blockPendPool, this.blockDonePool, bodyReqTimer, len(txLists), reconstruct)

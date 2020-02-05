@@ -122,15 +122,13 @@ func (p *FakePeer) RequestHeadersByNumber(number uint64, amount int, skip int, r
 func (p *FakePeer) RequestBodies(hashes []common.Hash) error {
 	var (
 		txs    [][]*types.Transaction
-		uncles [][]*types.Header
 	)
 	for _, hash := range hashes {
 		block := bc.GetBlock(p.db, hash, p.hc.GetBlockNumber(hash))
 
 		txs = append(txs, block.Transactions())
-		uncles = append(uncles, block.Uncles())
 	}
-	p.syncer.DeliverBodies(p.id, txs, uncles)
+	p.syncer.DeliverBodies(p.id, txs)
 	return nil
 }
 

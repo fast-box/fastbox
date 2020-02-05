@@ -16,7 +16,6 @@
 package prometheus
 
 import (
-	"bytes"
 	"math/big"
 	"time"
 
@@ -26,43 +25,9 @@ import (
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/consensus"
 
-	"errors"
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/network/rpc"
 )
-
-// Prepare function for Block
-func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *types.Header, state *state.StateDB) error {
-	number := header.Number.Uint64()
-
-	parentnum := number - 1
-	parentheader := chain.GetHeaderByNumber(parentnum)
-	if parentheader == nil {
-		return errors.New("-----PrepareBlockHeader parentheader------ is nil")
-	}
-
-	// check the header
-	if len(header.Extra) < consensus.ExtraVanity {
-		header.Extra = append(header.Extra, bytes.Repeat([]byte{0x00}, consensus.ExtraVanity-len(header.Extra))...)
-	}
-
-	header.Extra = header.Extra[:consensus.ExtraVanity]
-
-	header.Extra = append(header.Extra, make([]byte, consensus.ExtraSeal)...)
-
-	parent := chain.GetHeader(header.ParentHash, number-1)
-	if parent == nil {
-		return consensus.ErrUnknownAncestor
-	}
-
-	header.Time = new(big.Int).Add(parent.Time, new(big.Int).SetUint64(c.config.Period))
-
-	if header.Time.Int64() < time.Now().Unix() {
-		header.Time = big.NewInt(time.Now().Unix())
-	}
-
-	return nil
-}
 
 // generate blocks by giving the signature
 func (c *Prometheus) GenBlockWithSig(chain consensus.ChainReader, block *types.Block, stop <-chan struct{}) (*types.Block, error) {
@@ -148,30 +113,4 @@ func (c *Prometheus) GetSinger() common.Address {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 	return c.signer
-}
-func MixHash(first, second common.Hash) common.Hash {
-	var result common.Hash
-	for i := 0; i < common.HashLength; i++ {
-		result[i] = first[i] ^ second[i]
-	}
-	return result
-}
-
-func (c *Prometheus) GenProof(txs types.Transactions) (proof *types.WorkProof, err error) {
-	rootHash := make([]byte, 0, common.HashLength) // get local latest hash
-	latestHash, err := c.db.Get(rootHash)
-	if err != nil {
-		return nil, err
-	}
-
-	txroot := types.DeriveSha(txs)
-	var lhash common.Hash
-	lhash.SetBytes(latestHash)
-	proofHash := MixHash(lhash, txroot)
-	signer, signFn := c.signer, c.signFn
-	sighash, err := signFn(accounts.Account{Address: signer}, proofHash.Bytes())
-	if err != nil {
-		return nil, err
-	}
-	return &types.WorkProof{sighash, txs}, nil
 }

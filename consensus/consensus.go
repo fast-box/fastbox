@@ -41,7 +41,7 @@ type ChainReader interface {
 	// GetHeaderByNumber retrieves a block header from the database by number.
 	GetHeaderByNumber(number uint64) *types.Header
 
-	// GetHeaderByHash retrieves a block header from the database by its hash.
+	// GetHeaderByash retrieves a block header from the database by its hash.
 	GetHeaderByHash(hash common.Hash) *types.Header
 
 	// GetBlock retrieves a block from the database by hash and number.
@@ -52,6 +52,26 @@ type ChainReader interface {
 
 // Engine is an algorithm agnostic consensus engine.
 type Engine interface {
+	// generate
+	PrepareBlockHeader(chain ChainReader, header *types.Header, state *state.StateDB) error
+
+	// GerateProof return a workproof
+	GenerateProof(chain ChainReader, header *types.Header, txs types.Transactions) (*types.WorkProof,error)
+
+	// Finalize runs any post-transaction state modifications
+	// and assembles the final block.
+	// Note: The block header and state database might be updated to reflect any
+	// consensus rules that happen at finalization.
+	Finalize(chain ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction,
+		receipts []*types.Receipt) (*types.Block, error)
+
+	// Seal generates a new block for the given input block with the local miner's
+	// seal place on top.
+	GenBlockWithSig(chain ChainReader, block *types.Block, stop <-chan struct{}) (*types.Block, error)
+
+	// update peer proof info.
+	UpdateProof(addr common.Address, hash common.Hash)
+
 	// Author retrieves the Hpb address of the account that minted the given
 	// block, which may be different from the header's coinbase if a consensus
 	// engine is based on signatures.
@@ -68,25 +88,9 @@ type Engine interface {
 	// the input slice).
 	VerifyHeaders(chain ChainReader, headers []*types.Header, seals []bool, mode config.SyncMode) (chan<- struct{}, <-chan error)
 
-	//set net node type
-	SetNetTopology(chain ChainReader, headers []*types.Header)
-
 	// VerifySeal checks whether the crypto seal on a header is valid according to
 	// the consensus rules of the given engine.
 	VerifySeal(chain ChainReader, header *types.Header) error
-
-	PrepareBlockHeader(chain ChainReader, header *types.Header, state *state.StateDB) error
-
-	// Finalize runs any post-transaction state modifications (e.g. block rewards)
-	// and assembles the final block.
-	// Note: The block header and state database might be updated to reflect any
-	// consensus rules that happen at finalization (e.g. block rewards).
-	Finalize(chain ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction,
-		receipts []*types.Receipt) (*types.Block, error)
-
-	// Seal generates a new block for the given input block with the local miner's
-	// seal place on top.
-	GenBlockWithSig(chain ChainReader, block *types.Block, stop <-chan struct{}) (*types.Block, error)
 
 	// APIs returns the RPC APIs this consensus engine provides.
 	APIs(chain ChainReader) []rpc.API
