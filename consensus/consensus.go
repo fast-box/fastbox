@@ -67,7 +67,7 @@ type Engine interface {
 
 	// Seal generates a new block for the given input block with the local miner's
 	// seal place on top.
-	GenBlockWithSig(chain ChainReader, block *types.Block, stop <-chan struct{}) (*types.Block, error)
+	GenBlockWithSig(chain ChainReader, block *types.Block) (*types.Block, error)
 
 	// update peer proof info.
 	UpdateProof(addr common.Address, hash common.Hash)

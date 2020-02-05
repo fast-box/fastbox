@@ -39,6 +39,7 @@ type Miner struct {
 	worker *worker
 
 	coinbase common.Address
+	controlStarted bool
 	mining   int32
 	engine   consensus.Engine
 
@@ -52,6 +53,7 @@ func New(config *config.ChainConfig, mux *sub.TypeMux, engine consensus.Engine,c
 		engine:   engine,
 		worker:   newWorker(config, engine, coinbase, mux),
 		canStart: 1,
+		controlStarted:false,
 	}
 	return miner
 }
@@ -60,9 +62,9 @@ func New(config *config.ChainConfig, mux *sub.TypeMux, engine consensus.Engine,c
 // It's entered once and as soon as `Done` or `Failed` has been broadcasted the events are unregistered and
 // the loop is exited. This to prevent a major security vuln where external parties can DOS you with blocks
 // and halt your mining operation for as long as the DOS continues.
-func (self *Miner) update() {
+func (self *Miner) WorkControl() {
 	events := self.mux.Subscribe(synctrl.StartEvent{}, synctrl.DoneEvent{}, synctrl.FailedEvent{})
-out:
+
 	for ev := range events.Chan() {
 		switch ev.Data.(type) {
 		case synctrl.StartEvent:
@@ -80,17 +82,15 @@ out:
 			if shouldStart {
 				self.Start(self.coinbase)
 			}
-			// unsubscribe. we're only interested in this event once
-			events.Unsubscribe()
-			// stop immediately and ignore all further pending events
-			break out
 		}
 	}
 }
 
 func (self *Miner) Start(coinbase common.Address) {
-	go self.update()
-	
+	if !self.controlStarted {
+		go self.WorkControl()
+	}
+
 	atomic.StoreInt32(&self.shouldStart, 1)
 	self.worker.setHpberbase(coinbase)
 	self.coinbase = coinbase
@@ -110,7 +110,6 @@ func (self *Miner) Stop() {
 	atomic.StoreInt32(&self.mining, 0)
 	atomic.StoreInt32(&self.shouldStart, 0)
 }
-
 
 func (self *Miner) Mining() bool {
 	return atomic.LoadInt32(&self.mining) > 0
@@ -136,9 +135,4 @@ func (self *Miner) Pending() (*types.Block, *state.StateDB) {
 // change between multiple method calls
 func (self *Miner) PendingBlock() *types.Block {
 	return self.worker.pendingBlock()
-}
-
-func (self *Miner) SetHpberbase(addr common.Address) {
-	self.coinbase = addr
-	self.worker.setHpberbase(addr)
 }

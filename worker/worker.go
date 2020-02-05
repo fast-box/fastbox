@@ -76,14 +76,13 @@ type Result struct {
 type worker struct {
 	config *config.ChainConfig
 	engine consensus.Engine
-
 	mu sync.Mutex
 
 	mux          *sub.TypeMux
 	txpool       *txpool.TxPool
 	chainHeadCh  chan bc.ChainHeadEvent
 	chainHeadSub sub.Subscription
-	recv      chan *Result
+	confirmCh    chan *Work
 
 	chain   *bc.BlockChain
 	chainDb hpbdb.Database
@@ -98,27 +97,26 @@ type worker struct {
 
 	// atomic status counters
 	mining int32
-	atWork int32
 }
 
-func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase common.Address /*eth Backend,*/, mux *sub.TypeMux) *worker {
+func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase common.Address, mux *sub.TypeMux) *worker {
+
 	worker := &worker{
 		config:      config,
 		engine:      engine,
 		mux:         mux,
 		chainHeadCh: make(chan bc.ChainHeadEvent, chainHeadChanSize),
 		chainDb:     nil,
-		recv:        make(chan *Result, resultQueueSize),
+		confirmCh: 	 make(chan *Work, 10),
 		chain:       bc.InstanceBlockChain(),
 		coinbase:    coinbase,
-		unconfirmed: newUnconfirmedProofs(),
 	}
-
+	worker.unconfirmed = newUnconfirmedProofs(worker.confirmCh)
 	worker.txpool = txpool.GetTxPool()
 	worker.chainHeadSub = bc.InstanceBlockChain().SubscribeChainHeadEvent(worker.chainHeadCh)
+
 	// goto listen the event
 	go worker.eventListener()
-	go worker.handlerSelfMinedBlock()
 
 	return worker
 }
@@ -174,7 +172,6 @@ func (self *worker) stop() {
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	atomic.StoreInt32(&self.mining, 0)
-	atomic.StoreInt32(&self.atWork, 0)
 }
 
 func (self *worker) eventListener() {
@@ -191,60 +188,6 @@ func (self *worker) eventListener() {
 
 		case <-self.chainHeadSub.Err():
 			return
-		}
-	}
-}
-
-func (self *worker) handlerSelfMinedBlock() {
-	for {
-		mustCommitNewWork := true
-		for result := range self.recv {
-			atomic.AddInt32(&self.atWork, -1)
-
-			if result == nil {
-				continue
-			}
-			block := result.Block
-			work := result.Work
-
-			//// Update the block hash in all logs since it is now available and not when the
-			//// receipt/log of individual transactions were created.
-			//for _, r := range work.receipts {
-			//	for _, l := range r.Logs {
-			//		l.BlockHash = block.Hash()
-			//	}
-			//}
-			//for _, log := range work.state.Logs() {
-			//	log.BlockHash = block.Hash()
-			//}
-			// Todo: update local chain tx info.
-
-			stat, err := self.chain.WriteBlockAndState(block, work.receipts, work.state)
-			if err != nil {
-				log.Error("Failed writing block to chain", "err", err)
-				continue
-			}
-			// check if canon block and write transactions
-			if stat == bc.CanonStatTy {
-				// implicit by posting ChainHeadEvent
-				mustCommitNewWork = false
-			}
-			// Broadcast the block and announce chain insertion event
-			self.mux.Post(bc.NewMinedBlockEvent{Block: block})
-			var (
-				events []interface{}
-				logs   = work.state.Logs()
-			)
-			events = append(events, bc.ChainEvent{Block: block, Hash: block.Hash(), Logs: logs})
-			if stat == bc.CanonStatTy {
-				events = append(events, bc.ChainHeadEvent{Block: block})
-			}
-
-			self.chain.PostChainEvents(events, logs)
-
-			if mustCommitNewWork {
-				// Todo: self.PreMiner()
-			}
 		}
 	}
 }
@@ -330,7 +273,16 @@ func (self *worker) RoutinePreMine() {
 			log.Error("Failed to finalize block for sealing", "err", err)
 			return
 		}
-		//Todo: send to wait confirm.
+
+		// wait confirm.
+		peers := p2p.PeerMgrInst().PeersAll()
+		validators := 0
+		for _, peer := range peers {
+			if peer.RemoteType() != discover.BootNode {
+				validators++
+			}
+		}
+		self.unconfirmed.Insert(proof, work, validators/2 + 1)
 	}
 }
 
@@ -346,6 +298,39 @@ func (self *worker) RoutineVerifyProof() {
 
 func (self *worker) RoutineFinalMine() {
 	// 1. gen block with proof and header.
+	for {
+		select {
+		case work := <- self.confirmCh:
+			if result, err := self.engine.GenBlockWithSig(self.chain, work.Block); result != nil {
+				log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
+					"difficulty -> ", result.Difficulty())
+
+				// Todo: update local chain tx info.
+				stat, err := self.chain.WriteBlockAndState(result, work.receipts, work.state)
+				if err != nil {
+					log.Error("Failed writing block to chain", "err", err)
+					continue
+				}
+				// Broadcast the block and announce chain insertion event
+				self.mux.Post(bc.NewMinedBlockEvent{Block: result})
+				var (
+					events []interface{}
+					logs   = work.state.Logs()
+				)
+				events = append(events, bc.ChainEvent{Block: result, Hash: result.Hash(), Logs: logs})
+				if stat == bc.CanonStatTy {
+					events = append(events, bc.ChainHeadEvent{Block: result})
+				}
+
+				self.chain.PostChainEvents(events, logs)
+
+			} else {
+				if err != nil {
+					log.Warn("Block sealing failed", "err", err)
+				}
+			}
+		}
+	}
 	// 2. update txpool.
 }
 

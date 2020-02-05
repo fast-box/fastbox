@@ -16,9 +16,6 @@
 package prometheus
 
 import (
-	"math/big"
-	"time"
-
 	"github.com/hpb-project/sphinx/account"
 	"github.com/hpb-project/sphinx/blockchain/state"
 	"github.com/hpb-project/sphinx/blockchain/types"
@@ -30,7 +27,7 @@ import (
 )
 
 // generate blocks by giving the signature
-func (c *Prometheus) GenBlockWithSig(chain consensus.ChainReader, block *types.Block, stop <-chan struct{}) (*types.Block, error) {
+func (c *Prometheus) GenBlockWithSig(chain consensus.ChainReader, block *types.Block) (*types.Block, error) {
 	header := block.Header()
 
 	log.Info("HPB Prometheus Seal is starting")
@@ -50,21 +47,6 @@ func (c *Prometheus) GenBlockWithSig(chain consensus.ChainReader, block *types.B
 	log.Debug("GenBlockWithSig signer's address", "signer", signer.Hex(), "number", number)
 
 	c.lock.RUnlock()
-
-	delay := time.Unix(header.Time.Int64(), 0).Sub(time.Now())
-	if delay < 0 {
-		delay = 0
-		header.Time = big.NewInt(time.Now().Unix())
-	}
-	// set delay time for out-turn hpb nodes
-	log.Debug("Waiting for slot to sign and propagate", "delay", common.PrettyDuration(delay), "number", number)
-
-	select {
-	case <-stop:
-		return nil, nil
-	case <-time.After(delay):
-	}
-
 	header.Coinbase = signer
 
 	// signing to get the signature

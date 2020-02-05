@@ -18,19 +18,30 @@ package worker
 
 import (
 	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/hpb-project/sphinx/common"
 	"sync"
 )
 
 
 type unconfirmedProofs struct {
 	proofs 		sync.Map // map[proofhash]int record proof's confirm count.
+	works       map[common.Hash]*Work
+	confirmedCh chan *Work
 }
 
-func newUnconfirmedProofs() *unconfirmedProofs{
-	return &unconfirmedProofs{}
+func newUnconfirmedProofs(confirmedCh chan *Work) *unconfirmedProofs{
+	return &unconfirmedProofs{
+		works:make(map[common.Hash]*Work),
+		confirmedCh:confirmedCh,
+	}
 }
 
-func (u *unconfirmedProofs) Insert(proof *types.WorkProof, threshold int) error {
+func (u *unconfirmedProofs) Insert(proof *types.WorkProof, work *Work, threshold int) error {
+
+	return nil
+}
+
+func (u *unconfirmedProofs) Confirm(proof *types.WorkProof) error {
 
 	return nil
 }
