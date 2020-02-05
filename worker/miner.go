@@ -21,15 +21,14 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	"github.com/hpb-project/sphinx/blockchain/state"
+	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/consensus"
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/synctrl"
-	"github.com/hpb-project/sphinx/blockchain"
+	"github.com/hpb-project/sphinx/consensus"
 	"github.com/hpb-project/sphinx/event/sub"
+	"github.com/hpb-project/sphinx/synctrl"
 )
 
 
@@ -54,7 +53,6 @@ func New(config *config.ChainConfig, mux *sub.TypeMux, engine consensus.Engine,c
 		worker:   newWorker(config, engine, coinbase, mux),
 		canStart: 1,
 	}
-	miner.Register(NewCpuAgent(bc.InstanceBlockChain(), engine))
 	return miner
 }
 
@@ -105,7 +103,6 @@ func (self *Miner) Start(coinbase common.Address) {
 
 	log.Info("Starting mining operation")
 	self.worker.start()
-	self.worker.PreMiner()
 }
 
 func (self *Miner) Stop() {
@@ -114,16 +111,6 @@ func (self *Miner) Stop() {
 	atomic.StoreInt32(&self.shouldStart, 0)
 }
 
-func (self *Miner) Register(producer Producer) {
-	if self.Mining() {
-		producer.Start()
-	}
-	self.worker.register(producer)
-}
-
-func (self *Miner) Unregister(producer Producer) {
-	self.worker.unregister(producer)
-}
 
 func (self *Miner) Mining() bool {
 	return atomic.LoadInt32(&self.mining) > 0

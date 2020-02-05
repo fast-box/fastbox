@@ -49,14 +49,6 @@ const (
 	blockMaxTxs = 5000 * 10
 )
 
-// Agent can register themself with the worker
-type Producer interface {
-	Work() chan<- *Work
-	SetReturnCh(chan<- *Result)
-	Stop()
-	Start()
-}
-
 // Work is the workers current environment and holds
 // all of the current state information
 type Work struct {
@@ -91,13 +83,9 @@ type worker struct {
 	txpool       *txpool.TxPool
 	chainHeadCh  chan bc.ChainHeadEvent
 	chainHeadSub sub.Subscription
-	wg           sync.WaitGroup
-
-	producers map[Producer]struct{}
 	recv      chan *Result
 
 	chain   *bc.BlockChain
-	proc    bc.Validator
 	chainDb hpbdb.Database
 
 	coinbase common.Address
@@ -106,7 +94,7 @@ type worker struct {
 	currentMu sync.Mutex
 	current   *Work
 
-	unconfirmed *unconfirmedBlocks // set of locally mined blocks pending canonicalness confirmations
+	unconfirmed *unconfirmedProofs // set of locally mined blocks pending canonicalness confirmations
 
 	// atomic status counters
 	mining int32
@@ -122,10 +110,8 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 		chainDb:     nil,
 		recv:        make(chan *Result, resultQueueSize),
 		chain:       bc.InstanceBlockChain(),
-		proc:        bc.InstanceBlockChain().Validator(),
 		coinbase:    coinbase,
-		producers:   make(map[Producer]struct{}),
-		unconfirmed: newUnconfirmedBlocks(bc.InstanceBlockChain(), miningLogAtDepth),
+		unconfirmed: newUnconfirmedProofs(),
 	}
 
 	worker.txpool = txpool.GetTxPool()
@@ -182,39 +168,13 @@ func (self *worker) start() {
 	defer self.mu.Unlock()
 
 	atomic.StoreInt32(&self.mining, 1)
-
-	// spin up agents
-	for producer := range self.producers {
-		producer.Start()
-	}
 }
 
 func (self *worker) stop() {
-	self.wg.Wait()
-
 	self.mu.Lock()
 	defer self.mu.Unlock()
-	if atomic.LoadInt32(&self.mining) == 1 {
-		for producer := range self.producers {
-			producer.Stop()
-		}
-	}
 	atomic.StoreInt32(&self.mining, 0)
 	atomic.StoreInt32(&self.atWork, 0)
-}
-
-func (self *worker) register(producer Producer) {
-	self.mu.Lock()
-	defer self.mu.Unlock()
-	self.producers[producer] = struct{}{}
-	producer.SetReturnCh(self.recv)
-}
-
-func (self *worker) unregister(producer Producer) {
-	self.mu.Lock()
-	defer self.mu.Unlock()
-	delete(self.producers, producer)
-	producer.Stop()
 }
 
 func (self *worker) eventListener() {
@@ -227,7 +187,7 @@ func (self *worker) eventListener() {
 		select {
 		// Handle ChainHeadEvent
 		case <-self.chainHeadCh:
-			self.PreMiner()
+			//Todo: self.PreMiner()
 
 		case <-self.chainHeadSub.Err():
 			return
@@ -282,25 +242,9 @@ func (self *worker) handlerSelfMinedBlock() {
 
 			self.chain.PostChainEvents(events, logs)
 
-			// Insert the block into the set of pending ones to wait for confirmations
-			self.unconfirmed.Insert(block.NumberU64(), block.Hash())
-
 			if mustCommitNewWork {
-				self.PreMiner()
+				// Todo: self.PreMiner()
 			}
-		}
-	}
-}
-
-// push sends a new work task to currently live miner agents.
-func (self *worker) push(work *Work) {
-	if atomic.LoadInt32(&self.mining) != 1 {
-		return
-	}
-	for producer := range self.producers {
-		atomic.AddInt32(&self.atWork, 1)
-		if ch := producer.Work(); ch != nil {
-			ch <- work
 		}
 	}
 }
@@ -324,11 +268,6 @@ func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error
 	self.current = work
 	return nil
 }
-
-func (self *worker) PreMiner() {
-
-}
-
 
 func (self *worker) RoutinePreMine() {
 	if p2p.PeerMgrInst().GetLocalType() == discover.BootNode {
@@ -391,13 +330,7 @@ func (self *worker) RoutinePreMine() {
 			log.Error("Failed to finalize block for sealing", "err", err)
 			return
 		}
-
-		// We only care about logging if we're actually mining.
-		if atomic.LoadInt32(&self.mining) == 1 {
-			log.Info("Commit new mining work", "number", work.Block.Number(), "txs", work.tcount)
-			self.unconfirmed.Shift(work.Block.NumberU64() - 1)
-		}
-		self.push(work)
+		//Todo: send to wait confirm.
 	}
 }
 
