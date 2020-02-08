@@ -214,7 +214,7 @@ func HandleGetNodeDataMsg(p *p2p.Peer, msg p2p.Msg) error {
 			return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 		}
 		// Retrieve the requested state entry, stopping if enough was found
-		if entry, err := db.GetHpbDbInstance().Get(hash.Bytes()); err == nil {
+		if entry, err := db.GetShxDbInstance().Get(hash.Bytes()); err == nil {
 			data = append(data, entry)
 			bytes += len(entry)
 		}
@@ -257,7 +257,7 @@ func HandleGetReceiptsMsg(p *p2p.Peer, msg p2p.Msg) error {
 			return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 		}
 		// Retrieve the requested block's receipts, skipping if unknown to us
-		results := bc.GetBlockReceipts(db.GetHpbDbInstance(), hash, bc.GetBlockNumber(db.GetHpbDbInstance(), hash))
+		results := bc.GetBlockReceipts(db.GetShxDbInstance(), hash, bc.GetBlockNumber(db.GetShxDbInstance(), hash))
 		if results == nil {
 			if header := bc.InstanceBlockChain().GetHeaderByHash(hash); header == nil || header.ReceiptHash != types.EmptyRootHash {
 				continue

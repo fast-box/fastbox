@@ -39,7 +39,7 @@ type PeerProof struct {
 
 type Prometheus struct {
 	config *config.PrometheusConfig // Consensus config
-	db     hpbdb.Database           // Database
+	db     shxdb.Database           // Database
 
 	recents    *lru.ARCCache // the recent signature
 	signatures *lru.ARCCache // the last signature
@@ -51,7 +51,7 @@ type Prometheus struct {
 	lock      sync.RWMutex // Protects the signerHash fields
 }
 
-func New(config *config.PrometheusConfig, db hpbdb.Database) *Prometheus {
+func New(config *config.PrometheusConfig, db shxdb.Database) *Prometheus {
 
 	conf := *config
 
@@ -76,7 +76,7 @@ func InstancePrometheus() *Prometheus {
 	if nil == insPrometheus {
 		reentryMux.Lock()
 		if nil == insPrometheus {
-			insPrometheus = New(&config.GetHpbConfigInstance().Prometheus, db.GetHpbDbInstance())
+			insPrometheus = New(&config.GetHpbConfigInstance().Prometheus, db.GetShxDbInstance())
 		}
 		reentryMux.Unlock()
 	}

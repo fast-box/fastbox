@@ -49,7 +49,7 @@ func BenchmarkFilters(b *testing.B) {
 	defer os.RemoveAll(dir)
 
 	var (
-		db, _      = hpbdb.NewLDBDatabase(dir, 0, 0)
+		db, _      = shxdb.NewLDBDatabase(dir, 0, 0)
 		mux        = new(sub.TypeMux)
 		txFeed     = new(sub.Feed)
 		rmLogsFeed = new(sub.Feed)
@@ -114,7 +114,7 @@ func TestFilters(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	var (
-		db, _      = hpbdb.NewLDBDatabase(dir, 0, 0)
+		db, _      = shxdb.NewLDBDatabase(dir, 0, 0)
 		mux        = new(sub.TypeMux)
 		txFeed     = new(sub.Feed)
 		rmLogsFeed = new(sub.Feed)

@@ -156,7 +156,7 @@ type Syncer struct {
 	strategy syncStrategy
 
 	mux        *sub.TypeMux // Event multiplexer to announce sync operation events
-	stateDB    hpbdb.Database
+	stateDB    shxdb.Database
 	lightchain LightChain
 
 	peers    *peerSet   // Set of active peers from which sync can proceed
@@ -186,7 +186,7 @@ type Syncer struct {
 	quitCh   chan struct{} // Quit channel to signal termination
 }
 
-func NewSyncer(mode config.SyncMode, stateDb hpbdb.Database, mux *sub.TypeMux, lightchain LightChain,
+func NewSyncer(mode config.SyncMode, stateDb shxdb.Database, mux *sub.TypeMux, lightchain LightChain,
 	dropPeer peerDropFn) *Syncer {
 	if lightchain == nil {
 		lightchain = bc.InstanceBlockChain()

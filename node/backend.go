@@ -104,7 +104,7 @@ func (s *Node) APIAccountManager() *accounts.Manager  { return s.accman }
 func (s *Node) BlockChain() *bc.BlockChain         { return s.Hpbbc }
 func (s *Node) TxPool() *txpool.TxPool             { return s.Hpbtxpool }
 func (s *Node) Engine() consensus.Engine           { return s.Hpbengine }
-func (s *Node) ChainDb() hpbdb.Database            { return s.HpbDb }
+func (s *Node) ChainDb() shxdb.Database            { return s.ShxDb }
 func (s *Node) IsListening() bool                  { return true } // Always listening
 func (s *Node) EthVersion() int                    { return int(s.Hpbpeermanager.Protocol()[0].Version)}
 func (s *Node) NetVersion() uint64                 { return s.networkId }

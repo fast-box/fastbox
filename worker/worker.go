@@ -83,7 +83,7 @@ type worker struct {
 	exit 		 chan bool
 
 	chain   *bc.BlockChain
-	chainDb hpbdb.Database
+	chainDb shxdb.Database
 
 	coinbase common.Address
 	extra    []byte

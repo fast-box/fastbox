@@ -61,8 +61,8 @@ func (h *Node) startBloomHandlers() {
 
 					task.Bitsets = make([][]byte, len(task.Sections))
 					for i, section := range task.Sections {
-						head := bc.GetCanonicalHash(h.HpbDb, (section+1)*config.BloomBitsBlocks-1)
-						blob, err := bitutil.DecompressBytes(bc.GetBloomBits(h.HpbDb, task.Bit, section, head), int(config.BloomBitsBlocks)/8)
+						head := bc.GetCanonicalHash(h.ShxDb, (section+1)*config.BloomBitsBlocks-1)
+						blob, err := bitutil.DecompressBytes(bc.GetBloomBits(h.ShxDb, task.Bit, section, head), int(config.BloomBitsBlocks)/8)
 						if err != nil {
 							panic(err)
 						}
@@ -90,7 +90,7 @@ const (
 type BloomIndexer struct {
 	size uint64 // section size to generate bloombits for
 
-	db  hpbdb.Database       // database instance to write index data and metadata into
+	db  shxdb.Database       // database instance to write index data and metadata into
 	gen *bloombits.Generator // generator to rotate the bloom bits crating the bloom index
 
 	section uint64      // Section is the section number being processed currently
@@ -99,12 +99,12 @@ type BloomIndexer struct {
 
 // NewBloomIndexer returns a chain indexer that generates bloom bits data for the
 // canonical chain for fast logs filtering.
-func NewBloomIndexer(db hpbdb.Database, size uint64) *bc.ChainIndexer {
+func NewBloomIndexer(db shxdb.Database, size uint64) *bc.ChainIndexer {
 	backend := &BloomIndexer{
 		db:   db,
 		size: size,
 	}
-	table := hpbdb.NewTable(db, string(bc.BloomBitsIndexPrefix))
+	table := shxdb.NewTable(db, string(bc.BloomBitsIndexPrefix))
 
 	return bc.NewChainIndexer(db, table, backend, size, bloomConfirms, bloomThrottling, "bloombits")
 }

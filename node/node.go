@@ -65,8 +65,8 @@ type Node struct {
 	Hpbsyncctr     *synctrl.SynCtrl
 	Hpbtxpool      *txpool.TxPool
 	Hpbbc          *bc.BlockChain
-	//HpbDb
-	HpbDb hpbdb.Database
+	//ShxDb
+	ShxDb shxdb.Database
 
 	networkId     uint64
 	netRPCService *hpbapi.PublicNetAPI
@@ -127,7 +127,7 @@ func New(conf *config.HpbConfig) (*Node, error) {
 		Hpbtxpool:      nil, //hpbtxpool,
 		Hpbbc:          nil, //block,
 
-		HpbDb:     nil, //db,
+		ShxDb:     nil, //db,
 		networkId: conf.Node.NetworkId,
 
 		newBlockMux: nil,
@@ -166,7 +166,7 @@ func New(conf *config.HpbConfig) (*Node, error) {
 	hpbnode.Hpbpeermanager = peermanager
 	hpbnode.Hpbrpcmanager = rpc.RpcMgrInst()
 
-	hpbnode.HpbDb = hpbdatabase
+	hpbnode.ShxDb = hpbdatabase
 
 	hpbnode.newBlockMux = new(sub.TypeMux)
 
@@ -189,14 +189,14 @@ func New(conf *config.HpbConfig) (*Node, error) {
 	return hpbnode, nil
 }
 func (hpbnode *Node) WorkerInit(conf *config.HpbConfig) error {
-	stored := bc.GetCanonicalHash(hpbnode.HpbDb, 0)
+	stored := bc.GetCanonicalHash(hpbnode.ShxDb, 0)
 	if stored != (common.Hash{}) {
 		if !conf.Node.SkipBcVersionCheck {
-			bcVersion := bc.GetBlockChainVersion(hpbnode.HpbDb)
+			bcVersion := bc.GetBlockChainVersion(hpbnode.ShxDb)
 			if bcVersion != bc.BlockChainVersion && bcVersion != 0 {
 				return fmt.Errorf("Blockchain DB version mismatch (%d / %d). Run geth upgradedb.\n", bcVersion, bc.BlockChainVersion)
 			}
-			bc.WriteBlockChainVersion(hpbnode.HpbDb, bc.BlockChainVersion)
+			bc.WriteBlockChainVersion(hpbnode.ShxDb, bc.BlockChainVersion)
 		}
 		engine := prometheus.InstancePrometheus()
 		hpbnode.Hpbengine = engine
@@ -369,7 +369,7 @@ func (n *Node) Stop() error {
 	n.Hpbpeermanager.Stop()
 
 	n.Hpbrpcmanager.Stop()
-	n.HpbDb.Close()
+	n.ShxDb.Close()
 
 	// Release instance directory lock.
 	if n.instanceDirLock != nil {

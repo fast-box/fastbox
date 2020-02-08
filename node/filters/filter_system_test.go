@@ -38,7 +38,7 @@ import (
 
 type testBackend struct {
 	mux        *sub.TypeMux
-	db         hpbdb.Database
+	db         shxdb.Database
 	sections   uint64
 	txFeed     *sub.Feed
 	rmLogsFeed *sub.Feed
@@ -46,7 +46,7 @@ type testBackend struct {
 	chainFeed  *sub.Feed
 }
 
-func (b *testBackend) ChainDb() hpbdb.Database {
+func (b *testBackend) ChainDb() shxdb.Database {
 	return b.db
 }
 
@@ -129,7 +129,7 @@ func TestBlockSubscription(t *testing.T) {
 
 	var (
 		mux         = new(sub.TypeMux)
-		db, _       = hpbdb.NewMemDatabase()
+		db, _       = shxdb.NewMemDatabase()
 		txFeed      = new(sub.Feed)
 		rmLogsFeed  = new(sub.Feed)
 		logsFeed    = new(sub.Feed)
@@ -186,7 +186,7 @@ func TestPendingTxFilter(t *testing.T) {
 
 	var (
 		mux        = new(sub.TypeMux)
-		db, _      = hpbdb.NewMemDatabase()
+		db, _      = shxdb.NewMemDatabase()
 		txFeed     = new(sub.Feed)
 		rmLogsFeed = new(sub.Feed)
 		logsFeed   = new(sub.Feed)
@@ -249,7 +249,7 @@ func TestPendingTxFilter(t *testing.T) {
 func TestLogFilterCreation(t *testing.T) {
 	var (
 		mux        = new(sub.TypeMux)
-		db, _      = hpbdb.NewMemDatabase()
+		db, _      = shxdb.NewMemDatabase()
 		txFeed     = new(sub.Feed)
 		rmLogsFeed = new(sub.Feed)
 		logsFeed   = new(sub.Feed)
@@ -298,7 +298,7 @@ func TestInvalidLogFilterCreation(t *testing.T) {
 
 	var (
 		mux        = new(sub.TypeMux)
-		db, _      = hpbdb.NewMemDatabase()
+		db, _      = shxdb.NewMemDatabase()
 		txFeed     = new(sub.Feed)
 		rmLogsFeed = new(sub.Feed)
 		logsFeed   = new(sub.Feed)
@@ -328,7 +328,7 @@ func TestLogFilter(t *testing.T) {
 
 	var (
 		mux        = new(sub.TypeMux)
-		db, _      = hpbdb.NewMemDatabase()
+		db, _      = shxdb.NewMemDatabase()
 		txFeed     = new(sub.Feed)
 		rmLogsFeed = new(sub.Feed)
 		logsFeed   = new(sub.Feed)
@@ -447,7 +447,7 @@ func TestPendingLogsSubscription(t *testing.T) {
 
 	var (
 		mux        = new(sub.TypeMux)
-		db, _      = hpbdb.NewMemDatabase()
+		db, _      = shxdb.NewMemDatabase()
 		txFeed     = new(sub.Feed)
 		rmLogsFeed = new(sub.Feed)
 		logsFeed   = new(sub.Feed)

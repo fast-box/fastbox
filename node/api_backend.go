@@ -97,7 +97,7 @@ func (b *HpbApiBackend) GetBlock(ctx context.Context, blockHash common.Hash) (*t
 }
 
 func (b *HpbApiBackend) GetReceipts(ctx context.Context, blockHash common.Hash) (types.Receipts, error) {
-	return bc.GetBlockReceipts(b.hpb.HpbDb, blockHash, bc.GetBlockNumber(b.hpb.HpbDb, blockHash)), nil
+	return bc.GetBlockReceipts(b.hpb.ShxDb, blockHash, bc.GetBlockNumber(b.hpb.ShxDb, blockHash)), nil
 }
 
 func (b *HpbApiBackend) GetTd(blockHash common.Hash) *big.Int {
@@ -161,7 +161,7 @@ func (b *HpbApiBackend) ProtocolVersion() int {
 	return b.hpb.EthVersion()
 }
 
-func (b *HpbApiBackend) ChainDb() hpbdb.Database {
+func (b *HpbApiBackend) ChainDb() shxdb.Database {
 	return b.hpb.ChainDb()
 }
 

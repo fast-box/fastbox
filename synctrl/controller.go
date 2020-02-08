@@ -116,7 +116,7 @@ func newSynCtrl(cfg *config.ChainConfig, mode config.SyncMode, txpoolins *txpool
 		synctrl.fastSync = uint32(1)
 	}
 	// Construct the different synchronisation mechanisms
-	synctrl.syner = NewSyncer(mode, db.GetHpbDbInstance(), synctrl.newBlockMux, nil, synctrl.removePeer)
+	synctrl.syner = NewSyncer(mode, db.GetShxDbInstance(), synctrl.newBlockMux, nil, synctrl.removePeer)
 
 	validator := func(header *types.Header) error {
 		return engine.VerifyHeader(bc.InstanceBlockChain(), header, true, mode)

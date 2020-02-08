@@ -986,7 +986,7 @@ func SetupNetwork(ctx *cli.Context) {
 }
 
 // MakeChainDatabase open an LevelDB using the flags passed to the client and will hard crash if it fails.
-func MakeChainDatabase(ctx *cli.Context, stack *node.Node) hpbdb.Database {
+func MakeChainDatabase(ctx *cli.Context, stack *node.Node) shxdb.Database {
 	var (
 		cache   = ctx.GlobalInt(CacheFlag.Name)
 		handles = makeDatabaseHandles()
@@ -1014,7 +1014,7 @@ func MakeGenesis(ctx *cli.Context) *bc.Genesis {
 }
 
 // MakeChain creates a chain manager from set command line flags.
-func MakeChain(ctx *cli.Context, stack *node.Node) (chain *bc.BlockChain, chainDb hpbdb.Database) {
+func MakeChain(ctx *cli.Context, stack *node.Node) (chain *bc.BlockChain, chainDb shxdb.Database) {
 	var err error
 	chainDb = MakeChainDatabase(ctx, stack)
 

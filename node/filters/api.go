@@ -54,7 +54,7 @@ type PublicFilterAPI struct {
 	backend   Backend
 	mux       *sub.TypeMux
 	quit      chan struct{}
-	chainDb   hpbdb.Database
+	chainDb   shxdb.Database
 	events    *EventSystem
 	filtersMu sync.Mutex
 	filters   map[rpc.ID]*filter

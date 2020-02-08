@@ -31,16 +31,16 @@ var DBINSTANCE = atomic.Value{}
 
 
 // CreateDB creates the chain database.
-func  CreateDB(config *config.Nodeconfig, name string) (hpbdb.Database, error) {
+func  CreateDB(config *config.Nodeconfig, name string) (shxdb.Database, error) {
 
 	if DBINSTANCE.Load() != nil {
-		return DBINSTANCE.Load().(*hpbdb.LDBDatabase),nil
+		return DBINSTANCE.Load().(*shxdb.LDBDatabase),nil
 	}
 	db, err := OpenDatabase(name, config.DatabaseCache, config.DatabaseHandles)
 	if err != nil {
 		return nil, err
 	}
-	if db, ok := db.(*hpbdb.LDBDatabase); ok {
+	if db, ok := db.(*shxdb.LDBDatabase); ok {
 		db.Meter("hpb/db/chaindata/")
 	}
 	DBINSTANCE.Store(db)
@@ -50,17 +50,17 @@ func  CreateDB(config *config.Nodeconfig, name string) (hpbdb.Database, error) {
 // OpenDatabase opens an existing database with the given name (or creates one
 // if no previous can be found) from within the node's data directory. If the
 // node is an ephemeral one, a memory database is returned.
-func OpenDatabase(name string, cache int, handles int) (hpbdb.Database, error) {
+func OpenDatabase(name string, cache int, handles int) (shxdb.Database, error) {
 
 	if DBINSTANCE.Load() != nil {
-		return DBINSTANCE.Load().(*hpbdb.LDBDatabase),nil
+		return DBINSTANCE.Load().(*shxdb.LDBDatabase),nil
 	}
 
 	var cfg = config.GetHpbConfigInstance()
 	if cfg.Node.DataDir == ""{
-		return hpbdb.NewMemDatabase()
+		return shxdb.NewMemDatabase()
 	}
-	db, err := hpbdb.NewLDBDatabase(cfg.Node.ResolvePath(name), cache, handles)
+	db, err := shxdb.NewLDBDatabase(cfg.Node.ResolvePath(name), cache, handles)
 	if err != nil {
 		return nil, err
 	}
@@ -69,9 +69,9 @@ func OpenDatabase(name string, cache int, handles int) (hpbdb.Database, error) {
 	return db, nil
 }
 
-func GetHpbDbInstance() (*hpbdb.LDBDatabase) {
+func GetShxDbInstance() (*shxdb.LDBDatabase) {
 	if DBINSTANCE.Load() != nil {
-		return DBINSTANCE.Load().(*hpbdb.LDBDatabase)
+		return DBINSTANCE.Load().(*shxdb.LDBDatabase)
 	}
 	log.Warn("LDBDatabase is nil, please init tx pool first.")
 	return nil

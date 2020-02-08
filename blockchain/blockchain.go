@@ -77,7 +77,7 @@ type BlockChain struct {
 	config *config.ChainConfig // chain & network configuration
 
 	hc            *HeaderChain
-	chainDb       hpbdb.Database
+	chainDb       shxdb.Database
 	rmLogsFeed    sub.Feed
 	chainFeed     sub.Feed
 	chainHeadFeed sub.Feed
@@ -114,7 +114,7 @@ type BlockChain struct {
 // InstanceBlockChain returns the singleton of BlockChain.
 func InstanceBlockChain() *BlockChain {
 	once.Do(func() {
-		bcInstance = NewBlockChain(db.GetHpbDbInstance(), &config.GetHpbConfigInstance().BlockChain)
+		bcInstance = NewBlockChain(db.GetShxDbInstance(), &config.GetHpbConfigInstance().BlockChain)
 	})
 	return bcInstance
 }
@@ -145,7 +145,7 @@ func (bc *BlockChain) InitWithEngine(engine consensus.Engine) (*BlockChain, erro
 // NewBlockChain returns a fully initialised block chain using information
 // available in the database. It initialises the default Hpb Validator and
 // Processor.
-func NewBlockChain(chainDb hpbdb.Database, config *config.ChainConfig) *BlockChain {
+func NewBlockChain(chainDb shxdb.Database, config *config.ChainConfig) *BlockChain {
 	bodyCache, _ := lru.New(bodyCacheLimit)
 	bodyRLPCache, _ := lru.New(bodyCacheLimit)
 	blockCache, _ := lru.New(blockCacheLimit)
@@ -170,7 +170,7 @@ func NewBlockChain(chainDb hpbdb.Database, config *config.ChainConfig) *BlockCha
 // NewBlockChain returns a fully initialised block chain using information
 // available in the database. It initialises the default Hpb Validator and
 // Processor.
-func NewBlockChainWithEngine(chainDb hpbdb.Database, config *config.ChainConfig, engine consensus.Engine) (*BlockChain, error) {
+func NewBlockChainWithEngine(chainDb shxdb.Database, config *config.ChainConfig, engine consensus.Engine) (*BlockChain, error) {
 	bodyCache, _ := lru.New(bodyCacheLimit)
 	bodyRLPCache, _ := lru.New(bodyCacheLimit)
 	blockCache, _ := lru.New(blockCacheLimit)
@@ -753,7 +753,7 @@ func (bc *BlockChain) InsertReceiptChain(blockChain types.Blocks, receiptChain [
 		}
 		stats.processed++
 
-		if batch.ValueSize() >= hpbdb.IdealBatchSize {
+		if batch.ValueSize() >= shxdb.IdealBatchSize {
 			if err := batch.Write(); err != nil {
 				return 0, err
 			}

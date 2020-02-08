@@ -167,7 +167,7 @@ func (s *stateSync) loop() error {
 }
 
 func (s *stateSync) commit(force bool) error {
-	if !force && s.bytesUncommitted < hpbdb.IdealBatchSize {
+	if !force && s.bytesUncommitted < shxdb.IdealBatchSize {
 		return nil
 	}
 	start := time.Now()

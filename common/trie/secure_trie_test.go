@@ -28,15 +28,15 @@ import (
 )
 
 func newEmptySecure() *SecureTrie {
-	db, _ := hpbdb.NewMemDatabase()
+	db, _ := shxdb.NewMemDatabase()
 	trie, _ := NewSecure(common.Hash{}, db, 0)
 	return trie
 }
 
 // makeTestSecureTrie creates a large enough secure trie for testing.
-func makeTestSecureTrie() (hpbdb.Database, *SecureTrie, map[string][]byte) {
+func makeTestSecureTrie() (shxdb.Database, *SecureTrie, map[string][]byte) {
 	// Create an empty trie
-	db, _ := hpbdb.NewMemDatabase()
+	db, _ := shxdb.NewMemDatabase()
 	trie, _ := NewSecure(common.Hash{}, db, 0)
 
 	// Fill it with some arbitrary data

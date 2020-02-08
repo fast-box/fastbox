@@ -67,7 +67,7 @@ func benchmarkBloomBits(b *testing.B, sectionSize uint64) {
 	benchDataDir := config.DefaultDataDir() + "/geth/chaindata"
 	fmt.Println("Running bloombits benchmark   section size:", sectionSize)
 
-	db, err := hpbdb.NewLDBDatabase(benchDataDir, 128, 1024)
+	db, err := shxdb.NewLDBDatabase(benchDataDir, 128, 1024)
 	if err != nil {
 		b.Fatalf("error opening database at %v: %v", benchDataDir, err)
 	}
@@ -129,7 +129,7 @@ func benchmarkBloomBits(b *testing.B, sectionSize uint64) {
 	for i := 0; i < benchFilterCnt; i++ {
 		if i%20 == 0 {
 			db.Close()
-			db, _ = hpbdb.NewLDBDatabase(benchDataDir, 128, 1024)
+			db, _ = shxdb.NewLDBDatabase(benchDataDir, 128, 1024)
 			backend = &testBackend{mux, db, cnt, new(sub.Feed), new(sub.Feed), new(sub.Feed), new(sub.Feed)}
 		}
 		var addr common.Address
@@ -146,8 +146,8 @@ func benchmarkBloomBits(b *testing.B, sectionSize uint64) {
 	db.Close()
 }
 
-func forEachKey(db hpbdb.Database, startPrefix, endPrefix []byte, fn func(key []byte)) {
-	it := db.(*hpbdb.LDBDatabase).NewIterator()
+func forEachKey(db shxdb.Database, startPrefix, endPrefix []byte, fn func(key []byte)) {
+	it := db.(*shxdb.LDBDatabase).NewIterator()
 	it.Seek(startPrefix)
 	for it.Valid() {
 		key := it.Key()
@@ -166,7 +166,7 @@ func forEachKey(db hpbdb.Database, startPrefix, endPrefix []byte, fn func(key []
 
 var bloomBitsPrefix = []byte("bloomBits-")
 
-func clearBloomBits(db hpbdb.Database) {
+func clearBloomBits(db shxdb.Database) {
 	fmt.Println("Clearing bloombits data...")
 	forEachKey(db, bloomBitsPrefix, bloomBitsPrefix, func(key []byte) {
 		db.Delete(key)
@@ -176,7 +176,7 @@ func clearBloomBits(db hpbdb.Database) {
 func BenchmarkNoBloomBits(b *testing.B) {
 	benchDataDir := config.DefaultDataDir() + "/geth/chaindata"
 	fmt.Println("Running benchmark without bloombits")
-	db, err := hpbdb.NewLDBDatabase(benchDataDir, 128, 1024)
+	db, err := shxdb.NewLDBDatabase(benchDataDir, 128, 1024)
 	if err != nil {
 		b.Fatalf("error opening database at %v: %v", benchDataDir, err)
 	}

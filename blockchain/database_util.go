@@ -101,7 +101,7 @@ func GetCanonicalHash(db DatabaseReader, number uint64) common.Hash {
 	return common.BytesToHash(data)
 }
 
-func StoreCadNodes(db hpbdb.Putter, blob []byte, Hash common.Hash) error {
+func StoreCadNodes(db shxdb.Putter, blob []byte, Hash common.Hash) error {
 	return db.Put(append([]byte("codnodesnap-"), Hash[:]...), blob)
 }
 
@@ -116,7 +116,7 @@ func GetRandom(db DatabaseReader) string {
 }
 
 // WriteRandom
-func WriteRandom(db hpbdb.Putter, rand string) error {
+func WriteRandom(db shxdb.Putter, rand string) error {
 	if err := db.Put(randomPrefix, []byte(rand)); err != nil {
 		log.Crit("Failed to store random string", "err", err)
 	}
@@ -372,7 +372,7 @@ func GetBloomBits(db DatabaseReader, bit uint, section uint64, head common.Hash)
 }
 
 // WriteCanonicalHash stores the canonical hash for the given block number.
-func WriteCanonicalHash(db hpbdb.Putter, hash common.Hash, number uint64) error {
+func WriteCanonicalHash(db shxdb.Putter, hash common.Hash, number uint64) error {
 	key := append(append(headerPrefix, encodeBlockNumber(number)...), numSuffix...)
 	if err := db.Put(key, hash.Bytes()); err != nil {
 		log.Crit("Failed to store number to hash mapping", "err", err)
@@ -381,7 +381,7 @@ func WriteCanonicalHash(db hpbdb.Putter, hash common.Hash, number uint64) error 
 }
 
 // WriteHeadHeaderHash stores the head header's hash.
-func WriteHeadHeaderHash(db hpbdb.Putter, hash common.Hash) error {
+func WriteHeadHeaderHash(db shxdb.Putter, hash common.Hash) error {
 	if err := db.Put(headHeaderKey, hash.Bytes()); err != nil {
 		log.Crit("Failed to store last header's hash", "err", err)
 	}
@@ -389,7 +389,7 @@ func WriteHeadHeaderHash(db hpbdb.Putter, hash common.Hash) error {
 }
 
 // WriteHeadBlockHash stores the head block's hash.
-func WriteHeadBlockHash(db hpbdb.Putter, hash common.Hash) error {
+func WriteHeadBlockHash(db shxdb.Putter, hash common.Hash) error {
 	if err := db.Put(headBlockKey, hash.Bytes()); err != nil {
 		log.Crit("Failed to store last block's hash", "err", err)
 	}
@@ -397,7 +397,7 @@ func WriteHeadBlockHash(db hpbdb.Putter, hash common.Hash) error {
 }
 
 // WriteHeadFastBlockHash stores the fast head block's hash.
-func WriteHeadFastBlockHash(db hpbdb.Putter, hash common.Hash) error {
+func WriteHeadFastBlockHash(db shxdb.Putter, hash common.Hash) error {
 	if err := db.Put(headFastKey, hash.Bytes()); err != nil {
 		log.Crit("Failed to store last fast block's hash", "err", err)
 	}
@@ -405,7 +405,7 @@ func WriteHeadFastBlockHash(db hpbdb.Putter, hash common.Hash) error {
 }
 
 // WriteHeader serializes a block header into the database.
-func WriteHeader(db hpbdb.Putter, header *types.Header) error {
+func WriteHeader(db shxdb.Putter, header *types.Header) error {
 	data, err := rlp.EncodeToBytes(header)
 	if err != nil {
 		return err
@@ -425,7 +425,7 @@ func WriteHeader(db hpbdb.Putter, header *types.Header) error {
 }
 
 // WriteBody serializes the body of a block into the database.
-func WriteBody(db hpbdb.Putter, hash common.Hash, number uint64, body *types.Body) error {
+func WriteBody(db shxdb.Putter, hash common.Hash, number uint64, body *types.Body) error {
 	data, err := rlp.EncodeToBytes(body)
 	if err != nil {
 		return err
@@ -434,7 +434,7 @@ func WriteBody(db hpbdb.Putter, hash common.Hash, number uint64, body *types.Bod
 }
 
 // WriteBodyRLP writes a serialized body of a block into the database.
-func WriteBodyRLP(db hpbdb.Putter, hash common.Hash, number uint64, rlp rlp.RawValue) error {
+func WriteBodyRLP(db shxdb.Putter, hash common.Hash, number uint64, rlp rlp.RawValue) error {
 	key := append(append(bodyPrefix, encodeBlockNumber(number)...), hash.Bytes()...)
 	if err := db.Put(key, rlp); err != nil {
 		log.Crit("Failed to store block body", "err", err)
@@ -443,7 +443,7 @@ func WriteBodyRLP(db hpbdb.Putter, hash common.Hash, number uint64, rlp rlp.RawV
 }
 
 // WriteTd serializes the total difficulty of a block into the database.
-func WriteTd(db hpbdb.Putter, hash common.Hash, number uint64, td *big.Int) error {
+func WriteTd(db shxdb.Putter, hash common.Hash, number uint64, td *big.Int) error {
 	data, err := rlp.EncodeToBytes(td)
 	if err != nil {
 		return err
@@ -456,7 +456,7 @@ func WriteTd(db hpbdb.Putter, hash common.Hash, number uint64, td *big.Int) erro
 }
 
 // WriteBlock serializes a block into the database, header and body separately.
-func WriteBlock(db hpbdb.Putter, block *types.Block) error {
+func WriteBlock(db shxdb.Putter, block *types.Block) error {
 	// Store the body first to retain database consistency
 	if err := WriteBody(db, block.Hash(), block.NumberU64(), block.Body()); err != nil {
 		return err
@@ -471,7 +471,7 @@ func WriteBlock(db hpbdb.Putter, block *types.Block) error {
 // WriteBlockReceipts stores all the transaction receipts belonging to a block
 // as a single receipt slice. This is used during chain reorganisations for
 // rescheduling dropped transactions.
-func WriteBlockReceipts(db hpbdb.Putter, hash common.Hash, number uint64, receipts types.Receipts) error {
+func WriteBlockReceipts(db shxdb.Putter, hash common.Hash, number uint64, receipts types.Receipts) error {
 	// Convert the receipts into their storage form and serialize them
 	storageReceipts := make([]*types.ReceiptForStorage, len(receipts))
 	for i, receipt := range receipts {
@@ -491,7 +491,7 @@ func WriteBlockReceipts(db hpbdb.Putter, hash common.Hash, number uint64, receip
 
 // WriteTxLookupEntries stores a positional metadata for every transaction from
 // a block, enabling hash based transaction and receipt lookups.
-func WriteTxLookupEntries(db hpbdb.Putter, block *types.Block) error {
+func WriteTxLookupEntries(db shxdb.Putter, block *types.Block) error {
 	// Iterate over each transaction and encode its metadata
 	for i, tx := range block.Transactions() {
 		entry := txLookupEntry{
@@ -512,7 +512,7 @@ func WriteTxLookupEntries(db hpbdb.Putter, block *types.Block) error {
 
 // WriteBloomBits writes the compressed bloom bits vector belonging to the given
 // section and bit index.
-func WriteBloomBits(db hpbdb.Putter, bit uint, section uint64, head common.Hash, bits []byte) {
+func WriteBloomBits(db shxdb.Putter, bit uint, section uint64, head common.Hash, bits []byte) {
 	key := append(append(bloomBitsPrefix, make([]byte, 10)...), head.Bytes()...)
 
 	binary.BigEndian.PutUint16(key[1:], uint16(bit))
@@ -563,13 +563,13 @@ func DeleteTxLookupEntry(db DatabaseDeleter, hash common.Hash) {
 }
 
 // PreimageTable returns a Database instance with the key prefix for preimage entries.
-func PreimageTable(db hpbdb.Database) hpbdb.Database {
-	return hpbdb.NewTable(db, preimagePrefix)
+func PreimageTable(db shxdb.Database) shxdb.Database {
+	return shxdb.NewTable(db, preimagePrefix)
 }
 
 // WritePreimages writes the provided set of preimages to the database. `number` is the
 // current block number, and is used for debug messages only.
-func WritePreimages(db hpbdb.Database, number uint64, preimages map[common.Hash][]byte) error {
+func WritePreimages(db shxdb.Database, number uint64, preimages map[common.Hash][]byte) error {
 	table := PreimageTable(db)
 	batch := table.NewBatch()
 	hitCount := 0
@@ -598,13 +598,13 @@ func GetBlockChainVersion(db DatabaseReader) int {
 }
 
 // WriteBlockChainVersion writes vsn as the version number to db.
-func WriteBlockChainVersion(db hpbdb.Putter, vsn int) {
+func WriteBlockChainVersion(db shxdb.Putter, vsn int) {
 	enc, _ := rlp.EncodeToBytes(uint(vsn))
 	db.Put([]byte("BlockchainVersion"), enc)
 }
 
 // WriteChainConfig writes the chain config settings to the database.
-func WriteChainConfig(db hpbdb.Putter, hash common.Hash, cfg *config.ChainConfig) error {
+func WriteChainConfig(db shxdb.Putter, hash common.Hash, cfg *config.ChainConfig) error {
 	// short circuit and ignore if nil config. GetChainConfig
 	// will return a default.
 

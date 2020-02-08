@@ -39,7 +39,7 @@ type Backend interface {
 	// general Hpb API
 	Downloader() *synctrl.Syncer
 	ProtocolVersion() int
-	ChainDb() hpbdb.Database
+	ChainDb() shxdb.Database
 	EventMux() *sub.TypeMux
 	AccountManager() *accounts.Manager
 	// BlockChain API

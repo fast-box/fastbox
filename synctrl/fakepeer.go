@@ -29,13 +29,13 @@ import (
 // sync commands from an xisting local database.
 type FakePeer struct {
 	id string
-	db hpbdb.Database
+	db shxdb.Database
 	hc *bc.HeaderChain
 	syncer *Syncer
 }
 
 // NewFakePeer creates a new mock syncer peer with the given data sources.
-func NewFakePeer(id string, db hpbdb.Database, hc *bc.HeaderChain, sy *Syncer) *FakePeer {
+func NewFakePeer(id string, db shxdb.Database, hc *bc.HeaderChain, sy *Syncer) *FakePeer {
 	return &FakePeer{id: id, db: db, hc: hc, syncer: sy}
 }
 

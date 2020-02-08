@@ -231,7 +231,7 @@ func importChain(ctx *cli.Context) error {
 	fmt.Printf("Import done in %v.\n\n", time.Since(start))
 
 	// Output pre-compaction stats mostly to see the import trashing
-	importChaindb := chainDb.(*hpbdb.LDBDatabase)
+	importChaindb := chainDb.(*shxdb.LDBDatabase)
 
 	stats, err := importChaindb.LDB().GetProperty("leveldb.stats")
 	if err != nil {
@@ -327,7 +327,7 @@ func copyDb(ctx *cli.Context) error {
 	syer := synctrl.NewSyncer(syncmode, chainDb, new(sub.TypeMux), chain, nil)
 
 	// Create a source peer to satisfy downloader requests from
-	copydb, err := hpbdb.NewLDBDatabase(ctx.Args().First(), ctx.GlobalInt(utils.CacheFlag.Name), 256)
+	copydb, err := shxdb.NewLDBDatabase(ctx.Args().First(), ctx.GlobalInt(utils.CacheFlag.Name), 256)
 	if err != nil {
 		return err
 	}
@@ -354,7 +354,7 @@ func copyDb(ctx *cli.Context) error {
 	// Compact the entire database to remove any sync overhead
 	start = time.Now()
 	fmt.Println("Compacting entire database...")
-	if err = chainDb.(*hpbdb.LDBDatabase).LDB().CompactRange(util.Range{}); err != nil {
+	if err = chainDb.(*shxdb.LDBDatabase).LDB().CompactRange(util.Range{}); err != nil {
 		utils.Fatalf("Compaction failed: %v", err)
 	}
 	fmt.Printf("Compaction done in %v.\n\n", time.Since(start))
