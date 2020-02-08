@@ -1,18 +1,18 @@
-// Copyright 2018 The go-hpb Authors
+// Copyright 2018 The sphinx Authors
 // Modified based on go-ethereum, which Copyright (C) 2014 The go-ethereum Authors.
 //
-// The go-hpb is free software: you can redistribute it and/or modify
+// The sphinx is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-hpb is distributed in the hope that it will be useful,
+// The sphinx is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-hpb. If not, see <http://www.gnu.org/licenses/>.
+// along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
 // ghpb is the official command-line client for Hpb.
 package main
@@ -46,7 +46,7 @@ var (
 	GitCommit = gitCommit
 	gitCommit = ""
 	// The app that holds all commands and flags.
-	app = utils.NewApp(gitCommit, "the go-hpb command line interface")
+	app = utils.NewApp(gitCommit, "the sphinx command line interface")
 	// flags that configure the node
 	nodeFlags = []cli.Flag{
 		utils.IdentityFlag,
@@ -134,7 +134,7 @@ func init() {
 	// Initialize the CLI app and start Geth
 	app.Action = ghpb
 	app.HideVersion = true // we have a command to print the version
-	app.Copyright = "Copyright 2018 The go-hpb Authors "
+	app.Copyright = "Copyright 2018 The sphinx Authors "
 	app.Commands = []cli.Command{
 		// See chaincmd.go:
 		initCommand,

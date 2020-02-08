@@ -1,18 +1,18 @@
-// Copyright 2018 The go-hpb Authors
+// Copyright 2018 The sphinx Authors
 // Modified based on go-ethereum, which Copyright (C) 2014 The go-ethereum Authors.
 //
-// The go-hpb is free software: you can redistribute it and/or modify
+// The sphinx is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-hpb is distributed in the hope that it will be useful,
+// The sphinx is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-hpb. If not, see <http://www.gnu.org/licenses/>.
+// along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
 // +build none
 
@@ -71,11 +71,11 @@ var (
 	debExecutables = []debExecutable{
 		{
 			Name:        "bootnode",
-			Description: "go-hpb bootnode.",
+			Description: "sphinx bootnode.",
 		},
 		{
 			Name:        "ghpb",
-			Description: "go-hpb CLI client.",
+			Description: "sphinx CLI client.",
 		},
 		{
 			Name:        "promfile",
@@ -140,7 +140,7 @@ func doInstall(cmdline []string) {
 
 	if minor < 7 && !strings.Contains(runtime.Version(), "devel"){
 		log.Println("You have Go version", runtime.Version())
-		log.Println("go-hpb requires at least Go version 1.7 and cannot")
+		log.Println("sphinx requires at least Go version 1.7 and cannot")
 		log.Println("be compiled with an earlier version. Please upgrade your Go installation.")
 		os.Exit(1)
 	}
@@ -420,7 +420,7 @@ func isUnstableBuild(env build.Environment) bool {
 type debMetadata struct {
 	Env build.Environment
 
-	// go-hpb version being built. Note that this
+	// sphinx version being built. Note that this
 	// is not the debian package version. The package version
 	// is constructed by VersionString.
 	Version string
