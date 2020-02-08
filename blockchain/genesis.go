@@ -19,12 +19,8 @@ package bc
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"math/big"
-	"strings"
-
 	"github.com/hpb-project/sphinx/blockchain/state"
 	"github.com/hpb-project/sphinx/blockchain/storage"
 	"github.com/hpb-project/sphinx/blockchain/types"
@@ -32,12 +28,11 @@ import (
 	"github.com/hpb-project/sphinx/common/hexutil"
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/common/math"
-	"github.com/hpb-project/sphinx/common/rlp"
 	"github.com/hpb-project/sphinx/config"
+	"math/big"
 )
 
 //go:generate gencodec -type Genesis -field-override genesisSpecMarshaling -out gen_genesis.go
-//go:generate gencodec -type GenesisAccount -field-override genesisAccountMarshaling -out gen_genesis_account.go
 
 var errGenesisNoConfig = errors.New("genesis has no chain configuration")
 
@@ -45,37 +40,16 @@ var errGenesisNoConfig = errors.New("genesis has no chain configuration")
 // fork switch-over blocks through the chain configuration.
 type Genesis struct {
 	Config    *config.ChainConfig `json:"config"`
-	Nonce     uint64              `json:"nonce"`
 	Timestamp uint64              `json:"timestamp"`
 	ExtraData []byte              `json:"extraData"`
-	//VoteIndex  uint64              `json:"voteIndex"`
-
-	//CandAddress common.Address     `json:"candAddress"`
-	GasLimit       uint64         `json:"gasLimit"   gencodec:"required"`
 	Difficulty     *big.Int       `json:"difficulty" gencodec:"required"`
-	Mixhash        common.Hash    `json:"mixHash"`
 	Coinbase       common.Address `json:"coinbase"`
-	Alloc          GenesisAlloc   `json:"alloc"      gencodec:"required"`
 	Number         uint64         `json:"number"`
-	GasUsed        uint64         `json:"gasUsed"`
 	ParentHash     common.Hash    `json:"parentHash"`
-	HardwareRandom []byte         `json:"hardwareRandom"`
 }
 
 // GenesisAlloc specifies the initial state that is part of the genesis block.
 type GenesisAlloc map[common.Address]GenesisAccount
-
-func (ga *GenesisAlloc) UnmarshalJSON(data []byte) error {
-	m := make(map[common.UnprefixedAddress]GenesisAccount)
-	if err := json.Unmarshal(data, &m); err != nil {
-		return err
-	}
-	*ga = make(GenesisAlloc)
-	for addr, a := range m {
-		(*ga)[common.Address(addr)] = a
-	}
-	return nil
-}
 
 // GenesisAccount is an account in the state of the genesis block.
 type GenesisAccount struct {
@@ -84,20 +58,6 @@ type GenesisAccount struct {
 	Balance    *big.Int                    `json:"balance" gencodec:"required"`
 	Nonce      uint64                      `json:"nonce,omitempty"`
 	PrivateKey []byte                      `json:"secretKey,omitempty"` // for tests
-}
-
-// field type overrides for gencodec
-type genesisSpecMarshaling struct {
-	Nonce     math.HexOrDecimal64
-	Timestamp math.HexOrDecimal64
-	ExtraData hexutil.Bytes
-	//VoteIndex  math.HexOrDecimal64
-	GasLimit       math.HexOrDecimal64
-	GasUsed        math.HexOrDecimal64
-	Number         math.HexOrDecimal64
-	Difficulty     *math.HexOrDecimal256
-	Alloc          map[common.UnprefixedAddress]GenesisAccount
-	HardwareRandom hexutil.Bytes
 }
 
 type genesisAccountMarshaling struct {
@@ -206,14 +166,6 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *config.ChainConfig {
 func (g *Genesis) ToBlock() (*types.Block, *state.StateDB) {
 	db, _ := hpbdb.NewMemDatabase()
 	statedb, _ := state.New(common.Hash{}, state.NewDatabase(db))
-	for addr, account := range g.Alloc {
-		statedb.AddBalance(addr, account.Balance)
-		statedb.SetCode(addr, account.Code)
-		statedb.SetNonce(addr, account.Nonce)
-		for key, value := range account.Storage {
-			statedb.SetState(addr, key, value)
-		}
-	}
 	root := statedb.IntermediateRoot(false)
 	head := &types.Header{
 		Number:     new(big.Int).SetUint64(g.Number),
@@ -278,7 +230,7 @@ func (g *Genesis) MustCommit(db hpbdb.Database) *types.Block {
 
 // GenesisBlockForTesting creates and writes a block in which addr has the given wei balance.
 func GenesisBlockForTesting(db hpbdb.Database, addr common.Address, balance *big.Int) *types.Block {
-	g := Genesis{Alloc: GenesisAlloc{addr: {Balance: balance}}}
+	g := Genesis{}
 	return g.MustCommit(db)
 }
 
@@ -286,12 +238,8 @@ func GenesisBlockForTesting(db hpbdb.Database, addr common.Address, balance *big
 func DefaultGenesisBlock() *Genesis {
 	return &Genesis{
 		Config:         config.MainnetChainConfig,
-		Nonce:          66,
 		ExtraData:      hexutil.MustDecode("0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa"),
-		HardwareRandom: hexutil.MustDecode("0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa"),
-		GasLimit:       5000,
 		Difficulty:     big.NewInt(17179869184),
-		Alloc:          decodePrealloc(mainnetAllocData),
 	}
 }
 
@@ -299,12 +247,8 @@ func DefaultGenesisBlock() *Genesis {
 func DefaultTestnetGenesisBlock() *Genesis {
 	return &Genesis{
 		Config:         config.MainnetChainConfig,
-		Nonce:          66,
 		ExtraData:      hexutil.MustDecode("0x3535353535353535353535353535353535353535353535353535353535353535"),
-		HardwareRandom: hexutil.MustDecode("0x3535353535353535353535353535353535353535353535353535353535353535"),
-		GasLimit:       16777216,
 		Difficulty:     big.NewInt(1048576),
-		Alloc:          decodePrealloc(testnetAllocData),
 	}
 }
 
@@ -312,21 +256,6 @@ func DefaultTestnetGenesisBlock() *Genesis {
 func DevGenesisBlock() *Genesis {
 	return &Genesis{
 		Config:     config.MainnetChainConfig,
-		Nonce:      42,
-		GasLimit:   4712388,
 		Difficulty: big.NewInt(131072),
-		Alloc:      decodePrealloc(devAllocData),
 	}
-}
-
-func decodePrealloc(data string) GenesisAlloc {
-	var p []struct{ Addr, Balance *big.Int }
-	if err := rlp.NewStream(strings.NewReader(data), 0).Decode(&p); err != nil {
-		panic(err)
-	}
-	ga := make(GenesisAlloc, len(p))
-	for _, account := range p {
-		ga[common.BigToAddress(account.Addr)] = GenesisAccount{Balance: account.Balance}
-	}
-	return ga
 }
