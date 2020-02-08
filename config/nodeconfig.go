@@ -79,7 +79,7 @@ var DefaultConfig = Nodeconfig{
 	LightPeers:    20,
 	DatabaseCache: 128,
 	GasPrice:      big.NewInt(18 * Shannon),
-	IPCPath:       "ghpb.ipc",
+	IPCPath:       "shx.ipc",
 	MaxTrieCacheGen: uint16(120),
 }
 
@@ -91,7 +91,7 @@ type GpoConfig struct {
 
 type Nodeconfig struct {
 	// Name sets the instance name of the node. It must not contain the / character and is
-	// used in the devp2p node identifier. The instance name of ghpb is "ghpb". If no
+	// used in the devp2p node identifier. The instance name of shx is "shx". If no
 	// value is specified, the basename of the current executable is used.
 	Name string `toml:"-"`
 
@@ -412,9 +412,9 @@ func (c *Nodeconfig) ResolvePath(path string) string {
 	}
 	// Backwards-compatibility: ensure that data directory files created
 	// by geth 1.4 are used if they exist.
-	if c.name() == "ghpb" && isOldGethResource[path] {
+	if c.name() == "shx" && isOldGethResource[path] {
 		oldpath := ""
-		if c.Name == "ghpb" {
+		if c.Name == "shx" {
 			oldpath = filepath.Join(c.DataDir, path)
 		}
 		if oldpath != "" && common.FileExist(oldpath) {

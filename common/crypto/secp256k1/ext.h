@@ -1,18 +1,18 @@
-// Copyright 2015 The ghpb Authors
-// This file is part of the ghpb library.
+// Copyright 2015 The shx Authors
+// This file is part of the shx library.
 //
-// The ghpb library is free software: you can redistribute it and/or modify
+// The shx library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The ghpb library is distributed in the hope that it will be useful,
+// The shx library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the ghpb library. If not, see <http://www.gnu.org/licenses/>.
+// along with the shx library. If not, see <http://www.gnu.org/licenses/>.
 
 // secp256k1_context_create_sign_verify creates a context for signing and signature verification.
 static secp256k1_context* secp256k1_context_create_sign_verify() {

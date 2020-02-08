@@ -1891,7 +1891,7 @@ var unitMap = {
     'khpb':       '1000000000000000000000',
     'grand':        '1000000000000000000000',
     'mhpb':       '1000000000000000000000000',
-    'ghpb':       '1000000000000000000000000000',
+    'shx':       '1000000000000000000000000000',
     'thpb':       '1000000000000000000000000000000'
 };
 
@@ -2132,7 +2132,7 @@ var getValueOfUnit = function (unit) {
  * - hpb      --             --
  * - khpb                    --           grand
  * - mhpb
- * - ghpb
+ * - shx
  * - thpb
  *
  * @method fromWei
@@ -2160,7 +2160,7 @@ var fromWei = function(number, unit) {
  * - hpb      --             --
  * - khpb                    --           grand
  * - mhpb
- * - ghpb
+ * - shx
  * - thpb
  *
  * @method toWei

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// ghpb is the official command-line client for Hpb.
+// shx is the official command-line client for Hpb.
 package main
 
 import (
@@ -38,7 +38,7 @@ import (
 )
 
 const (
-	clientIdentifier = "ghpb" // Client identifier to advertise over the network
+	clientIdentifier = "shx" // Client identifier to advertise over the network
 )
 
 var (
@@ -132,7 +132,7 @@ var (
 
 func init() {
 	// Initialize the CLI app and start Geth
-	app.Action = ghpb
+	app.Action = shx
 	app.HideVersion = true // we have a command to print the version
 	app.Copyright = "Copyright 2018 The sphinx Authors "
 	app.Commands = []cli.Command{
@@ -191,10 +191,10 @@ func main() {
 	}
 }
 
-// ghpb is the main entry point into the system if no special subcommand is ran.
+// shx is the main entry point into the system if no special subcommand is ran.
 // It creates a default node based on the command line arguments and runs it in
 // blocking mode, waiting for it to be shut down.
-func ghpb(ctx *cli.Context) error {
+func shx(ctx *cli.Context) error {
 	cfg := MakeConfigNode(ctx)
 	hpbnode, err := createNode(cfg)
 	if err != nil {

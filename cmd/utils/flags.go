@@ -451,16 +451,16 @@ var (
 	}
 	TestModeFlag = cli.BoolFlag{
 		Name:  "testmode",
-		Usage: "Run ghpb with testmode and boe don't need",
+		Usage: "Run shx with testmode and boe don't need",
 	}
 	TestCodeStageFlag = cli.IntSliceFlag{
 		Name:  "testparam",
-		Usage: "Run ghpb with test code stage and boe need",
+		Usage: "Run shx with test code stage and boe need",
 		Value: nil,
 	}
 	HpNumFlag = cli.IntFlag{
 		Name:  "hpnum",
-		Usage: "Run ghpb having hpnodes not better than HpNum, just for testing",
+		Usage: "Run shx having hpnodes not better than HpNum, just for testing",
 		Value: 31,
 	}
 	HpVoteRndSelScpFlag = cli.IntFlag{
@@ -470,16 +470,16 @@ var (
 	}
 	IgnRewardRetErrFlag = cli.BoolFlag{
 		Name:  "ignrewardreterr",
-		Usage: "Run ghpb ignore finailize rewards return err, just for testing",
+		Usage: "Run shx ignore finailize rewards return err, just for testing",
 	}
 	GenBlkSecsFlag = cli.IntFlag{
 		Name:  "genblksecs",
-		Usage: "Run ghpb with GenBlkSecsFlag seconds gen one block, just for testing",
+		Usage: "Run shx with GenBlkSecsFlag seconds gen one block, just for testing",
 		Value: 6,
 	}
 	BNodeidsFlag = cli.StringSliceFlag{
 		Name:  "bnodeids",
-		Usage: "Run ghpb with boot nodes with nodeids, and remove default bootnodesids, just for testing",
+		Usage: "Run shx with boot nodes with nodeids, and remove default bootnodesids, just for testing",
 		Value: nil,
 	}
 )

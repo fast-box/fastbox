@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// package web3ext contains ghpb specific web3.js extensions.
+// package web3ext contains shx specific web3.js extensions.
 package web3ext
 
 var Modules = map[string]string{

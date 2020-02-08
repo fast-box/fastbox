@@ -325,7 +325,7 @@ func makeAccountManager(conf *config.Nodeconfig) (*accounts.Manager, string, err
 		keydir, err = filepath.Abs(conf.KeyStoreDir)
 	default:
 		// There is no datadir.
-		keydir, err = ioutil.TempDir("", "ghpb-keystore")
+		keydir, err = ioutil.TempDir("", "shx-keystore")
 		ephemeral = keydir
 	}
 	if err != nil {
@@ -575,3 +575,4 @@ func (n *Node) SetNodeAPI() error {
 	n.RpcAPIs = append(n.RpcAPIs, n.Nodeapis()...)
 	return nil
 }
+

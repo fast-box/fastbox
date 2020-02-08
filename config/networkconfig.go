@@ -36,7 +36,7 @@ const (
 )
 
 const (
-	clientIdentifier = "ghpb" // Client identifier to advertise over the network
+	clientIdentifier = "shx" // Client identifier to advertise over the network
 )
 const (
 	// BloomBitsBlocks is the number of blocks a single bloom bit section vector
