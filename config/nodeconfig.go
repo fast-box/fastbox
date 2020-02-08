@@ -132,7 +132,7 @@ type Nodeconfig struct {
 	ExtraData    []byte         `toml:",omitempty"`
 	GasPrice     *big.Int
 
-	// Gas Price Oracle options,HPB don't need dynamic gas price
+	// Gas Price Oracle options,SHX don't need dynamic gas price
 	GPO GpoConfig
 
 	// Enables tracking of SHA3 preimages in the VM

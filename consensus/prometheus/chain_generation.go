@@ -30,7 +30,7 @@ import (
 func (c *Prometheus) GenBlockWithSig(chain consensus.ChainReader, block *types.Block) (*types.Block, error) {
 	header := block.Header()
 
-	log.Info("HPB Prometheus Seal is starting")
+	log.Info("SHX Prometheus Seal is starting")
 
 	number := header.Number.Uint64()
 	if number == 0 {

@@ -45,7 +45,7 @@ func (p *prometh) makeGenesis() {
 	}
 	// Figure out which consensus engine to choose
 	fmt.Println()
-	fmt.Println("Welcome to HPB consensus engine file maker")
+	fmt.Println("Welcome to SHX consensus engine file maker")
 
 	genesis.Difficulty = big.NewInt(1)
 	genesis.Config.Prometheus = &config.PrometheusConfig{

@@ -4482,7 +4482,7 @@ Iban.fromBban = function (bban) {
  * @return {Iban} the IBAN object
  */
 Iban.createIndirect = function (options) {
-    return Iban.fromBban('HPB' + options.institution + options.identifier);
+    return Iban.fromBban('SHX' + options.institution + options.identifier);
 };
 
 /**

@@ -320,7 +320,7 @@ type PeerInfo struct {
 	Start  string      `json:"start"`  //
 	Beat   string      `json:"beat"`   //
 	Mining string      `json:"mining"` //
-	HPB    interface{} `json:"hpb"`    // Sub-protocol specific metadata fields
+	SHX    interface{} `json:"hpb"`    // Sub-protocol specific metadata fields
 }
 
 type HpbInfo struct {
@@ -353,7 +353,7 @@ func (prm *PeerManager) PeersInfo() []*PeerInfo {
 			Start:   p.beatStart.String(),
 			Beat:    strconv.FormatUint(p.count, 10),
 			Mining:  p.statMining,
-			HPB:     "",
+			SHX:     "",
 		}
 		info.Network.Local = p.LocalAddr().String()
 		info.Network.Remote = p.RemoteAddr().String()
@@ -373,7 +373,7 @@ func (prm *PeerManager) PeersInfo() []*PeerInfo {
 			Start:   p.beatStart.String(),
 			Beat:    strconv.FormatUint(p.count, 10),
 			Mining:  p.statMining,
-			HPB: &HpbInfo{
+			SHX: &HpbInfo{
 				TD:   td,
 				Head: hash.Hex(),
 			},

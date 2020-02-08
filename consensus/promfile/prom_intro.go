@@ -42,12 +42,12 @@ func makePrometh(network string) *prometh {
 }
 
 // run displays some useful infos to the user, starting on the journey of
-// setting up a new or managing an existing HPB private network.
+// setting up a new or managing an existing SHX private network.
 func (p *prometh) run() {
 	fmt.Println("+-----------------------------------------------------------+")
-	fmt.Println("| Welcome to prometh, your HPB private network manager |")
+	fmt.Println("| Welcome to prometh, your SHX private network manager |")
 	fmt.Println("|                                                           |")
-	fmt.Println("| This tool lets you create a new HPB network down to  |")
+	fmt.Println("| This tool lets you create a new SHX network down to  |")
 	fmt.Println("| the genesis block, bootnodes, miners and ethstats servers |")
 	fmt.Println("| without the hassle that it would normally entail.         |")
 	fmt.Println("|                                                           |")
@@ -69,7 +69,7 @@ func (p *prometh) run() {
 			log.Error("I also like to live dangerously, still no spaces")
 		}
 	}
-	log.Info("Administering HPB network", "name", p.network)
+	log.Info("Administering SHX network", "name", p.network)
 
 	// Load initial configurations and connect to all live servers
 	p.conf.path = filepath.Join(os.Getenv("HOME"), ".prometh", p.network)

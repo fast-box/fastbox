@@ -9,7 +9,7 @@
 .PHONY: shx-windows shx-windows-386 shx-windows-amd64
 
 GOBIN = $(shell pwd)/build/bin
-GOHPB = $(shell pwd)
+GOSHX = $(shell pwd)
 GO ?= latest
 
 shx:
