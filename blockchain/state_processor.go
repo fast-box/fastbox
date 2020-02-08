@@ -43,7 +43,7 @@ func NewStateProcessor(config *config.ChainConfig, bc *BlockChain, engine consen
 	}
 }
 
-// Process processes the state changes according to the Hpb rules by running
+// Process processes the state changes according to the Shx rules by running
 // the transaction messages using the statedb.
 //
 // Process returns the receipts and logs accumulated during the process.

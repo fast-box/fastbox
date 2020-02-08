@@ -64,11 +64,11 @@ func dumpConfig(ctx *cli.Context) error {
 	return nil
 }
 
-func MakeConfigNode(ctx *cli.Context) (*config.HpbConfig) {
+func MakeConfigNode(ctx *cli.Context) (*config.ShxConfig) {
 	// Load defaults config
 	cfg := config.New()
 	if cfg == nil{
-		log.Error("Get Hpb config fail, so exit")
+		log.Error("Get Shx config fail, so exit")
 		os.Exit(1)
 	}
 	// Apply flags.
@@ -80,8 +80,8 @@ func MakeConfigNode(ctx *cli.Context) (*config.HpbConfig) {
 
 
 
-	if ctx.GlobalIsSet(utils.HpbStatsURLFlag.Name) {
-	cfg.HpbStats.URL = ctx.GlobalString(utils.HpbStatsURLFlag.Name)
+	if ctx.GlobalIsSet(utils.ShxStatsURLFlag.Name) {
+	cfg.ShxStats.URL = ctx.GlobalString(utils.ShxStatsURLFlag.Name)
 	}
 
 	return cfg

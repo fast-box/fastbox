@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package consensus implements different Hpb consensus engines.
+// Package consensus implements different Shx consensus engines.
 package consensus
 
 import (
@@ -72,7 +72,7 @@ type Engine interface {
 	// seal place on top.
 	GenBlockWithSig(chain ChainReader, block *types.Block) (*types.Block, error)
 
-	// Author retrieves the Hpb address of the account that minted the given
+	// Author retrieves the Shx address of the account that minted the given
 	// block, which may be different from the header's coinbase if a consensus
 	// engine is based on signatures.
 	Author(header *types.Header) (common.Address, error)

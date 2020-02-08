@@ -44,7 +44,7 @@ import (
 	"github.com/hpb-project/sphinx/consensus/prometheus"
 	"github.com/hpb-project/sphinx/event/sub"
 	"github.com/hpb-project/sphinx/internal/debug"
-	"github.com/hpb-project/sphinx/internal/hpbapi"
+	"github.com/hpb-project/sphinx/internal/shxapi"
 	"github.com/hpb-project/sphinx/network/p2p"
 	"github.com/hpb-project/sphinx/network/rpc"
 	"github.com/hpb-project/sphinx/node/db"
@@ -59,19 +59,19 @@ type Node struct {
 	accman      *accounts.Manager
 	newBlockMux *sub.TypeMux
 
-	Hpbconfig      *config.HpbConfig
-	Hpbpeermanager *p2p.PeerManager
-	Hpbrpcmanager  *rpc.RpcManager
-	Hpbsyncctr     *synctrl.SynCtrl
-	Hpbtxpool      *txpool.TxPool
-	Hpbbc          *bc.BlockChain
+	Shxconfig      *config.ShxConfig
+	Shxpeermanager *p2p.PeerManager
+	Shxrpcmanager  *rpc.RpcManager
+	Shxsyncctr     *synctrl.SynCtrl
+	Shxtxpool      *txpool.TxPool
+	Shxbc          *bc.BlockChain
 	//ShxDb
 	ShxDb shxdb.Database
 
 	networkId     uint64
-	netRPCService *hpbapi.PublicNetAPI
+	netRPCService *shxapi.PublicNetAPI
 
-	Hpbengine     consensus.Engine
+	Shxengine     consensus.Engine
 	bloomRequests chan chan *bloombits.Retrieval // Channel receiving bloom data retrieval requests
 	bloomIndexer  *bc.ChainIndexer               // Bloom indexer operating during block imports
 
@@ -89,7 +89,7 @@ type Node struct {
 	inprocHandler *rpc.Server // In-process RPC request handler to process the API requests
 
 	lock       sync.RWMutex
-	ApiBackend *HpbApiBackend
+	ApiBackend *ShxApiBackend
 
 	RpcAPIs []rpc.API // List of APIs currently provided by the node
 
@@ -98,7 +98,7 @@ type Node struct {
 }
 
 // New creates a hpb node, create all object and start
-func New(conf *config.HpbConfig) (*Node, error) {
+func New(conf *config.ShxConfig) (*Node, error) {
 	if conf.Node.DataDir != "" {
 		absdatadir, err := filepath.Abs(conf.Node.DataDir)
 		if err != nil {
@@ -121,25 +121,25 @@ func New(conf *config.HpbConfig) (*Node, error) {
 	}
 
 	hpbnode := &Node{
-		Hpbconfig:      conf,
-		Hpbpeermanager: nil, //peermanager,
-		Hpbsyncctr:     nil, //syncctr,
-		Hpbtxpool:      nil, //hpbtxpool,
-		Hpbbc:          nil, //block,
+		Shxconfig:      conf,
+		Shxpeermanager: nil, //peermanager,
+		Shxsyncctr:     nil, //syncctr,
+		Shxtxpool:      nil, //hpbtxpool,
+		Shxbc:          nil, //block,
 
 		ShxDb:     nil, //db,
 		networkId: conf.Node.NetworkId,
 
 		newBlockMux: nil,
 		accman:      nil,
-		Hpbengine:   nil,
+		Shxengine:   nil,
 
 		hpberbase:     common.Address{},
 		bloomRequests: make(chan chan *bloombits.Retrieval),
 		bloomIndexer:  nil,
 		stop:          make(chan struct{}),
 	}
-	log.Info("Initialising Hpb node", "network", conf.Node.NetworkId)
+	log.Info("Initialising Shx node", "network", conf.Node.NetworkId)
 
 	hpbdatabase, _ := db.CreateDB(&conf.Node, "chaindata")
 	// Ensure that the AccountManager method works before the node has started.
@@ -163,22 +163,22 @@ func New(conf *config.HpbConfig) (*Node, error) {
 	// in the data directory or instance directory is delayed until Start.
 	//create all object
 	peermanager := p2p.PeerMgrInst()
-	hpbnode.Hpbpeermanager = peermanager
-	hpbnode.Hpbrpcmanager = rpc.RpcMgrInst()
+	hpbnode.Shxpeermanager = peermanager
+	hpbnode.Shxrpcmanager = rpc.RpcMgrInst()
 
 	hpbnode.ShxDb = hpbdatabase
 
 	hpbnode.newBlockMux = new(sub.TypeMux)
 
-	hpbnode.Hpbbc = bc.InstanceBlockChain()
+	hpbnode.Shxbc = bc.InstanceBlockChain()
 
-	peermanager.RegChanStatus(hpbnode.Hpbbc.Status)
+	peermanager.RegChanStatus(hpbnode.Shxbc.Status)
 
-	txpool.NewTxPool(conf.TxPool, &conf.BlockChain, hpbnode.Hpbbc)
+	txpool.NewTxPool(conf.TxPool, &conf.BlockChain, hpbnode.Shxbc)
 	hpbtxpool := txpool.GetTxPool()
 
-	hpbnode.Hpbtxpool = hpbtxpool
-	hpbnode.ApiBackend = &HpbApiBackend{hpbnode}
+	hpbnode.Shxtxpool = hpbtxpool
+	hpbnode.ApiBackend = &ShxApiBackend{hpbnode}
 
 	gpoParams := conf.Node.GPO
 	if gpoParams.Default == nil {
@@ -188,7 +188,7 @@ func New(conf *config.HpbConfig) (*Node, error) {
 	hpbnode.bloomIndexer = NewBloomIndexer(hpbdatabase, params.BloomBitsBlocks)
 	return hpbnode, nil
 }
-func (hpbnode *Node) WorkerInit(conf *config.HpbConfig) error {
+func (hpbnode *Node) WorkerInit(conf *config.ShxConfig) error {
 	stored := bc.GetCanonicalHash(hpbnode.ShxDb, 0)
 	if stored != (common.Hash{}) {
 		if !conf.Node.SkipBcVersionCheck {
@@ -199,18 +199,18 @@ func (hpbnode *Node) WorkerInit(conf *config.HpbConfig) error {
 			bc.WriteBlockChainVersion(hpbnode.ShxDb, bc.BlockChainVersion)
 		}
 		engine := prometheus.InstancePrometheus()
-		hpbnode.Hpbengine = engine
+		hpbnode.Shxengine = engine
 		//add consensus engine to blockchain
-		_, err := hpbnode.Hpbbc.InitWithEngine(engine)
+		_, err := hpbnode.Shxbc.InitWithEngine(engine)
 		if err != nil {
 			log.Error("add engine to blockchain error")
 			return err
 		}
-		hpbnode.Hpbsyncctr = synctrl.InstanceSynCtrl()
-		hpbnode.newBlockMux = hpbnode.Hpbsyncctr.NewBlockMux()
+		hpbnode.Shxsyncctr = synctrl.InstanceSynCtrl()
+		hpbnode.newBlockMux = hpbnode.Shxsyncctr.NewBlockMux()
 
-		hpbnode.miner = worker.New(&conf.BlockChain, hpbnode.NewBlockMux(), hpbnode.Hpbengine, hpbnode.hpberbase)
-		hpbnode.bloomIndexer.Start(hpbnode.Hpbbc.CurrentHeader(), hpbnode.Hpbbc.SubscribeChainEvent)
+		hpbnode.miner = worker.New(&conf.BlockChain, hpbnode.NewBlockMux(), hpbnode.Shxengine, hpbnode.hpberbase)
+		hpbnode.bloomIndexer.Start(hpbnode.Shxbc.CurrentHeader(), hpbnode.Shxbc.SubscribeChainEvent)
 
 	} else {
 		return errors.New(`The genesis block is not inited`)
@@ -226,7 +226,7 @@ type ConsensuscfgF struct {
 	Nodeids          []string //`json:"Nodeids"`				//bootnode`s nodeid only add one
 }
 
-func parseConsensusConfigFile(conf *config.HpbConfig) {
+func parseConsensusConfigFile(conf *config.ShxConfig) {
 
 	path := conf.Node.DataDir + "/" + conf.Node.FNameConsensusCfg
 	_, err := os.Stat(path)
@@ -261,7 +261,7 @@ func parseConsensusConfigFile(conf *config.HpbConfig) {
 	}
 }
 
-func (hpbnode *Node) Start(conf *config.HpbConfig) error {
+func (hpbnode *Node) Start(conf *config.ShxConfig) error {
 
 	if conf.Node.FNameConsensusCfg != "" {
 		parseConsensusConfigFile(conf)
@@ -279,21 +279,21 @@ func (hpbnode *Node) Start(conf *config.HpbConfig) error {
 		log.Error("Worker init failed", ":", err)
 		return err
 	}
-	if hpbnode.Hpbsyncctr == nil {
+	if hpbnode.Shxsyncctr == nil {
 		log.Error("syncctrl is nil")
 		return errors.New("synctrl is nil")
 	}
-	hpbnode.Hpbsyncctr.Start()
-	retval := hpbnode.Hpbpeermanager.Start(hpbnode.hpberbase)
+	hpbnode.Shxsyncctr.Start()
+	retval := hpbnode.Shxpeermanager.Start(hpbnode.hpberbase)
 	if retval != nil {
 		log.Error("Start hpbpeermanager error")
 		return errors.New(`start peermanager error ".ipc"`)
 	}
-	hpbnode.Hpbpeermanager.RegStatMining(hpbnode.miner.Mining)
+	hpbnode.Shxpeermanager.RegStatMining(hpbnode.miner.Mining)
 
 	hpbnode.SetNodeAPI()
-	hpbnode.Hpbrpcmanager.Start(hpbnode.RpcAPIs)
-	hpbnode.Hpbtxpool.Start()
+	hpbnode.Shxrpcmanager.Start(hpbnode.RpcAPIs)
+	hpbnode.Shxtxpool.Start()
 
 	return nil
 
@@ -338,11 +338,11 @@ func makeAccountManager(conf *config.Nodeconfig) (*accounts.Manager, string, err
 }
 
 func (n *Node) openDataDir() error {
-	if n.Hpbconfig.Node.DataDir == "" {
+	if n.Shxconfig.Node.DataDir == "" {
 		return nil // ephemeral
 	}
 
-	instdir := filepath.Join(n.Hpbconfig.Node.DataDir, n.Hpbconfig.Node.StringName())
+	instdir := filepath.Join(n.Shxconfig.Node.DataDir, n.Shxconfig.Node.StringName())
 	if err := os.MkdirAll(instdir, 0700); err != nil {
 		return err
 	}
@@ -363,12 +363,12 @@ func (n *Node) Stop() error {
 	defer n.lock.Unlock()
 
 	//stop all modules
-	n.Hpbsyncctr.Stop()
-	n.Hpbtxpool.Stop()
+	n.Shxsyncctr.Stop()
+	n.Shxtxpool.Stop()
 	n.miner.Stop()
-	n.Hpbpeermanager.Stop()
+	n.Shxpeermanager.Stop()
 
-	n.Hpbrpcmanager.Stop()
+	n.Shxrpcmanager.Stop()
 	n.ShxDb.Close()
 
 	// Release instance directory lock.
@@ -411,7 +411,7 @@ func (n *Node) Restart() error {
 	if err := n.Stop(); err != nil {
 		return err
 	}
-	if err := n.Start(config.HpbConfigIns); err != nil {
+	if err := n.Start(config.ShxConfigIns); err != nil {
 		return err
 	}
 	return nil
@@ -442,12 +442,12 @@ func (n *Node) RPCHandler() (*rpc.Server, error) {
 // DataDir retrieves the current datadir used by the protocol stack.
 // Deprecated: No files should be stored in this directory, use InstanceDir instead.
 func (n *Node) DataDir() string {
-	return n.Hpbconfig.Node.DataDir
+	return n.Shxconfig.Node.DataDir
 }
 
 // InstanceDir retrieves the instance directory used by the protocol stack.
 func (n *Node) InstanceDir() string {
-	return n.Hpbconfig.Node.InstanceDir()
+	return n.Shxconfig.Node.InstanceDir()
 }
 
 // AccountManager retrieves the account manager used by the protocol stack.
@@ -463,7 +463,7 @@ func (n *Node) NewBlockMux() *sub.TypeMux {
 
 // ResolvePath returns the absolute path of a resource in the instance directory.
 func (n *Node) ResolvePath(x string) string {
-	return n.Hpbconfig.Node.ResolvePath(x)
+	return n.Shxconfig.Node.ResolvePath(x)
 }
 
 // apis returns the collection of RPC descriptors this node offers.
@@ -514,10 +514,10 @@ func makeExtraData(extra []byte) []byte {
 }
 
 func (s *Node) ResetWithGenesisBlock(gb *types.Block) {
-	s.Hpbbc.ResetWithGenesisBlock(gb)
+	s.Shxbc.ResetWithGenesisBlock(gb)
 }
 
-func (s *Node) Hpberbase() (eb common.Address, err error) {
+func (s *Node) Shxerbase() (eb common.Address, err error) {
 	s.lock.RLock()
 	hpberbase := s.hpberbase
 	s.lock.RUnlock()
@@ -534,7 +534,7 @@ func (s *Node) Hpberbase() (eb common.Address, err error) {
 }
 
 // set in js console via admin interface or wrapper from cli flags
-func (self *Node) SetHpberbase(hpberbase common.Address) {
+func (self *Node) SetShxerbase(hpberbase common.Address) {
 	self.lock.Lock()
 	self.hpberbase = hpberbase
 	self.lock.Unlock()
@@ -544,22 +544,22 @@ func (s *Node) StartMining(local bool) error {
 	//read coinbase from node
 	eb := s.hpberbase
 
-	if promeengine, ok := s.Hpbengine.(*prometheus.Prometheus); ok {
+	if promeengine, ok := s.Shxengine.(*prometheus.Prometheus); ok {
 		wallet, err := s.accman.Find(accounts.Account{Address: eb})
 		if wallet == nil || err != nil {
-			log.Error("Hpberbase account unavailable locally", "err", err)
+			log.Error("Shxerbase account unavailable locally", "err", err)
 			return fmt.Errorf("signer missing: %v", err)
 		}
 		promeengine.Authorize(eb, wallet.SignHash)
 	} else {
-		log.Error("Cannot start mining without prometheus", "err", s.Hpbengine)
+		log.Error("Cannot start mining without prometheus", "err", s.Shxengine)
 	}
 	if local {
 		// If local (CPU) mining is started, we can disable the transaction rejection
 		// mechanism introduced to speed sync times. CPU mining on mainnet is ludicrous
 		// so noone will ever hit this path, whereas marking sync done on CPU mining
 		// will ensure that private networks work in single miner mode too.
-		atomic.StoreUint32(&s.Hpbsyncctr.AcceptTxs, 1)
+		atomic.StoreUint32(&s.Shxsyncctr.AcceptTxs, 1)
 	}
 	go s.miner.Start(eb)
 	return nil

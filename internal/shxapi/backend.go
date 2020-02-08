@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package ethapi implements the general Hpb API functions.
-package hpbapi
+// Package ethapi implements the general Shx API functions.
+package shxapi
 
 import (
 	"context"
@@ -36,7 +36,7 @@ import (
 // Backend interface provides the common API services (that are provided by
 // both full and light clients) with access to necessary functions.
 type Backend interface {
-	// general Hpb API
+	// general Shx API
 	Downloader() *synctrl.Syncer
 	ProtocolVersion() int
 	ChainDb() shxdb.Database
@@ -72,7 +72,7 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 		{
 			Namespace: "shx",
 			Version:   "1.0",
-			Service:   NewPublicHpbAPI(apiBackend),
+			Service:   NewPublicShxAPI(apiBackend),
 			Public:    true,
 		}, {
 			Namespace: "shx",

@@ -22,7 +22,7 @@ var Modules = map[string]string{
 	"chequebook": Chequebook_JS,
 	"prometheus": Prometheus_JS,
 	"debug":      Debug_JS,
-	"hpb":        Hpb_JS,
+	"shx":        Shx_JS,
 	"miner":      Miner_JS,
 	"net":        Net_JS,
 	"personal":   Personal_JS,
@@ -64,8 +64,8 @@ web3._extend({
 ` 
 /*
 new web3._extend.Method({
-			name: 'getHpbNodeSnapAtHash',
-			call: 'prometheus_getHpbNodeSnapAtHash',
+			name: 'getShxNodeSnapAtHash',
+			call: 'prometheus_getShxNodeSnapAtHash',
 			params: 1
 		}),
 		
@@ -94,14 +94,14 @@ web3._extend({
 	property: 'prometheus',
 	methods: [
 		new web3._extend.Method({
-			name: 'getHpbNodeSnap',
-			call: 'prometheus_getHpbNodeSnap',
+			name: 'getShxNodeSnap',
+			call: 'prometheus_getShxNodeSnap',
 			params: 1,
 			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
 		}),
 		new web3._extend.Method({
-			name: 'getHpbNodes',
-			call: 'prometheus_getHpbNodes',
+			name: 'getShxNodes',
+			call: 'prometheus_getShxNodes',
 			params: 1,
 			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
 		}),
@@ -372,55 +372,43 @@ web3._extend({
 });
 `
 
-const Hpb_JS = `
+const Shx_JS = `
 web3._extend({
-	property: 'hpb',
+	property: 'shx',
 	methods: [
 		new web3._extend.Method({
-			name: 'getStatediffbyblock',
-			call: 'hpb_getStatediffbyblock',
-			params: 1,
-			inputFormatter: [null]
-		}),
-		new web3._extend.Method({
-			name: 'getStatediffbyblockandTx',
-			call: 'hpb_getStatediffbyblockandTx',
-			params: 2,
-			inputFormatter: [null,null]
-		}),
-		new web3._extend.Method({
 			name: 'sign',
-			call: 'hpb_sign',
+			call: 'shx_sign',
 			params: 2,
 			inputFormatter: [web3._extend.formatters.inputAddressFormatter, null]
 		}),
 		new web3._extend.Method({
 			name: 'resend',
-			call: 'hpb_resend',
+			call: 'shx_resend',
 			params: 3,
 			inputFormatter: [web3._extend.formatters.inputTransactionFormatter, web3._extend.utils.fromDecimal, web3._extend.utils.fromDecimal]
 		}),
 		new web3._extend.Method({
 			name: 'signTransaction',
-			call: 'hpb_signTransaction',
+			call: 'shx_signTransaction',
 			params: 1,
 			inputFormatter: [web3._extend.formatters.inputTransactionFormatter]
 		}),
 		new web3._extend.Method({
 			name: 'submitTransaction',
-			call: 'hpb_submitTransaction',
+			call: 'shx_submitTransaction',
 			params: 1,
 			inputFormatter: [web3._extend.formatters.inputTransactionFormatter]
 		}),
 		new web3._extend.Method({
 			name: 'getRawTransaction',
-			call: 'hpb_getRawTransactionByHash',
+			call: 'shx_getRawTransactionByHash',
 			params: 1
 		}),
 		new web3._extend.Method({
 			name: 'getRawTransactionFromBlock',
 			call: function(args) {
-				return (web3._extend.utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'hpb_getRawTransactionByBlockHashAndIndex' : 'hpb_getRawTransactionByBlockNumberAndIndex';
+				return (web3._extend.utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'shx_getRawTransactionByBlockHashAndIndex' : 'shx_getRawTransactionByBlockNumberAndIndex';
 			},
 			params: 2,
 			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter, web3._extend.utils.toHex]
@@ -429,7 +417,7 @@ web3._extend({
 	properties: [
 		new web3._extend.Property({
 			name: 'pendingTransactions',
-			getter: 'hpb_pendingTransactions',
+			getter: 'shx_pendingTransactions',
 			outputFormatter: function(txs) {
 				var formatted = [];
 				for (var i = 0; i < txs.length; i++) {
@@ -458,8 +446,8 @@ web3._extend({
 			call: 'miner_stop'
 		}),
 		new web3._extend.Method({
-			name: 'setHpberbase',
-			call: 'miner_setHpberbase',
+			name: 'setShxerbase',
+			call: 'miner_setShxerbase',
 			params: 1,
 			inputFormatter: [web3._extend.formatters.inputAddressFormatter]
 		}),

@@ -1756,33 +1756,33 @@ var ETH_UNITS = [
     'Gwei',
     'szabo',
     'finney',
-    'femtohpb',
-    'picohpb',
-    'nanohpb',
-    'microhpb',
-    'millihpb',
+    'femtoshx',
+    'picoshx',
+    'nanoshx',
+    'microshx',
+    'millishx',
     'nano',
     'micro',
     'milli',
-    'hpb',
+    'shx',
     'grand',
-    'Mhpb',
-    'Ghpb',
-    'Thpb',
-    'Phpb',
-    'Ehpb',
-    'Zhpb',
-    'Yhpb',
-    'Nhpb',
-    'Dhpb',
-    'Vhpb',
-    'Uhpb'
+    'Mshx',
+    'Gshx',
+    'Tshx',
+    'Pshx',
+    'Eshx',
+    'Zshx',
+    'Yshx',
+    'Nshx',
+    'Dshx',
+    'Vshx',
+    'Ushx'
 ];
 
 module.exports = {
     ETH_PADDING: 32,
     ETH_SIGNATURE_LENGTH: 4,
-    ETH_UNITS: ETH_UNITS,
+    //ETH_UNITS: ETH_UNITS,
     ETH_BIGNUMBER_ROUNDING_MODE: { ROUNDING_MODE: BigNumber.ROUND_DOWN },
     ETH_POLLING_TIMEOUT: 1000/2,
     defaultBlock: 'latest',
@@ -1864,36 +1864,6 @@ module.exports = function (value, options) {
 var BigNumber = require('bignumber.js');
 var sha3 = require('./sha3.js');
 var utf8 = require('utf8');
-
-var unitMap = {
-    'nohpb':      '0',
-    'wei':          '1',
-    'kwei':         '1000',
-    'Kwei':         '1000',
-    'babbage':      '1000',
-    'femtohpb':   '1000',
-    'mwei':         '1000000',
-    'Mwei':         '1000000',
-    'lovelace':     '1000000',
-    'picohpb':    '1000000',
-    'gwei':         '1000000000',
-    'Gwei':         '1000000000',
-    'shannon':      '1000000000',
-    'nanohpb':    '1000000000',
-    'nano':         '1000000000',
-    'szabo':        '1000000000000',
-    'microhpb':   '1000000000000',
-    'micro':        '1000000000000',
-    'finney':       '1000000000000000',
-    'millihpb':    '1000000000000000',
-    'milli':         '1000000000000000',
-    'hpb':        '1000000000000000000',
-    'khpb':       '1000000000000000000000',
-    'grand':        '1000000000000000000000',
-    'mhpb':       '1000000000000000000000000',
-    'shx':       '1000000000000000000000000000',
-    'thpb':       '1000000000000000000000000000000'
-};
 
 /**
  * Should be called to pad string to expected length
@@ -2100,78 +2070,6 @@ var toHex = function (val) {
     }
 
     return fromDecimal(val);
-};
-
-/**
- * Returns value of unit in Wei
- *
- * @method getValueOfUnit
- * @param {String} unit the unit to convert to, default hpb
- * @returns {BigNumber} value of the unit (in Wei)
- * @throws error if the unit is not correct:w
- */
-var getValueOfUnit = function (unit) {
-    unit = unit ? unit.toLowerCase() : 'hpb';
-    var unitValue = unitMap[unit];
-    if (unitValue === undefined) {
-        throw new Error('This unit doesn\'t exists, please use the one of the following units' + JSON.stringify(unitMap, null, 2));
-    }
-    return new BigNumber(unitValue, 10);
-};
-
-/**
- * Takes a number of wei and converts it to any other hpb unit.
- *
- * Possible units are:
- *   SI Short   SI Full        Effigy       Other
- * - kwei       femtohpb     babbage
- * - mwei       picohpb      lovelace
- * - gwei       nanohpb      shannon      nano
- * - --         microhpb     szabo        micro
- * - --         millihpb     finney       milli
- * - hpb      --             --
- * - khpb                    --           grand
- * - mhpb
- * - shx
- * - thpb
- *
- * @method fromWei
- * @param {Number|String} number can be a number, number string or a HEX of a decimal
- * @param {String} unit the unit to convert to, default hpb
- * @return {String|Object} When given a BigNumber object it returns one as well, otherwise a number
-*/
-var fromWei = function(number, unit) {
-    var returnValue = toBigNumber(number).dividedBy(getValueOfUnit(unit));
-
-    return isBigNumber(number) ? returnValue : returnValue.toString(10);
-};
-
-/**
- * Takes a number of a unit and converts it to wei.
- *
- * Possible units are:
- *   SI Short   SI Full        Effigy       Other
- * - kwei       femtohpb     babbage
- * - mwei       picohpb      lovelace
- * - gwei       nanohpb      shannon      nano
- * - --         microhpb     szabo        micro
- * - --         microhpb     szabo        micro
- * - --         millihpb     finney       milli
- * - hpb      --             --
- * - khpb                    --           grand
- * - mhpb
- * - shx
- * - thpb
- *
- * @method toWei
- * @param {Number|String|BigNumber} number can be a number, number string or a HEX of a decimal
- * @param {String} unit the unit to convert from, default hpb
- * @return {String|Object} When given a BigNumber object it returns one as well, otherwise a number
-*/
-var toWei = function(number, unit) {
-    var returnValue = toBigNumber(number).times(getValueOfUnit(unit));
-
-    return isBigNumber(number) ? returnValue : returnValue.toString(10);
 };
 
 /**
@@ -2391,7 +2289,7 @@ var isJson = function (str) {
 };
 
 /**
- * Returns true if given string is a valid Hpb block header bloom.
+ * Returns true if given string is a valid Shx block header bloom.
  *
  * @method isBloom
  * @param {String} hex encoded bloom filter
@@ -2435,8 +2333,6 @@ module.exports = {
     transformToFullName: transformToFullName,
     extractDisplayName: extractDisplayName,
     extractTypeName: extractTypeName,
-    toWei: toWei,
-    fromWei: fromWei,
     toBigNumber: toBigNumber,
     toTwosComplement: toTwosComplement,
     toAddress: toAddress,
@@ -2487,7 +2383,7 @@ module.exports={
 
 var RequestManager = require('./web3/requestmanager');
 var Iban = require('./web3/iban');
-var Hpb = require('./web3/methods/hpb');
+var Shx = require('./web3/methods/shx');
 var DB = require('./web3/methods/db');
 var Shh = require('./web3/methods/shh');
 var Net = require('./web3/methods/net');
@@ -2509,7 +2405,7 @@ var BigNumber = require('bignumber.js');
 function Web3 (provider) {
     this._requestManager = new RequestManager(provider);
     this.currentProvider = provider;
-    this.hpb = new Hpb(this);
+    this.shx = new Shx(this);
     this.db = new DB(this);
     this.shh = new Shh(this);
     this.net = new Net(this);
@@ -2588,8 +2484,8 @@ var properties = function () {
             inputFormatter: utils.toDecimal
         }),
         new Property({
-            name: 'version.hpb',
-            getter: 'hpb_protocolVersion',
+            name: 'version.shx',
+            getter: 'shx_protocolVersion',
             inputFormatter: utils.toDecimal
         }),
         new Property({
@@ -2611,7 +2507,7 @@ Web3.prototype.createBatch = function () {
 module.exports = Web3;
 
 
-},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/hpb":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
+},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/shx":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
 /*
     This file is part of web3.js.
     web3.js is free software: you can redistribute it and/or modify
@@ -2687,7 +2583,7 @@ AllSolidityEvents.prototype.execute = function (options, callback) {
 
     var o = this.encode(options);
     var formatter = this.decode.bind(this);
-    return new Filter(o, 'hpb', this._requestManager, watches.hpb(), formatter, callback);
+    return new Filter(o, 'shx', this._requestManager, watches.shx(), formatter, callback);
 };
 
 AllSolidityEvents.prototype.attachToContract = function (contract) {
@@ -2819,7 +2715,7 @@ var addFunctionsToContract = function (contract) {
     contract.abi.filter(function (json) {
         return json.type === 'function';
     }).map(function (json) {
-        return new SolidityFunction(contract._hpb, json, contract.address);
+        return new SolidityFunction(contract._shx, json, contract.address);
     }).forEach(function (f) {
         f.attachToContract(contract);
     });
@@ -2837,11 +2733,11 @@ var addEventsToContract = function (contract) {
         return json.type === 'event';
     });
 
-    var All = new AllEvents(contract._hpb._requestManager, events, contract.address);
+    var All = new AllEvents(contract._shx._requestManager, events, contract.address);
     All.attachToContract(contract);
 
     events.map(function (json) {
-        return new SolidityEvent(contract._hpb._requestManager, json, contract.address);
+        return new SolidityEvent(contract._shx._requestManager, json, contract.address);
     }).forEach(function (e) {
         e.attachToContract(contract);
     });
@@ -2861,7 +2757,7 @@ var checkForContractAddress = function(contract, callback){
         callbackFired = false;
 
     // wait for receipt
-    var filter = contract._hpb.filter('latest', function(e){
+    var filter = contract._shx.filter('latest', function(e){
         if (!e && !callbackFired) {
             count++;
 
@@ -2879,10 +2775,10 @@ var checkForContractAddress = function(contract, callback){
 
             } else {
 
-                contract._hpb.getTransactionReceipt(contract.transactionHash, function(e, receipt){
+                contract._shx.getTransactionReceipt(contract.transactionHash, function(e, receipt){
                     if(receipt && !callbackFired) {
 
-                        contract._hpb.getCode(receipt.contractAddress, function(e, code){
+                        contract._shx.getCode(receipt.contractAddress, function(e, code){
                             /*jshint maxcomplexity: 6 */
 
                             if(callbackFired || !code)
@@ -2925,8 +2821,8 @@ var checkForContractAddress = function(contract, callback){
  * @method ContractFactory
  * @param {Array} abi
  */
-var ContractFactory = function (hpb, abi) {
-    this.hpb = hpb;
+var ContractFactory = function (shx, abi) {
+    this.shx = shx;
     this.abi = abi;
 
     /**
@@ -2942,7 +2838,7 @@ var ContractFactory = function (hpb, abi) {
     this.new = function () {
         /*jshint maxcomplexity: 7 */
         
-        var contract = new Contract(this.hpb, this.abi);
+        var contract = new Contract(this.shx, this.abi);
 
         // parse arguments
         var options = {}; // required!
@@ -2974,7 +2870,7 @@ var ContractFactory = function (hpb, abi) {
         if (callback) {
 
             // wait for the contract address adn check if the code was deployed
-            this.hpb.sendTransaction(options, function (err, hash) {
+            this.shx.sendTransaction(options, function (err, hash) {
                 if (err) {
                     callback(err);
                 } else {
@@ -2988,7 +2884,7 @@ var ContractFactory = function (hpb, abi) {
                 }
             });
         } else {
-            var hash = this.hpb.sendTransaction(options);
+            var hash = this.shx.sendTransaction(options);
             // add the transaction hash
             contract.transactionHash = hash;
             checkForContractAddress(contract);
@@ -3023,7 +2919,7 @@ var ContractFactory = function (hpb, abi) {
  * otherwise calls callback function (err, contract)
  */
 ContractFactory.prototype.at = function (address, callback) {
-    var contract = new Contract(this.hpb, this.abi, address);
+    var contract = new Contract(this.shx, this.abi, address);
 
     // this functions are not part of prototype,
     // because we dont want to spoil the interface
@@ -3063,8 +2959,8 @@ ContractFactory.prototype.getData = function () {
  * @param {Array} abi
  * @param {Address} contract address
  */
-var Contract = function (hpb, abi, address) {
-    this._hpb = hpb;
+var Contract = function (shx, abi, address) {
+    this._shx = shx;
     this.transactionHash = null;
     this.address = address;
     this.abi = abi;
@@ -3300,7 +3196,7 @@ SolidityEvent.prototype.execute = function (indexed, options, callback) {
 
     var o = this.encode(indexed, options);
     var formatter = this.decode.bind(this);
-    return new Filter(o, 'hpb', this._requestManager, watches.hpb(), formatter, callback);
+    return new Filter(o, 'shx', this._requestManager, watches.shx(), formatter, callback);
 };
 
 /**
@@ -3431,7 +3327,7 @@ var getOptions = function (options, type) {
 
 
     switch(type) {
-        case 'hpb':
+        case 'shx':
 
             // make sure topics, get converted to hex
             options.topics = options.topics || [];
@@ -3949,8 +3845,8 @@ var sha3 = require('../utils/sha3');
 /**
  * This prototype should be used to call/sendTransaction to solidity functions
  */
-var SolidityFunction = function (hpb, json, address) {
-    this._hpb = hpb;
+var SolidityFunction = function (shx, json, address) {
+    this._shx = shx;
     this._inputTypes = json.inputs.map(function (i) {
         return i.type;
     });
@@ -4052,12 +3948,12 @@ SolidityFunction.prototype.call = function () {
 
 
     if (!callback) {
-        var output = this._hpb.call(payload, defaultBlock);
+        var output = this._shx.call(payload, defaultBlock);
         return this.unpackOutput(output);
     }
 
     var self = this;
-    this._hpb.call(payload, defaultBlock, function (error, output) {
+    this._shx.call(payload, defaultBlock, function (error, output) {
         if (error) return callback(error, null);
 
         var unpacked = null;
@@ -4087,10 +3983,10 @@ SolidityFunction.prototype.sendTransaction = function () {
     }
 
     if (!callback) {
-        return this._hpb.sendTransaction(payload);
+        return this._shx.sendTransaction(payload);
     }
 
-    this._hpb.sendTransaction(payload, callback);
+    this._shx.sendTransaction(payload, callback);
 };
 
 /**
@@ -4104,10 +4000,10 @@ SolidityFunction.prototype.estimateGas = function () {
     var payload = this.toPayload(args);
 
     if (!callback) {
-        return this._hpb.estimateGas(payload);
+        return this._shx.estimateGas(payload);
     }
 
-    this._hpb.estimateGas(payload, callback);
+    this._shx.estimateGas(payload, callback);
 };
 
 /**
@@ -4156,7 +4052,7 @@ SolidityFunction.prototype.request = function () {
     var format = this.unpackOutput.bind(this);
 
     return {
-        method: this._constant ? 'hpb_call' : 'hpb_sendTransaction',
+        method: this._constant ? 'shx_call' : 'shx_sendTransaction',
         callback: callback,
         params: [payload],
         format: format
@@ -4443,7 +4339,7 @@ var Iban = function (iban) {
 };
 
 /**
- * This method should be used to create iban object from hpb address
+ * This method should be used to create iban object from shx address
  *
  * @method fromAddress
  * @param {String} address
@@ -5113,7 +5009,7 @@ module.exports = DB;
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
 /**
- * @file hpb.js
+ * @file shx.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @author Fabian Vogelsteller <fabian@ethdev.com>
  * @date 2015
@@ -5135,26 +5031,26 @@ var Iban = require('../iban');
 var transfer = require('../transfer');
 
 var blockCall = function (args) {
-    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? "hpb_getBlockByHash" : "hpb_getBlockByNumber";
+    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? "shx_getBlockByHash" : "shx_getBlockByNumber";
 };
 
 var transactionFromBlockCall = function (args) {
-    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'hpb_getTransactionByBlockHashAndIndex' : 'hpb_getTransactionByBlockNumberAndIndex';
+    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'shx_getTransactionByBlockHashAndIndex' : 'shx_getTransactionByBlockNumberAndIndex';
 };
 
 var uncleCall = function (args) {
-    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'hpb_getUncleByBlockHashAndIndex' : 'hpb_getUncleByBlockNumberAndIndex';
+    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'shx_getUncleByBlockHashAndIndex' : 'shx_getUncleByBlockNumberAndIndex';
 };
 
 var getBlockTransactionCountCall = function (args) {
-    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'hpb_getBlockTransactionCountByHash' : 'hpb_getBlockTransactionCountByNumber';
+    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'shx_getBlockTransactionCountByHash' : 'shx_getBlockTransactionCountByNumber';
 };
 
 var uncleCountCall = function (args) {
-    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'hpb_getUncleCountByBlockHash' : 'hpb_getUncleCountByBlockNumber';
+    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'shx_getUncleCountByBlockHash' : 'shx_getUncleCountByBlockNumber';
 };
 
-function Hpb(web3) {
+function Shx(web3) {
     this._requestManager = web3._requestManager;
 
     var self = this;
@@ -5174,7 +5070,7 @@ function Hpb(web3) {
     this.sendIBANTransaction = transfer.bind(null, this);
 }
 
-Object.defineProperty(Hpb.prototype, 'defaultBlock', {
+Object.defineProperty(Shx.prototype, 'defaultBlock', {
     get: function () {
         return c.defaultBlock;
     },
@@ -5184,7 +5080,7 @@ Object.defineProperty(Hpb.prototype, 'defaultBlock', {
     }
 });
 
-Object.defineProperty(Hpb.prototype, 'defaultAccount', {
+Object.defineProperty(Shx.prototype, 'defaultAccount', {
     get: function () {
         return c.defaultAccount;
     },
@@ -5197,7 +5093,7 @@ Object.defineProperty(Hpb.prototype, 'defaultAccount', {
 var methods = function () {
     var getBalance = new Method({
         name: 'getBalance',
-        call: 'hpb_getBalance',
+        call: 'shx_getBalance',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter],
         outputFormatter: formatters.outputBigNumberFormatter
@@ -5205,14 +5101,14 @@ var methods = function () {
 
     var getStorageAt = new Method({
         name: 'getStorageAt',
-        call: 'hpb_getStorageAt',
+        call: 'shx_getStorageAt',
         params: 3,
         inputFormatter: [null, utils.toHex, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getCode = new Method({
         name: 'getCode',
-        call: 'hpb_getCode',
+        call: 'shx_getCode',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
@@ -5236,7 +5132,7 @@ var methods = function () {
 
     var getCompilers = new Method({
         name: 'getCompilers',
-        call: 'hpb_getCompilers',
+        call: 'shx_getCompilers',
         params: 0
     });
 
@@ -5258,7 +5154,7 @@ var methods = function () {
 
     var getTransaction = new Method({
         name: 'getTransaction',
-        call: 'hpb_getTransactionByHash',
+        call: 'shx_getTransactionByHash',
         params: 1,
         outputFormatter: formatters.outputTransactionFormatter
     });
@@ -5273,14 +5169,14 @@ var methods = function () {
 
     var getTransactionReceipt = new Method({
         name: 'getTransactionReceipt',
-        call: 'hpb_getTransactionReceipt',
+        call: 'shx_getTransactionReceipt',
         params: 1,
         outputFormatter: formatters.outputTransactionReceiptFormatter
     });
 
     var getTransactionCount = new Method({
         name: 'getTransactionCount',
-        call: 'hpb_getTransactionCount',
+        call: 'shx_getTransactionCount',
         params: 2,
         inputFormatter: [null, formatters.inputDefaultBlockNumberFormatter],
         outputFormatter: utils.toDecimal
@@ -5288,42 +5184,42 @@ var methods = function () {
 
     var sendRawTransaction = new Method({
         name: 'sendRawTransaction',
-        call: 'hpb_sendRawTransaction',
+        call: 'shx_sendRawTransaction',
         params: 1,
         inputFormatter: [null]
     });
 
     var sendTransaction = new Method({
         name: 'sendTransaction',
-        call: 'hpb_sendTransaction',
+        call: 'shx_sendTransaction',
         params: 1,
         inputFormatter: [formatters.inputTransactionFormatter]
     });
 
     var signTransaction = new Method({
         name: 'signTransaction',
-        call: 'hpb_signTransaction',
+        call: 'shx_signTransaction',
         params: 1,
         inputFormatter: [formatters.inputTransactionFormatter]
     });
 
     var sign = new Method({
         name: 'sign',
-        call: 'hpb_sign',
+        call: 'shx_sign',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, null]
     });
 
     var call = new Method({
         name: 'call',
-        call: 'hpb_call',
+        call: 'shx_call',
         params: 2,
         inputFormatter: [formatters.inputCallFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var estimateGas = new Method({
         name: 'estimateGas',
-        call: 'hpb_estimateGas',
+        call: 'shx_estimateGas',
         params: 1,
         inputFormatter: [formatters.inputCallFormatter],
         outputFormatter: utils.toDecimal
@@ -5331,31 +5227,31 @@ var methods = function () {
 
     var compileSolidity = new Method({
         name: 'compile.solidity',
-        call: 'hpb_compileSolidity',
+        call: 'shx_compileSolidity',
         params: 1
     });
 
     var compileLLL = new Method({
         name: 'compile.lll',
-        call: 'hpb_compileLLL',
+        call: 'shx_compileLLL',
         params: 1
     });
 
     var compileSerpent = new Method({
         name: 'compile.serpent',
-        call: 'hpb_compileSerpent',
+        call: 'shx_compileSerpent',
         params: 1
     });
 
     var submitWork = new Method({
         name: 'submitWork',
-        call: 'hpb_submitWork',
+        call: 'shx_submitWork',
         params: 3
     });
 
     var getWork = new Method({
         name: 'getWork',
-        call: 'hpb_getWork',
+        call: 'shx_getWork',
         params: 0
     });
     var newFilterCall = function (args) {
@@ -5365,13 +5261,13 @@ var methods = function () {
             case 'latest':
                 args.shift();
                 this.params = 0;
-                return 'hpb_newBlockFilter';
+                return 'shx_newBlockFilter';
             case 'pending':
                 args.shift();
                 this.params = 0;
-                return 'hpb_newPendingTransactionFilter';
+                return 'shx_newPendingTransactionFilter';
             default:
-                return 'hpb_newFilter';
+                return 'shx_newFilter';
         }
     };
 
@@ -5383,19 +5279,19 @@ var methods = function () {
 
     var uninstallFilter = new Method({
         name: 'uninstallFilter',
-        call: 'hpb_uninstallFilter',
+        call: 'shx_uninstallFilter',
         params: 1
     });
 
     var getFilterLogs = new Method({
         name: 'getFilterLogs',
-        call: 'hpb_getFilterLogs',
+        call: 'shx_getFilterLogs',
         params: 1
     });
 
     var getFilterChanges = new Method({
         name: 'getFilterChanges',
-        call: 'hpb_getFilterChanges',
+        call: 'shx_getFilterChanges',
         params: 1
     });
 
@@ -5435,60 +5331,60 @@ var properties = function () {
     return [
         new Property({
             name: 'coinbase',
-            getter: 'hpb_coinbase'
+            getter: 'shx_coinbase'
         }),
         new Property({
             name: 'mining',
-            getter: 'hpb_mining'
+            getter: 'shx_mining'
         }),
         new Property({
             name: 'syncing',
-            getter: 'hpb_syncing',
+            getter: 'shx_syncing',
             outputFormatter: formatters.outputSyncingFormatter
         }),
         new Property({
             name: 'gasPrice',
-            getter: 'hpb_gasPrice',
+            getter: 'shx_gasPrice',
             outputFormatter: formatters.outputBigNumberFormatter
         }),
         new Property({
             name: 'accounts',
-            getter: 'hpb_accounts'
+            getter: 'shx_accounts'
         }),
         new Property({
             name: 'blockNumber',
-            getter: 'hpb_blockNumber',
+            getter: 'shx_blockNumber',
             outputFormatter: utils.toDecimal
         }),
         new Property({
             name: 'protocolVersion',
-            getter: 'hpb_protocolVersion'
+            getter: 'shx_protocolVersion'
         })
     ];
 };
 
-Hpb.prototype.contract = function (abi) {
+Shx.prototype.contract = function (abi) {
     var factory = new Contract(this, abi);
     return factory;
 };
 
-Hpb.prototype.filter = function (options, callback, filterCreationErrorCallback) {
-    return new Filter(options, 'hpb', this._requestManager, watches.hpb(), formatters.outputLogFormatter, callback, filterCreationErrorCallback);
+Shx.prototype.filter = function (options, callback, filterCreationErrorCallback) {
+    return new Filter(options, 'shx', this._requestManager, watches.shx(), formatters.outputLogFormatter, callback, filterCreationErrorCallback);
 };
 
-Hpb.prototype.namereg = function () {
+Shx.prototype.namereg = function () {
     return this.contract(namereg.global.abi).at(namereg.global.address);
 };
 
-Hpb.prototype.icapNamereg = function () {
+Shx.prototype.icapNamereg = function () {
     return this.contract(namereg.icap.abi).at(namereg.icap.address);
 };
 
-Hpb.prototype.isSyncing = function (callback) {
+Shx.prototype.isSyncing = function (callback) {
     return new IsSyncing(this._requestManager, callback);
 };
 
-module.exports = Hpb;
+module.exports = Shx;
 
 },{"../../utils/config":18,"../../utils/utils":20,"../contract":25,"../filter":29,"../formatters":30,"../iban":33,"../method":36,"../namereg":44,"../property":45,"../syncing":48,"../transfer":49,"./watches":43}],39:[function(require,module,exports){
 /*
@@ -5504,7 +5400,7 @@ module.exports = Hpb;
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file hpb.js
+/** @file shx.js
  * @authors:
  *   Marek Kotewicz <marek@ethdev.com>
  * @date 2015
@@ -5524,7 +5420,7 @@ var Net = function (web3) {
     });
 };
 
-/// @returns an array of objects describing web3.hpb api properties
+/// @returns an array of objects describing web3.shx api properties
 var properties = function () {
     return [
         new Property({
@@ -5556,7 +5452,7 @@ module.exports = Net;
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
 /**
- * @file hpb.js
+ * @file shx.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @author Fabian Vogelsteller <fabian@ethdev.com>
  * @date 2015
@@ -5951,8 +5847,8 @@ module.exports = Swarm;
 
 var Method = require('../method');
 
-/// @returns an array of objects describing web3.hpb.filter api methods
-var hpb = function (web3) {
+/// @returns an array of objects describing web3.shx.filter api methods
+var shx = function (web3) {
     var newFilterCall = function (args) {
         var type = args[0];
 
@@ -5960,13 +5856,13 @@ var hpb = function (web3) {
             case 'latest':
                 args.shift();
                 this.params = 0;
-                return 'hpb_newBlockFilter';
+                return 'shx_newBlockFilter';
             case 'pending':
                 args.shift();
                 this.params = 0;
-                return 'hpb_newPendingTransactionFilter';
+                return 'shx_newPendingTransactionFilter';
             default:
-                return 'hpb_newFilter';
+                return 'shx_newFilter';
         }
     };
 
@@ -5978,19 +5874,19 @@ var hpb = function (web3) {
 
     var uninstallFilter = new Method({
         name: 'uninstallFilter',
-        call: 'hpb_uninstallFilter',
+        call: 'shx_uninstallFilter',
         params: 1
     });
 
     var getLogs = new Method({
         name: 'getLogs',
-        call: 'hpb_getFilterLogs',
+        call: 'shx_getFilterLogs',
         params: 1
     });
 
     var poll = new Method({
         name: 'poll',
-        call: 'hpb_getFilterChanges',
+        call: 'shx_getFilterChanges',
         params: 1
     });
 
@@ -6030,7 +5926,7 @@ var shh = function (web3) {
 };
 
 module.exports = {
-    hpb: hpb,
+    shx: shx,
     shh: shh
 };
 
@@ -6247,7 +6143,7 @@ var errors = require('./errors');
 
 /**
  * It's responsible for passing messages to providers
- * It's also responsible for polling the hpb node for incoming messages
+ * It's also responsible for polling the shx node for incoming messages
  * Default poll timeout is 1 second
  * Singleton
  */
@@ -6551,7 +6447,7 @@ var pollSyncing = function(self) {
     };
 
     self.requestManager.startPolling({
-        method: 'hpb_syncing',
+        method: 'shx_syncing',
         params: [],
     }, self.pollId, onMessage, self.stopWatching.bind(self));
 
@@ -6614,23 +6510,23 @@ var exchangeAbi = require('../contracts/SmartExchange.json');
  * @param {Value} value to be tranfered
  * @param {Function} callback, callback
  */
-var transfer = function (hpb, from, to, value, callback) {
+var transfer = function (shx, from, to, value, callback) {
     var iban = new Iban(to); 
     if (!iban.isValid()) {
         throw new Error('invalid iban address');
     }
 
     if (iban.isDirect()) {
-        return transferToAddress(hpb, from, iban.address(), value, callback);
+        return transferToAddress(shx, from, iban.address(), value, callback);
     }
     
     if (!callback) {
-        var address = hpb.icapNamereg().addr(iban.institution());
-        return deposit(hpb, from, address, value, iban.client());
+        var address = shx.icapNamereg().addr(iban.institution());
+        return deposit(shx, from, address, value, iban.client());
     }
 
-    hpb.icapNamereg().addr(iban.institution(), function (err, address) {
-        return deposit(hpb, from, address, value, iban.client(), callback);
+    shx.icapNamereg().addr(iban.institution(), function (err, address) {
+        return deposit(shx, from, address, value, iban.client(), callback);
     });
     
 };
@@ -6644,8 +6540,8 @@ var transfer = function (hpb, from, to, value, callback) {
  * @param {Value} value to be tranfered
  * @param {Function} callback, callback
  */
-var transferToAddress = function (hpb, from, to, value, callback) {
-    return hpb.sendTransaction({
+var transferToAddress = function (shx, from, to, value, callback) {
+    return shx.sendTransaction({
         address: to,
         from: from,
         value: value
@@ -6662,9 +6558,9 @@ var transferToAddress = function (hpb, from, to, value, callback) {
  * @param {String} client unique identifier
  * @param {Function} callback, callback
  */
-var deposit = function (hpb, from, to, value, client, callback) {
+var deposit = function (shx, from, to, value, client, callback) {
     var abi = exchangeAbi;
-    return hpb.contract(abi).at(to).deposit(client, {
+    return shx.contract(abi).at(to).deposit(client, {
         from: from,
         value: value
     }, callback);

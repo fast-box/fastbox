@@ -33,25 +33,25 @@ import (
 	"github.com/hpb-project/sphinx/synctrl"
 )
 
-// HpbApiBackend implements ethapi.Backend for full nodes
-type HpbApiBackend struct {
+// ShxApiBackend implements ethapi.Backend for full nodes
+type ShxApiBackend struct {
 	hpb *Node
 }
 
-func (b *HpbApiBackend) ChainConfig() *config.ChainConfig {
-	return &b.hpb.Hpbconfig.BlockChain
+func (b *ShxApiBackend) ChainConfig() *config.ChainConfig {
+	return &b.hpb.Shxconfig.BlockChain
 }
 
-func (b *HpbApiBackend) CurrentBlock() *types.Block {
-	return b.hpb.Hpbbc.CurrentBlock()
+func (b *ShxApiBackend) CurrentBlock() *types.Block {
+	return b.hpb.Shxbc.CurrentBlock()
 }
 
-func (b *HpbApiBackend) SetHead(number uint64) {
-	b.hpb.Hpbsyncctr.Syncer().Cancel()
-	b.hpb.Hpbbc.SetHead(number)
+func (b *ShxApiBackend) SetHead(number uint64) {
+	b.hpb.Shxsyncctr.Syncer().Cancel()
+	b.hpb.Shxbc.SetHead(number)
 }
 
-func (b *HpbApiBackend) HeaderByNumber(ctx context.Context, blockNr rpc.BlockNumber) (*types.Header, error) {
+func (b *ShxApiBackend) HeaderByNumber(ctx context.Context, blockNr rpc.BlockNumber) (*types.Header, error) {
 	// Pending block is only known by the miner
 	if blockNr == rpc.PendingBlockNumber {
 		block := b.hpb.miner.PendingBlock()
@@ -59,12 +59,12 @@ func (b *HpbApiBackend) HeaderByNumber(ctx context.Context, blockNr rpc.BlockNum
 	}
 	// Otherwise resolve and return the block
 	if blockNr == rpc.LatestBlockNumber {
-		return b.hpb.Hpbbc.CurrentBlock().Header(), nil
+		return b.hpb.Shxbc.CurrentBlock().Header(), nil
 	}
-	return b.hpb.Hpbbc.GetHeaderByNumber(uint64(blockNr)), nil
+	return b.hpb.Shxbc.GetHeaderByNumber(uint64(blockNr)), nil
 }
 
-func (b *HpbApiBackend) BlockByNumber(ctx context.Context, blockNr rpc.BlockNumber) (*types.Block, error) {
+func (b *ShxApiBackend) BlockByNumber(ctx context.Context, blockNr rpc.BlockNumber) (*types.Block, error) {
 	// Pending block is only known by the miner
 	if blockNr == rpc.PendingBlockNumber {
 		block := b.hpb.miner.PendingBlock()
@@ -72,12 +72,12 @@ func (b *HpbApiBackend) BlockByNumber(ctx context.Context, blockNr rpc.BlockNumb
 	}
 	// Otherwise resolve and return the block
 	if blockNr == rpc.LatestBlockNumber {
-		return b.hpb.Hpbbc.CurrentBlock(), nil
+		return b.hpb.Shxbc.CurrentBlock(), nil
 	}
-	return b.hpb.Hpbbc.GetBlockByNumber(uint64(blockNr)), nil
+	return b.hpb.Shxbc.GetBlockByNumber(uint64(blockNr)), nil
 }
 
-func (b *HpbApiBackend) StateAndHeaderByNumber(ctx context.Context, blockNr rpc.BlockNumber) (*state.StateDB, *types.Header, error) {
+func (b *ShxApiBackend) StateAndHeaderByNumber(ctx context.Context, blockNr rpc.BlockNumber) (*state.StateDB, *types.Header, error) {
 	// Pending state is only known by the miner
 	if blockNr == rpc.PendingBlockNumber {
 		block, state := b.hpb.miner.Pending()
@@ -92,39 +92,39 @@ func (b *HpbApiBackend) StateAndHeaderByNumber(ctx context.Context, blockNr rpc.
 	return stateDb, header, err
 }
 
-func (b *HpbApiBackend) GetBlock(ctx context.Context, blockHash common.Hash) (*types.Block, error) {
-	return b.hpb.Hpbbc.GetBlockByHash(blockHash), nil
+func (b *ShxApiBackend) GetBlock(ctx context.Context, blockHash common.Hash) (*types.Block, error) {
+	return b.hpb.Shxbc.GetBlockByHash(blockHash), nil
 }
 
-func (b *HpbApiBackend) GetReceipts(ctx context.Context, blockHash common.Hash) (types.Receipts, error) {
+func (b *ShxApiBackend) GetReceipts(ctx context.Context, blockHash common.Hash) (types.Receipts, error) {
 	return bc.GetBlockReceipts(b.hpb.ShxDb, blockHash, bc.GetBlockNumber(b.hpb.ShxDb, blockHash)), nil
 }
 
-func (b *HpbApiBackend) GetTd(blockHash common.Hash) *big.Int {
-	return b.hpb.Hpbbc.GetTdByHash(blockHash)
+func (b *ShxApiBackend) GetTd(blockHash common.Hash) *big.Int {
+	return b.hpb.Shxbc.GetTdByHash(blockHash)
 }
 
-func (b *HpbApiBackend) SubscribeRemovedLogsEvent(ch chan<- bc.RemovedLogsEvent) sub.Subscription {
+func (b *ShxApiBackend) SubscribeRemovedLogsEvent(ch chan<- bc.RemovedLogsEvent) sub.Subscription {
 	return b.hpb.BlockChain().SubscribeRemovedLogsEvent(ch)
 }
 
-func (b *HpbApiBackend) SubscribeChainEvent(ch chan<- bc.ChainEvent) sub.Subscription {
+func (b *ShxApiBackend) SubscribeChainEvent(ch chan<- bc.ChainEvent) sub.Subscription {
 	return b.hpb.BlockChain().SubscribeChainEvent(ch)
 }
 
-func (b *HpbApiBackend) SubscribeChainHeadEvent(ch chan<- bc.ChainHeadEvent) sub.Subscription {
+func (b *ShxApiBackend) SubscribeChainHeadEvent(ch chan<- bc.ChainHeadEvent) sub.Subscription {
 	return b.hpb.BlockChain().SubscribeChainHeadEvent(ch)
 }
 
-func (b *HpbApiBackend) SubscribeLogsEvent(ch chan<- []*types.Log) sub.Subscription {
+func (b *ShxApiBackend) SubscribeLogsEvent(ch chan<- []*types.Log) sub.Subscription {
 	return b.hpb.BlockChain().SubscribeLogsEvent(ch)
 }
 
-func (b *HpbApiBackend) SendTx(ctx context.Context, signedTx *types.Transaction) error {
+func (b *ShxApiBackend) SendTx(ctx context.Context, signedTx *types.Transaction) error {
 	return b.hpb.TxPool().AddTx(signedTx)
 }
 
-func (b *HpbApiBackend) GetPoolTransactions() (types.Transactions, error) {
+func (b *ShxApiBackend) GetPoolTransactions() (types.Transactions, error) {
 	pending, err := b.hpb.TxPool().Pended()
 	if err != nil {
 		return nil, err
@@ -133,52 +133,52 @@ func (b *HpbApiBackend) GetPoolTransactions() (types.Transactions, error) {
 	return pending, nil
 }
 
-func (b *HpbApiBackend) GetPoolTransaction(hash common.Hash) *types.Transaction {
+func (b *ShxApiBackend) GetPoolTransaction(hash common.Hash) *types.Transaction {
 	return b.hpb.TxPool().GetTxByHash(hash)
 }
 
-func (b *HpbApiBackend) GetPoolNonce(ctx context.Context, addr common.Address) (uint64, error) {
+func (b *ShxApiBackend) GetPoolNonce(ctx context.Context, addr common.Address) (uint64, error) {
 	return b.hpb.TxPool().State().GetNonce(addr), nil
 }
 
-func (b *HpbApiBackend) Stats() (pending int, queued int) {
+func (b *ShxApiBackend) Stats() (pending int, queued int) {
 	return b.hpb.TxPool().Stats()
 }
 
-func (b *HpbApiBackend) TxPoolContent() (map[common.Address]types.Transactions, map[common.Address]types.Transactions) {
+func (b *ShxApiBackend) TxPoolContent() (map[common.Address]types.Transactions, map[common.Address]types.Transactions) {
 	return b.hpb.TxPool().Content()
 }
 
-func (b *HpbApiBackend) SubscribeTxPreEvent(ch chan<- bc.TxPreEvent) sub.Subscription {
+func (b *ShxApiBackend) SubscribeTxPreEvent(ch chan<- bc.TxPreEvent) sub.Subscription {
 	return b.hpb.TxPool().SubscribeTxPreEvent(ch)
 }
 
-func (b *HpbApiBackend) Downloader() *synctrl.Syncer {
-	return b.hpb.Hpbsyncctr.Syncer()
+func (b *ShxApiBackend) Downloader() *synctrl.Syncer {
+	return b.hpb.Shxsyncctr.Syncer()
 }
 
-func (b *HpbApiBackend) ProtocolVersion() int {
+func (b *ShxApiBackend) ProtocolVersion() int {
 	return b.hpb.EthVersion()
 }
 
-func (b *HpbApiBackend) ChainDb() shxdb.Database {
+func (b *ShxApiBackend) ChainDb() shxdb.Database {
 	return b.hpb.ChainDb()
 }
 
-func (b *HpbApiBackend) EventMux() *sub.TypeMux {
+func (b *ShxApiBackend) EventMux() *sub.TypeMux {
 	return b.hpb.NewBlockMux()
 }
 
-func (b *HpbApiBackend) AccountManager() *accounts.Manager {
+func (b *ShxApiBackend) AccountManager() *accounts.Manager {
 	return b.hpb.AccountManager()
 }
 
-func (b *HpbApiBackend) BloomStatus() (uint64, uint64) {
+func (b *ShxApiBackend) BloomStatus() (uint64, uint64) {
 	sections, _, _ := b.hpb.bloomIndexer.Sections()
 	return config.BloomBitsBlocks, sections
 }
 
-func (b *HpbApiBackend) ServiceFilter(ctx context.Context, session *bloombits.MatcherSession) {
+func (b *ShxApiBackend) ServiceFilter(ctx context.Context, session *bloombits.MatcherSession) {
 	for i := 0; i < bloomFilterThreads; i++ {
 		go session.Multiplex(bloomRetrievalBatch, bloomRetrievalWait, b.hpb.bloomRequests)
 	}

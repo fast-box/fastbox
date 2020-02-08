@@ -51,7 +51,7 @@ type PeerManager struct {
 	closed bool
 
 	server *Server   // pointer to server of p2p
-	hpbpro *HpbProto // pointer to hpb protocol
+	hpbpro *ShxProto // pointer to hpb protocol
 
 }
 
@@ -73,7 +73,7 @@ func PeerMgrInst() *PeerManager {
 
 func (prm *PeerManager) Start(coinbase common.Address) error {
 
-	config := config.GetHpbConfigInstance()
+	config := config.GetShxConfigInstance()
 
 	prm.server.Config = Config{
 		NAT:        config.Network.NAT,
@@ -110,7 +110,7 @@ func (prm *PeerManager) Start(coinbase common.Address) error {
 	log.Info("Set Init Local Type by p2p", "type", localType.ToString())
 
 	if err := prm.server.Start(); err != nil {
-		log.Error("Hpb protocol", "error", err)
+		log.Error("Shx protocol", "error", err)
 		return err
 	}
 	////////////////////////////////////////////////////////////////////////////////////////
@@ -323,7 +323,7 @@ type PeerInfo struct {
 	SHX    interface{} `json:"hpb"`    // Sub-protocol specific metadata fields
 }
 
-type HpbInfo struct {
+type ShxInfo struct {
 	TD   *big.Int `json:"handshakeTD"` // Total difficulty of the peer's blockchain
 	Head string   `json:"handshakeHD"` // SHA3 hash of the peer's best owned block
 }
@@ -373,7 +373,7 @@ func (prm *PeerManager) PeersInfo() []*PeerInfo {
 			Start:   p.beatStart.String(),
 			Beat:    strconv.FormatUint(p.count, 10),
 			Mining:  p.statMining,
-			SHX: &HpbInfo{
+			SHX: &ShxInfo{
 				TD:   td,
 				Head: hash.Hex(),
 			},
