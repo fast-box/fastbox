@@ -76,7 +76,7 @@ func InstancePrometheus() *Prometheus {
 	if nil == insPrometheus {
 		reentryMux.Lock()
 		if nil == insPrometheus {
-			insPrometheus = New(&config.GetShxConfigInstance().Prometheus, db.GetShxDbInstance())
+			insPrometheus = New(&config.GetHpbConfigInstance().Prometheus, db.GetShxDbInstance())
 		}
 		reentryMux.Unlock()
 	}

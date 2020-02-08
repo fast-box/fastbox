@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// shx is the official command-line client for Shx.
+// shx is the official command-line client for Hpb.
 package main
 
 import (
@@ -79,7 +79,7 @@ var (
 		utils.ListenPortFlag,
 		utils.MaxPeersFlag,
 		utils.MaxPendingPeersFlag,
-		utils.ShxerbaseFlag,
+		utils.HpberbaseFlag,
 		utils.GasPriceFlag,
 		utils.MinerThreadsFlag,
 		utils.MiningEnabledFlag,
@@ -96,7 +96,7 @@ var (
 		utils.VMEnableDebugFlag,
 		utils.NetworkIdFlag,
 		utils.RPCCORSDomainFlag,
-		utils.ShxStatsURLFlag,
+		utils.HpbStatsURLFlag,
 		utils.MetricsEnabledFlag,
 		utils.FakePoWFlag,
 		utils.NoCompactionFlag,
@@ -207,7 +207,7 @@ func shx(ctx *cli.Context) error {
 }
 
 //create node object
-func createNode(conf *config.ShxConfig) (*node.Node, error) {
+func createNode(conf *config.HpbConfig) (*node.Node, error) {
 	//create node object
 	stack, err := node.New(conf)
 	if err != nil {
@@ -220,7 +220,7 @@ func createNode(conf *config.ShxConfig) (*node.Node, error) {
 // startNode boots up the system node and all registered protocols, after which
 // it unlocks any requested accounts, and starts the RPC/IPC interfaces and the
 // miner.
-func startNode(ctx *cli.Context, stack *node.Node, conf *config.ShxConfig) {
+func startNode(ctx *cli.Context, stack *node.Node, conf *config.HpbConfig) {
 
 	// Unlock any account specifically requested
 	ks := stack.AccountManager().KeyStore().(*keystore.KeyStore)

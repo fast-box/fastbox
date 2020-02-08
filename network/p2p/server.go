@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package p2p implements the Shx p2p network protocols.
+// Package p2p implements the Hpb p2p network protocols.
 package p2p
 
 import (

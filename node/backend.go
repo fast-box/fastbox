@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package eth implements the Shx protocol.
+// Package eth implements the Hpb protocol.
 package node
 
 import (
 	"github.com/hpb-project/sphinx/account"
 	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/internal/shxapi"
+	"github.com/hpb-project/sphinx/internal/hpbapi"
 	"github.com/hpb-project/sphinx/network/p2p"
 	"github.com/hpb-project/sphinx/network/rpc"
 	"github.com/hpb-project/sphinx/blockchain"
@@ -40,14 +40,14 @@ type LesServer interface {
 // APIs returns the collection of RPC services the hpb package offers.
 // NOTE, some of these services probably need to be moved to somewhere else.
 func (s *Node) APIs() []rpc.API {
-	apis := shxapi.GetAPIs(s.ApiBackend)
+	apis := hpbapi.GetAPIs(s.ApiBackend)
 
 	// Append all the local APIs and return
 	apis = append(apis, []rpc.API{
 		{
-			Namespace: "shx",
+			Namespace: "hpb",
 			Version:   "1.0",
-			Service:   NewPublicShxAPI(s),
+			Service:   NewPublicHpbAPI(s),
 			Public:    true,
 		}, {
 			Namespace: "miner",
@@ -55,7 +55,7 @@ func (s *Node) APIs() []rpc.API {
 			Service:   NewPrivateMinerAPI(s),
 			Public:    false,
 		},{
-			Namespace: "shx",
+			Namespace: "hpb",
 			Version:   "1.0",
 			Service:   filters.NewPublicFilterAPI(s.ApiBackend, false),
 			Public:    true,
@@ -71,23 +71,23 @@ func (s *Node) APIs() []rpc.API {
 		}, {
 			Namespace: "debug",
 			Version:   "1.0",
-			Service:   NewPrivateDebugAPI(&s.Shxconfig.BlockChain, s),
+			Service:   NewPrivateDebugAPI(&s.Hpbconfig.BlockChain, s),
 		}, {
 			Namespace: "net",
 			Version:   "1.0",
-			Service:   shxapi.NewPublicNetAPI(p2p.PeerMgrInst().P2pSvr(), s.networkId), //s.netRPCService,
+			Service:   hpbapi.NewPublicNetAPI(p2p.PeerMgrInst().P2pSvr(), s.networkId), //s.netRPCService,
 			Public:    true,
 		},
 	}...)
 
 
 	// Append any APIs exposed explicitly by the consensus engine
-	if s.Shxengine != nil {
-		apis = append(apis, s.Shxengine.APIs(s.BlockChain())...)
+	if s.Hpbengine != nil {
+		apis = append(apis, s.Hpbengine.APIs(s.BlockChain())...)
 		apis = append(apis, []rpc.API{
-			{Namespace: "shx",
+			{Namespace: "hpb",
 				Version:   "1.0",
-					Service:   synctrl.NewPublicSyncerAPI(s.Shxsyncctr.Syncer(), s.newBlockMux),
+					Service:   synctrl.NewPublicSyncerAPI(s.Hpbsyncctr.Syncer(), s.newBlockMux),
 					Public:    true,
 			},
 		}...)
@@ -101,10 +101,10 @@ func (s *Node) IsMining() bool      { return s.miner.Mining() }
 func (s *Node) Miner() *worker.Miner { return s.miner }
 
 func (s *Node) APIAccountManager() *accounts.Manager  { return s.accman }
-func (s *Node) BlockChain() *bc.BlockChain         { return s.Shxbc }
-func (s *Node) TxPool() *txpool.TxPool             { return s.Shxtxpool }
-func (s *Node) Engine() consensus.Engine           { return s.Shxengine }
+func (s *Node) BlockChain() *bc.BlockChain         { return s.Hpbbc }
+func (s *Node) TxPool() *txpool.TxPool             { return s.Hpbtxpool }
+func (s *Node) Engine() consensus.Engine           { return s.Hpbengine }
 func (s *Node) ChainDb() shxdb.Database            { return s.ShxDb }
 func (s *Node) IsListening() bool                  { return true } // Always listening
-func (s *Node) EthVersion() int                    { return int(s.Shxpeermanager.Protocol()[0].Version)}
+func (s *Node) EthVersion() int                    { return int(s.Hpbpeermanager.Protocol()[0].Version)}
 func (s *Node) NetVersion() uint64                 { return s.networkId }

@@ -234,7 +234,7 @@ func GenesisBlockForTesting(db shxdb.Database, addr common.Address, balance *big
 	return g.MustCommit(db)
 }
 
-// DefaultGenesisBlock returns the Shx main net genesis block.
+// DefaultGenesisBlock returns the Hpb main net genesis block.
 func DefaultGenesisBlock() *Genesis {
 	return &Genesis{
 		Config:         config.MainnetChainConfig,

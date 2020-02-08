@@ -251,7 +251,7 @@ var (
 		Usage: "Target gas limit sets the artificial target gas floor for the blocks to mine",
 		Value: params.GenesisGasLimit.Uint64(),
 	}
-	ShxerbaseFlag = cli.StringFlag{
+	HpberbaseFlag = cli.StringFlag{
 		Name:  "hpberbase",
 		Usage: "Public address for block mining rewards (default = first account created)",
 		Value: "0",
@@ -282,7 +282,7 @@ var (
 		Usage: "Record information useful for VM and contract debugging",
 	}
 	// Logging and debug settings
-	ShxStatsURLFlag = cli.StringFlag{
+	HpbStatsURLFlag = cli.StringFlag{
 		Name:  "ethstats",
 		Usage: "Reporting URL of a ethstats service (nodename:secret@host:port)",
 	}
@@ -679,21 +679,21 @@ func MakeAddress(ks *keystore.KeyStore, account string) (accounts.Account, error
 	return accs[index], nil
 }
 
-// setShxerbase retrieves the etherbase either from the directly specified
+// setHpberbase retrieves the etherbase either from the directly specified
 // command line flags or from the keystore if CLI indexed.
-func setShxerbase(ctx *cli.Context, ks *keystore.KeyStore, cfg *config.Nodeconfig) {
-	if ctx.GlobalIsSet(ShxerbaseFlag.Name) {
-		account, err := MakeAddress(ks, ctx.GlobalString(ShxerbaseFlag.Name))
+func setHpberbase(ctx *cli.Context, ks *keystore.KeyStore, cfg *config.Nodeconfig) {
+	if ctx.GlobalIsSet(HpberbaseFlag.Name) {
+		account, err := MakeAddress(ks, ctx.GlobalString(HpberbaseFlag.Name))
 		if err != nil {
-			Fatalf("Option %q: %v", ShxerbaseFlag.Name, err)
+			Fatalf("Option %q: %v", HpberbaseFlag.Name, err)
 		}
-		cfg.Shxerbase = account.Address
+		cfg.Hpberbase = account.Address
 		return
 	}
 	accounts := ks.Accounts()
-	if (cfg.Shxerbase == common.Address{}) {
+	if (cfg.Hpberbase == common.Address{}) {
 		if len(accounts) > 0 {
-			cfg.Shxerbase = accounts[0].Address
+			cfg.Hpberbase = accounts[0].Address
 		} else {
 			log.Warn("No hpberbase set and no accounts found as default")
 		}
@@ -718,7 +718,7 @@ func MakePasswordList(ctx *cli.Context) []string {
 	return lines
 }
 
-func SetNetWorkConfig(ctx *cli.Context, cfg *config.ShxConfig) {
+func SetNetWorkConfig(ctx *cli.Context, cfg *config.HpbConfig) {
 
 	setNAT(ctx, &cfg.Network)
 	setListenAddress(ctx, &cfg.Network)
@@ -815,14 +815,14 @@ func SetNetWorkConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 
 }
 
-func SetConfig(ctx *cli.Context, cfg *config.ShxConfig) {
+func SetConfig(ctx *cli.Context, cfg *config.HpbConfig) {
 
 	SetNodeConfig(ctx, cfg)
 	SetNetWorkConfig(ctx, cfg)
 }
 
 // SetNodeConfig applies node-related command line flags to the config.
-func SetNodeConfig(ctx *cli.Context, cfg *config.ShxConfig) {
+func SetNodeConfig(ctx *cli.Context, cfg *config.HpbConfig) {
 	switch {
 	case ctx.GlobalIsSet(DataDirFlag.Name):
 		cfg.Node.DataDir = ctx.GlobalString(DataDirFlag.Name)
