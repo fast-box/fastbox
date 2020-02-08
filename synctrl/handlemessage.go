@@ -437,12 +437,22 @@ func HandleWorkProofMsg(p *p2p.Peer, msg p2p.Msg) error {
 	if err := msg.Decode(&proof); err != nil {
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
+	ev := bc.WorkProofEvent{p, &proof}
+	// post to worker
+	syncInstance.NewBlockMux().Post(ev)
 
 	return nil
 }
 
 func HandleProofResMsg(p *p2p.Peer, msg p2p.Msg) error {
-	//TODO:
+	var confirm types.ProofConfirm
+	if err := msg.Decode(&confirm); err != nil {
+		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
+	}
+	ev := bc.ProofConfirmEvent{p, &confirm}
+	// post to worker
+	syncInstance.NewBlockMux().Post(ev)
+
 	return nil
 }
 

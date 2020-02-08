@@ -19,6 +19,7 @@ package bc
 import (
 	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/network/p2p"
 )
 
 // TxPreEvent is posted when a transaction enters the transaction pool.
@@ -45,5 +46,13 @@ type ChainEvent struct {
 }
 
 type ChainHeadEvent struct{ Block *types.Block }
+type NewWorkProofEvent struct { Proof *types.WorkProof }
+type WorkProofEvent struct {
+	Peer  *p2p.Peer
+	Proof *types.WorkProof
+}
 
-type WorkProofEvent struct { Proof *types.WorkProof }
+type ProofConfirmEvent struct {
+	Peer    *p2p.Peer
+	Confirm *types.ProofConfirm
+}

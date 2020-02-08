@@ -1,6 +1,13 @@
 package types
 
+type ProofSignature []byte
+
 type WorkProof struct {
-	Signature []byte
+	Signature ProofSignature
 	Txs       Transactions
+}
+
+type ProofConfirm struct {
+	Signature ProofSignature
+	Confirm   bool
 }

@@ -69,6 +69,18 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 	return &types.WorkProof{sighash, txs}, nil
 }
 
+// VerifyProof
+func (c *Prometheus) VerifyProof(addr common.Address, proof *types.WorkProof, update bool) error {
+	if val, ok := c.proofs.Load(addr); ok {
+		pf := val.(PeerProof)
+		if hash, err := c.verifyProof(pf.RootHash, addr, proof); err == nil && update {
+			c.UpdateProof(addr, hash)
+		}
+
+	}
+	return errors.New("not found addr")
+}
+
 func (c *Prometheus) UpdateProof(addr common.Address, hash common.Hash) {
 	if val, ok := c.proofs.Load(addr); ok {
 		if pf, ok := val.(*PeerProof); ok {

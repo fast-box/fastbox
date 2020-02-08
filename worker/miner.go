@@ -88,6 +88,7 @@ func (self *Miner) WorkControl() {
 
 func (self *Miner) Start(coinbase common.Address) {
 	if !self.controlStarted {
+		self.controlStarted = true
 		go self.WorkControl()
 	}
 

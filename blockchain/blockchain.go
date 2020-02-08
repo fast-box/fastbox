@@ -80,7 +80,6 @@ type BlockChain struct {
 	chainDb       hpbdb.Database
 	rmLogsFeed    sub.Feed
 	chainFeed     sub.Feed
-	chainSideFeed sub.Feed
 	chainHeadFeed sub.Feed
 	logsFeed      sub.Feed
 	scope         sub.SubscriptionScope
@@ -1423,3 +1422,4 @@ func (bc *BlockChain) SubscribeChainHeadEvent(ch chan<- ChainHeadEvent) sub.Subs
 func (bc *BlockChain) SubscribeLogsEvent(ch chan<- []*types.Log) sub.Subscription {
 	return bc.scope.Track(bc.logsFeed.Subscribe(ch))
 }
+

@@ -134,7 +134,7 @@ func (c *Prometheus) verifySeal(chain consensus.ChainReader, header *types.Heade
 	return nil
 }
 
-func (c *Prometheus) VerifyProof(lHash common.Hash, address common.Address, proof *types.WorkProof) error {
+func (c *Prometheus) verifyProof(lHash common.Hash, address common.Address, proof *types.WorkProof) (common.Hash,error) {
 	txroot := types.DeriveSha(proof.Txs)
 	proofHash := c.MixHash(lHash, txroot)
 
@@ -142,11 +142,11 @@ func (c *Prometheus) VerifyProof(lHash common.Hash, address common.Address, proo
 		var addr common.Address
 		copy(addr[:], crypto.Keccak256(pub[1:])[12:])
 		if bytes.Compare(addr.Bytes(), address.Bytes()) != 0 {
-			return errors.New("invalid proof")
+			return common.Hash{},errors.New("invalid proof")
 		} else {
-			return nil
+			return proofHash, nil
 		}
 	} else {
-		return errors.New("invalid proof")
+		return common.Hash{}, errors.New("invalid proof")
 	}
 }

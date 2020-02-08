@@ -58,6 +58,9 @@ type Engine interface {
 	// GerateProof return a workproof
 	GenerateProof(chain ChainReader, header *types.Header, txs types.Transactions) (*types.WorkProof,error)
 
+	// VerifyProof check the proof from peer is correct, and return new hash.
+	VerifyProof(addr common.Address, proof *types.WorkProof, update bool) error
+
 	// Finalize runs any post-transaction state modifications
 	// and assembles the final block.
 	// Note: The block header and state database might be updated to reflect any
@@ -68,9 +71,6 @@ type Engine interface {
 	// Seal generates a new block for the given input block with the local miner's
 	// seal place on top.
 	GenBlockWithSig(chain ChainReader, block *types.Block) (*types.Block, error)
-
-	// update peer proof info.
-	UpdateProof(addr common.Address, hash common.Hash)
 
 	// Author retrieves the Hpb address of the account that minted the given
 	// block, which may be different from the header's coinbase if a consensus
