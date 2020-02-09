@@ -116,6 +116,7 @@ func (pool *TxPool) Start() {
 	// start main process loop
 	pool.wg.Add(1)
 	go pool.loop()
+	go pool.DealTxRoutine()
 }
 
 func GetTxPool() *TxPool {
@@ -184,6 +185,11 @@ func (pool *TxPool) validateTx(tx *types.Transaction) error {
 	if tx.Size() > maxTransactionSize {
 		log.Trace("ErrOversizedData maxTransactionSize", "ErrOversizedData", ErrOversizedData)
 		return ErrOversizedData
+	}
+	_, err := types.Sender(pool.signer, tx) // first time get sender.
+	if err != nil {
+		log.Error("validateTx Sender ErrInvalidSender", "ErrInvalidSender", ErrInvalidSender, "tx.hash", tx.Hash())
+		return ErrInvalidSender
 	}
 	return nil
 }
@@ -372,6 +378,30 @@ func (pool *TxPool) State() *state.ManagedState {
 func (pool *TxPool) Content() (map[common.Address]types.Transactions, map[common.Address]types.Transactions) {
 	pending := make(map[common.Address]types.Transactions)
 	queued := make(map[common.Address]types.Transactions)
+	pool.pending.Range(func(k, v interface{}) bool {
+		tx := v.(*types.Transaction)
+		from,_ := types.Sender(pool.signer,tx)
+		if txs,ok := pending[from]; ok {
+			txs = append(txs, tx)
+		} else {
+			var txs types.Transactions
+			txs = append(txs, tx)
+			pending[from] = txs
+		}
+		return true
+	})
+	pool.queue.Range(func(k, v interface{}) bool {
+		tx := v.(*types.Transaction)
+		from,_ := types.Sender(pool.signer,tx)
+		if txs,ok := queued[from]; ok {
+			txs = append(txs, tx)
+		} else {
+			var txs types.Transactions
+			txs = append(txs, tx)
+			queued[from] = txs
+		}
+		return true
+	})
 	return pending, queued
 }
 
