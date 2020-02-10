@@ -63,7 +63,6 @@ type TxPool struct {
 
 	fullCh      chan *types.Transaction
 	verifyCh    chan *types.Transaction
-	pendingCh   chan *types.Transaction
 	invalidTxCh chan *types.Transaction
 
 	txFeed sub.Feed
@@ -99,7 +98,6 @@ func NewTxPool(config config.TxPoolConfiguration, chainConfig *config.ChainConfi
 		fullCh:         make(chan *types.Transaction, 1000000),
 		verifyCh:       make(chan *types.Transaction, 100000),
 		invalidTxCh:    make(chan *types.Transaction, 100000),
-		pendingCh:      make(chan *types.Transaction, 100000),
 		poolBlockCount: 100,
 	}
 	INSTANCE.Store(pool)
@@ -151,6 +149,7 @@ func (pool *TxPool) loop() {
 		select {
 		// Handle ChainHeadEvent
 		case ev := <-pool.chainHeadCh:
+			log.Info("txpool loop, get new block.")
 			if ev.Block != nil {
 				pool.JustPending(ev.Block)
 			}
@@ -260,7 +259,6 @@ func (pool *TxPool) DealTxRoutine() {
 				if pool.verifyTx(tx) {
 					pool.pending.Store(tx.Hash(), tx)
 					pool.queue.Delete(tx.Hash())
-					pool.pendingCh <- tx                   // wait miner sign
 					go pool.txFeed.Send(bc.TxPreEvent{tx}) // send to route tx.
 				} else {
 					pool.invalidTxCh <- tx
@@ -301,7 +299,7 @@ func (pool *TxPool) AddTxs(txs []*types.Transaction) error {
 func (pool *TxPool) JustPending(newblock *types.Block) {
 	newChainTxs := newblock.Transactions()
 	for _, tx := range newChainTxs {
-		pool.onChain.Store(tx.Hash(), tx)
+		pool.onChain.Store(tx.Hash(), newblock.Number().Uint64())
 		pool.pending.Delete(tx.Hash())
 	}
 }
@@ -346,15 +344,17 @@ func (pool *TxPool) GetTxByHash(hash common.Hash) *types.Transaction {
 // Pending retrieves all currently processable transactions, groupped by origin
 // account and sorted by nonce. The returned transaction set is a copy and can be
 // freely modified by calling code.
-func (pool *TxPool) Pending(maxtxs int) (pending types.Transactions, err error) {
-	for i := 0; i < maxtxs; {
-		select {
-		case tx := <-pool.pendingCh:
-			pending = append(pending, tx)
-		default:
-			return
+func (pool *TxPool) Pending(maxtxs int) (pending types.Transactions) {
+	var i = 0
+	pool.pending.Range(func(k, v interface{}) bool {
+		if i >= maxtxs {
+			return false
 		}
-	}
+		tx := v.(*types.Transaction)
+		pending = append(pending, tx)
+		i++
+		return true
+	})
 	return
 }
 

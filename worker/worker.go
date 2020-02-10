@@ -353,11 +353,7 @@ func (self *worker) NewMineRound() error {
 	}
 	// Create the current work task and check any fork transitions needed
 
-	pending, err := txpool.GetTxPool().Pending(10000)
-	if err != nil {
-		log.Error("Failed to fetch pending transactions", "err", err)
-		return err
-	}
+	pending := txpool.GetTxPool().Pending(10000)
 	txs := types.NewTransactionsByPayload(self.current.signer, pending)
 
 	work := self.current
@@ -420,13 +416,12 @@ func (self *worker) FinalMine(work *Work) error {
 			log.Debug("WriteBlockAndState", "Stat", stat)
 			events = append(events, bc.ChainEvent{Block: result, Hash: result.Hash(), Logs: logs})
 			if stat == bc.CanonStatTy {
+				// 2. send event and update txpool.
 				events = append(events, bc.ChainHeadEvent{Block: result})
 			}
 
 			self.chain.PostChainEvents(events, logs)
 
-			// Todo: update local chain tx info.
-			// 2. update txpool.
 		} else {
 			if err != nil {
 				log.Error("Block sealing failed", "err", err)

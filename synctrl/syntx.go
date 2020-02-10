@@ -32,7 +32,7 @@ type txsync struct {
 
 // syncTransactions starts sending all currently pending transactions to the given peer.
 func (this *SynCtrl) syncTransactions(p *p2p.Peer) {
-	txs, _ := this.txpool.Pending(10000)
+	txs := this.txpool.Pending(10000)
 	if len(txs) == 0 {
 		return
 	}
