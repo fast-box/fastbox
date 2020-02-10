@@ -20,11 +20,13 @@ var DefaultPrometheusConfig = PrometheusConfig{
 	//for test,change from 3 to 6 seconds
 	Period: 6,
 	Epoch:  30000,
+	Validators:7,
 }
 
 type PrometheusConfig struct {
 	Period uint64 `json:"period"` // Number of seconds between blocks to enforce
 	Epoch  uint64 `json:"epoch"`  // Epoch length to reset votes and checkpoint
+	Validators uint64 `json:"validators"`
 }
 
 // PrometheusConfig is the consensus engine configs for proof-of-authority based sealing.

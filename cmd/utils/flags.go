@@ -449,9 +449,10 @@ var (
 		Usage: "Suggested gas price is the given percentile of a set of recent transaction gas prices",
 		Value: config.DefaultConfig.GPO.Percentile,
 	}
-	TestModeFlag = cli.BoolFlag{
+	TestModeFlag = cli.IntFlag{
 		Name:  "testmode",
-		Usage: "Run shx with testmode and boe don't need",
+		Usage: "Run shx with testmode. 0: not in testmode, 1 is normal test, 2 is single miner, pass confirm.",
+		Value: 0,
 	}
 	TestCodeStageFlag = cli.IntSliceFlag{
 		Name:  "testparam",
@@ -877,8 +878,11 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.HpbConfig) {
 	if ctx.GlobalIsSet(VMEnableDebugFlag.Name) {
 		cfg.Node.EnablePreimageRecording = ctx.GlobalBool(VMEnableDebugFlag.Name)
 	}
-	if ctx.GlobalBool(TestModeFlag.Name) {
-		cfg.Node.TestMode = 1
+	if ctx.GlobalIsSet(TestModeFlag.Name) {
+		cfg.Node.TestMode = uint8(TestModeFlag.Value)
+		if cfg.Node.TestMode > 2 {
+			cfg.Node.TestMode = 0
+		}
 	}
 	if ctx.GlobalIsSet(ConfigFileFlag.Name) {
 		res := ctx.GlobalString(ConfigFileFlag.Name)
