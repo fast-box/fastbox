@@ -25,7 +25,6 @@ import (
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/network/p2p/discover"
 	"math/big"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -123,11 +122,11 @@ func (prm *PeerManager) Start(coinbase common.Address) error {
 	}
 
 	//for bing info
-	if prm.server.localType == discover.BootNode {
-		filename := filepath.Join(config.Node.DataDir, bindInfoFileName)
-		log.Debug("bootnode load bindings", "filename", filename)
-		prm.parseBindInfo(filename)
-	}
+	//if prm.server.localType == discover.BootNode {
+	//	filename := filepath.Join(config.Node.DataDir, bindInfoFileName)
+	//	log.Debug("bootnode load bindings", "filename", filename)
+	//	prm.parseBindInfo(filename)
+	//}
 
 	return nil
 }

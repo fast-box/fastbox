@@ -33,7 +33,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 )
@@ -716,56 +715,56 @@ func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *discover.Nod
 	clog.Debug("Do protocol handshake OK.", "id", c.id)
 
 	/////////////////////////////////////////////////////////////////////////////////
-	isRemoteBoot := false
-	hdtab := srv.getHdtab()
+	//isRemoteBoot := false
+	//hdtab := srv.getHdtab()
+	//
+	//for _, n := range srv.BootstrapNodes {
+	//	if c.id == n.ID {
+	//		clog.Info("Remote node is boot.", "id", c.id)
+	//		c.isboe = true
+	//		//isRemoteBoot = true
+	//	}
+	//}
+	//
+	//if !c.isboe {
+	//	remoteCoinbase := strings.ToLower(c.their.CoinBase.String())
+	//	clog.Trace("Remote coinbase", "address", remoteCoinbase)
+	//	if len(hdtab) == 0 {
+	//		clog.Debug("Do not ready for connected.", "id", c.id.TerminalString())
+	//		c.close(DiscHwSignError)
+	//		return
+	//	}
+	//
+	//	for _, hw := range hdtab {
+	//		if hw.Adr == remoteCoinbase {
+	//			c.isboe = true
+	//		}
+	//	}
+	//}
+	//clog.Info("Verify the remote hardware.", "id", c.id.TerminalString(), "result", c.isboe)
+	//
+	//if !srv.TestMode && c.isboe == false {
+	//	clog.Debug("SynNode peer SynNode, dorp peer.")
+	//	c.close(DiscHwSignError)
+	//	return
+	//}
 
-	for _, n := range srv.BootstrapNodes {
-		if c.id == n.ID {
-			clog.Info("Remote node is boot.", "id", c.id)
-			c.isboe = true
-			isRemoteBoot = true
-		}
-	}
-
-	if !c.isboe {
-		remoteCoinbase := strings.ToLower(c.their.CoinBase.String())
-		clog.Trace("Remote coinbase", "address", remoteCoinbase)
-		if len(hdtab) == 0 {
-			clog.Debug("Do not ready for connected.", "id", c.id.TerminalString())
-			c.close(DiscHwSignError)
-			return
-		}
-
-		for _, hw := range hdtab {
-			if hw.Adr == remoteCoinbase {
-				c.isboe = true
-			}
-		}
-	}
-	clog.Info("Verify the remote hardware.", "id", c.id.TerminalString(), "result", c.isboe)
-
-	if !srv.TestMode && c.isboe == false {
-		clog.Debug("SynNode peer SynNode, dorp peer.")
-		c.close(DiscHwSignError)
-		return
-	}
-
-	{
-		ourHdtable := &hardwareTable{Version: 0x00, Hdtab: hdtab}
-		theirHdtable, err := c.doHardwareTable(ourHdtable)
-		if err != nil {
-			clog.Debug("Failed hardware table handshake", "reason", err)
-			c.close(err)
-			return
-		}
-
-		clog.Trace("Exchange hardware table.", "our", ourHdtable, "their", theirHdtable)
-
-		if isRemoteBoot {
-			srv.updateHdtab(theirHdtable.Hdtab, true)
-			clog.Trace("Update hardware table from boot.", "srv hdtab", srv.getHdtab())
-		}
-	}
+	//{
+	//	ourHdtable := &hardwareTable{Version: 0x00, Hdtab: hdtab}
+	//	theirHdtable, err := c.doHardwareTable(ourHdtable)
+	//	if err != nil {
+	//		clog.Debug("Failed hardware table handshake", "reason", err)
+	//		c.close(err)
+	//		return
+	//	}
+	//
+	//	clog.Trace("Exchange hardware table.", "our", ourHdtable, "their", theirHdtable)
+	//
+	//	if isRemoteBoot {
+	//		srv.updateHdtab(theirHdtable.Hdtab, true)
+	//		clog.Trace("Update hardware table from boot.", "srv hdtab", srv.getHdtab())
+	//	}
+	//}
 
 	/////////////////////////////////////////////////////////////////////////////////
 	if err := srv.checkpoint(c, srv.addpeer); err != nil {
@@ -776,37 +775,37 @@ func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *discover.Nod
 }
 
 func (srv *Server) updateHdtab(pairs []HwPair, boot bool) error {
-
-	log.Trace("hw pairs from prometheus", "boot", boot, "pairs", pairs)
-
-	if len(srv.hdtab) == len(pairs) {
-		theSame := true
-		for _, our := range srv.hdtab {
-			find := false
-			for _, there := range pairs {
-				if our.Adr == there.Adr {
-					find = true
-					break
-				}
-			}
-
-			if !find {
-				log.Debug("update hardware table do not fond.", "address", our.Adr)
-				theSame = false
-				break
-			}
-		}
-
-		if theSame {
-			log.Debug("do not need update hardware table.")
-			return nil
-		}
-	}
-
-	log.Trace("server need to update hardware table", "boot", boot, "our", len(srv.hdtab), "there", len(pairs), "hdtab", pairs)
-	srv.hdlock.Lock()
-	defer srv.hdlock.Unlock()
-	srv.hdtab = pairs
+	//
+	//log.Trace("hw pairs from prometheus", "boot", boot, "pairs", pairs)
+	//
+	//if len(srv.hdtab) == len(pairs) {
+	//	theSame := true
+	//	for _, our := range srv.hdtab {
+	//		find := false
+	//		for _, there := range pairs {
+	//			if our.Adr == there.Adr {
+	//				find = true
+	//				break
+	//			}
+	//		}
+	//
+	//		if !find {
+	//			log.Debug("update hardware table do not fond.", "address", our.Adr)
+	//			theSame = false
+	//			break
+	//		}
+	//	}
+	//
+	//	if theSame {
+	//		log.Debug("do not need update hardware table.")
+	//		return nil
+	//	}
+	//}
+	//
+	//log.Trace("server need to update hardware table", "boot", boot, "our", len(srv.hdtab), "there", len(pairs), "hdtab", pairs)
+	//srv.hdlock.Lock()
+	//defer srv.hdlock.Unlock()
+	//srv.hdtab = pairs
 
 	return nil
 }
