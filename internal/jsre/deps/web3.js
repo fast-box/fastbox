@@ -1764,7 +1764,7 @@ var ETH_UNITS = [
     'nano',
     'micro',
     'milli',
-    'hpb',
+    'sph',
     'grand',
     'Mhpb',
     'Ghpb',
@@ -1887,7 +1887,7 @@ var unitMap = {
     'finney':       '1000000000000000',
     'millihpb':    '1000000000000000',
     'milli':         '1000000000000000',
-    'hpb':        '1000000000000000000',
+    'sph':        '1000000000000000000',
     'khpb':       '1000000000000000000000',
     'grand':        '1000000000000000000000',
     'mhpb':       '1000000000000000000000000',
@@ -2106,12 +2106,12 @@ var toHex = function (val) {
  * Returns value of unit in Wei
  *
  * @method getValueOfUnit
- * @param {String} unit the unit to convert to, default hpb
+ * @param {String} unit the unit to convert to, default sph
  * @returns {BigNumber} value of the unit (in Wei)
  * @throws error if the unit is not correct:w
  */
 var getValueOfUnit = function (unit) {
-    unit = unit ? unit.toLowerCase() : 'hpb';
+    unit = unit ? unit.toLowerCase() : 'sph';
     var unitValue = unitMap[unit];
     if (unitValue === undefined) {
         throw new Error('This unit doesn\'t exists, please use the one of the following units' + JSON.stringify(unitMap, null, 2));
@@ -2120,7 +2120,7 @@ var getValueOfUnit = function (unit) {
 };
 
 /**
- * Takes a number of wei and converts it to any other hpb unit.
+ * Takes a number of wei and converts it to any other sph unit.
  *
  * Possible units are:
  *   SI Short   SI Full        Effigy       Other
@@ -2129,7 +2129,7 @@ var getValueOfUnit = function (unit) {
  * - gwei       nanohpb      shannon      nano
  * - --         microhpb     szabo        micro
  * - --         millihpb     finney       milli
- * - hpb      --             --
+ * - sph      --             --
  * - khpb                    --           grand
  * - mhpb
  * - shx
@@ -2137,7 +2137,7 @@ var getValueOfUnit = function (unit) {
  *
  * @method fromWei
  * @param {Number|String} number can be a number, number string or a HEX of a decimal
- * @param {String} unit the unit to convert to, default hpb
+ * @param {String} unit the unit to convert to, default sph
  * @return {String|Object} When given a BigNumber object it returns one as well, otherwise a number
 */
 var fromWei = function(number, unit) {
@@ -2157,7 +2157,7 @@ var fromWei = function(number, unit) {
  * - --         microhpb     szabo        micro
  * - --         microhpb     szabo        micro
  * - --         millihpb     finney       milli
- * - hpb      --             --
+ * - sph      --             --
  * - khpb                    --           grand
  * - mhpb
  * - shx
@@ -2165,7 +2165,7 @@ var fromWei = function(number, unit) {
  *
  * @method toWei
  * @param {Number|String|BigNumber} number can be a number, number string or a HEX of a decimal
- * @param {String} unit the unit to convert from, default hpb
+ * @param {String} unit the unit to convert from, default sph
  * @return {String|Object} When given a BigNumber object it returns one as well, otherwise a number
 */
 var toWei = function(number, unit) {
@@ -2391,7 +2391,7 @@ var isJson = function (str) {
 };
 
 /**
- * Returns true if given string is a valid Hpb block header bloom.
+ * Returns true if given string is a valid sph block header bloom.
  *
  * @method isBloom
  * @param {String} hex encoded bloom filter
@@ -2487,7 +2487,7 @@ module.exports={
 
 var RequestManager = require('./web3/requestmanager');
 var Iban = require('./web3/iban');
-var Hpb = require('./web3/methods/hpb');
+var sph = require('./web3/methods/sph');
 var DB = require('./web3/methods/db');
 var Shh = require('./web3/methods/shh');
 var Net = require('./web3/methods/net');
@@ -2509,7 +2509,7 @@ var BigNumber = require('bignumber.js');
 function Web3 (provider) {
     this._requestManager = new RequestManager(provider);
     this.currentProvider = provider;
-    this.hpb = new Hpb(this);
+    this.sph = new sph(this);
     this.db = new DB(this);
     this.shh = new Shh(this);
     this.net = new Net(this);
@@ -2588,7 +2588,7 @@ var properties = function () {
             inputFormatter: utils.toDecimal
         }),
         new Property({
-            name: 'version.hpb',
+            name: 'version.sph',
             getter: 'hpb_protocolVersion',
             inputFormatter: utils.toDecimal
         }),
@@ -2611,7 +2611,7 @@ Web3.prototype.createBatch = function () {
 module.exports = Web3;
 
 
-},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/hpb":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
+},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/sph":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
 /*
     This file is part of web3.js.
     web3.js is free software: you can redistribute it and/or modify
@@ -2687,7 +2687,7 @@ AllSolidityEvents.prototype.execute = function (options, callback) {
 
     var o = this.encode(options);
     var formatter = this.decode.bind(this);
-    return new Filter(o, 'hpb', this._requestManager, watches.hpb(), formatter, callback);
+    return new Filter(o, 'sph', this._requestManager, watches.sph(), formatter, callback);
 };
 
 AllSolidityEvents.prototype.attachToContract = function (contract) {
@@ -2925,8 +2925,8 @@ var checkForContractAddress = function(contract, callback){
  * @method ContractFactory
  * @param {Array} abi
  */
-var ContractFactory = function (hpb, abi) {
-    this.hpb = hpb;
+var ContractFactory = function (sph, abi) {
+    this.sph = sph;
     this.abi = abi;
 
     /**
@@ -2942,7 +2942,7 @@ var ContractFactory = function (hpb, abi) {
     this.new = function () {
         /*jshint maxcomplexity: 7 */
         
-        var contract = new Contract(this.hpb, this.abi);
+        var contract = new Contract(this.sph, this.abi);
 
         // parse arguments
         var options = {}; // required!
@@ -2974,7 +2974,7 @@ var ContractFactory = function (hpb, abi) {
         if (callback) {
 
             // wait for the contract address adn check if the code was deployed
-            this.hpb.sendTransaction(options, function (err, hash) {
+            this.sph.sendTransaction(options, function (err, hash) {
                 if (err) {
                     callback(err);
                 } else {
@@ -2988,7 +2988,7 @@ var ContractFactory = function (hpb, abi) {
                 }
             });
         } else {
-            var hash = this.hpb.sendTransaction(options);
+            var hash = this.sph.sendTransaction(options);
             // add the transaction hash
             contract.transactionHash = hash;
             checkForContractAddress(contract);
@@ -3023,7 +3023,7 @@ var ContractFactory = function (hpb, abi) {
  * otherwise calls callback function (err, contract)
  */
 ContractFactory.prototype.at = function (address, callback) {
-    var contract = new Contract(this.hpb, this.abi, address);
+    var contract = new Contract(this.sph, this.abi, address);
 
     // this functions are not part of prototype,
     // because we dont want to spoil the interface
@@ -3063,8 +3063,8 @@ ContractFactory.prototype.getData = function () {
  * @param {Array} abi
  * @param {Address} contract address
  */
-var Contract = function (hpb, abi, address) {
-    this._hpb = hpb;
+var Contract = function (sph, abi, address) {
+    this._hpb = sph;
     this.transactionHash = null;
     this.address = address;
     this.abi = abi;
@@ -3300,7 +3300,7 @@ SolidityEvent.prototype.execute = function (indexed, options, callback) {
 
     var o = this.encode(indexed, options);
     var formatter = this.decode.bind(this);
-    return new Filter(o, 'hpb', this._requestManager, watches.hpb(), formatter, callback);
+    return new Filter(o, 'sph', this._requestManager, watches.sph(), formatter, callback);
 };
 
 /**
@@ -3431,7 +3431,7 @@ var getOptions = function (options, type) {
 
 
     switch(type) {
-        case 'hpb':
+        case 'sph':
 
             // make sure topics, get converted to hex
             options.topics = options.topics || [];
@@ -3949,8 +3949,8 @@ var sha3 = require('../utils/sha3');
 /**
  * This prototype should be used to call/sendTransaction to solidity functions
  */
-var SolidityFunction = function (hpb, json, address) {
-    this._hpb = hpb;
+var SolidityFunction = function (sph, json, address) {
+    this._hpb = sph;
     this._inputTypes = json.inputs.map(function (i) {
         return i.type;
     });
@@ -4443,7 +4443,7 @@ var Iban = function (iban) {
 };
 
 /**
- * This method should be used to create iban object from hpb address
+ * This method should be used to create iban object from sph address
  *
  * @method fromAddress
  * @param {String} address
@@ -5113,7 +5113,7 @@ module.exports = DB;
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
 /**
- * @file hpb.js
+ * @file sph.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @author Fabian Vogelsteller <fabian@ethdev.com>
  * @date 2015
@@ -5154,7 +5154,7 @@ var uncleCountCall = function (args) {
     return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'hpb_getUncleCountByBlockHash' : 'hpb_getUncleCountByBlockNumber';
 };
 
-function Hpb(web3) {
+function sph(web3) {
     this._requestManager = web3._requestManager;
 
     var self = this;
@@ -5174,7 +5174,7 @@ function Hpb(web3) {
     this.sendIBANTransaction = transfer.bind(null, this);
 }
 
-Object.defineProperty(Hpb.prototype, 'defaultBlock', {
+Object.defineProperty(sph.prototype, 'defaultBlock', {
     get: function () {
         return c.defaultBlock;
     },
@@ -5184,7 +5184,7 @@ Object.defineProperty(Hpb.prototype, 'defaultBlock', {
     }
 });
 
-Object.defineProperty(Hpb.prototype, 'defaultAccount', {
+Object.defineProperty(sph.prototype, 'defaultAccount', {
     get: function () {
         return c.defaultAccount;
     },
@@ -5467,28 +5467,28 @@ var properties = function () {
     ];
 };
 
-Hpb.prototype.contract = function (abi) {
+sph.prototype.contract = function (abi) {
     var factory = new Contract(this, abi);
     return factory;
 };
 
-Hpb.prototype.filter = function (options, callback, filterCreationErrorCallback) {
-    return new Filter(options, 'hpb', this._requestManager, watches.hpb(), formatters.outputLogFormatter, callback, filterCreationErrorCallback);
+sph.prototype.filter = function (options, callback, filterCreationErrorCallback) {
+    return new Filter(options, 'sph', this._requestManager, watches.sph(), formatters.outputLogFormatter, callback, filterCreationErrorCallback);
 };
 
-Hpb.prototype.namereg = function () {
+sph.prototype.namereg = function () {
     return this.contract(namereg.global.abi).at(namereg.global.address);
 };
 
-Hpb.prototype.icapNamereg = function () {
+sph.prototype.icapNamereg = function () {
     return this.contract(namereg.icap.abi).at(namereg.icap.address);
 };
 
-Hpb.prototype.isSyncing = function (callback) {
+sph.prototype.isSyncing = function (callback) {
     return new IsSyncing(this._requestManager, callback);
 };
 
-module.exports = Hpb;
+module.exports = sph;
 
 },{"../../utils/config":18,"../../utils/utils":20,"../contract":25,"../filter":29,"../formatters":30,"../iban":33,"../method":36,"../namereg":44,"../property":45,"../syncing":48,"../transfer":49,"./watches":43}],39:[function(require,module,exports){
 /*
@@ -5504,7 +5504,7 @@ module.exports = Hpb;
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file hpb.js
+/** @file sph.js
  * @authors:
  *   Marek Kotewicz <marek@ethdev.com>
  * @date 2015
@@ -5524,7 +5524,7 @@ var Net = function (web3) {
     });
 };
 
-/// @returns an array of objects describing web3.hpb api properties
+/// @returns an array of objects describing web3.sph api properties
 var properties = function () {
     return [
         new Property({
@@ -5556,7 +5556,7 @@ module.exports = Net;
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
 /**
- * @file hpb.js
+ * @file sph.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @author Fabian Vogelsteller <fabian@ethdev.com>
  * @date 2015
@@ -5951,8 +5951,8 @@ module.exports = Swarm;
 
 var Method = require('../method');
 
-/// @returns an array of objects describing web3.hpb.filter api methods
-var hpb = function (web3) {
+/// @returns an array of objects describing web3.sph.filter api methods
+var sph = function (web3) {
     var newFilterCall = function (args) {
         var type = args[0];
 
@@ -6030,7 +6030,7 @@ var shh = function (web3) {
 };
 
 module.exports = {
-    hpb: hpb,
+    sph: sph,
     shh: shh
 };
 
@@ -6247,7 +6247,7 @@ var errors = require('./errors');
 
 /**
  * It's responsible for passing messages to providers
- * It's also responsible for polling the hpb node for incoming messages
+ * It's also responsible for polling the sph node for incoming messages
  * Default poll timeout is 1 second
  * Singleton
  */
@@ -6614,23 +6614,23 @@ var exchangeAbi = require('../contracts/SmartExchange.json');
  * @param {Value} value to be tranfered
  * @param {Function} callback, callback
  */
-var transfer = function (hpb, from, to, value, callback) {
+var transfer = function (sph, from, to, value, callback) {
     var iban = new Iban(to); 
     if (!iban.isValid()) {
         throw new Error('invalid iban address');
     }
 
     if (iban.isDirect()) {
-        return transferToAddress(hpb, from, iban.address(), value, callback);
+        return transferToAddress(sph, from, iban.address(), value, callback);
     }
     
     if (!callback) {
-        var address = hpb.icapNamereg().addr(iban.institution());
-        return deposit(hpb, from, address, value, iban.client());
+        var address = sph.icapNamereg().addr(iban.institution());
+        return deposit(sph, from, address, value, iban.client());
     }
 
-    hpb.icapNamereg().addr(iban.institution(), function (err, address) {
-        return deposit(hpb, from, address, value, iban.client(), callback);
+    sph.icapNamereg().addr(iban.institution(), function (err, address) {
+        return deposit(sph, from, address, value, iban.client(), callback);
     });
     
 };
@@ -6644,8 +6644,8 @@ var transfer = function (hpb, from, to, value, callback) {
  * @param {Value} value to be tranfered
  * @param {Function} callback, callback
  */
-var transferToAddress = function (hpb, from, to, value, callback) {
-    return hpb.sendTransaction({
+var transferToAddress = function (sph, from, to, value, callback) {
+    return sph.sendTransaction({
         address: to,
         from: from,
         value: value
@@ -6662,9 +6662,9 @@ var transferToAddress = function (hpb, from, to, value, callback) {
  * @param {String} client unique identifier
  * @param {Function} callback, callback
  */
-var deposit = function (hpb, from, to, value, client, callback) {
+var deposit = function (sph, from, to, value, client, callback) {
     var abi = exchangeAbi;
-    return hpb.contract(abi).at(to).deposit(client, {
+    return sph.contract(abi).at(to).deposit(client, {
         from: from,
         value: value
     }, callback);

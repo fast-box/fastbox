@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package ethapi implements the general Hpb API functions.
+// Package ethapi implements the general sph API functions.
 package hpbapi
 
 import (
@@ -36,7 +36,7 @@ import (
 // Backend interface provides the common API services (that are provided by
 // both full and light clients) with access to necessary functions.
 type Backend interface {
-	// general Hpb API
+	// general sph API
 	Downloader() *synctrl.Syncer
 	ProtocolVersion() int
 	ChainDb() shxdb.Database
@@ -70,17 +70,17 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 	nonceLock := new(AddrLocker)
 	return []rpc.API{
 		{
-			Namespace: "hpb",
+			Namespace: "sph",
 			Version:   "1.0",
 			Service:   NewPublicHpbAPI(apiBackend),
 			Public:    true,
 		}, {
-			Namespace: "hpb",
+			Namespace: "sph",
 			Version:   "1.0",
 			Service:   NewPublicBlockChainAPI(apiBackend),
 			Public:    true,
 		}, {
-			Namespace: "hpb",
+			Namespace: "sph",
 			Version:   "1.0",
 			Service:   NewPublicTransactionPoolAPI(apiBackend, nonceLock),
 			Public:    true,
@@ -99,7 +99,7 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 			Version:   "1.0",
 			Service:   NewPrivateDebugAPI(apiBackend),
 		}, {
-			Namespace: "hpb",
+			Namespace: "sph",
 			Version:   "1.0",
 			Service:   NewPublicAccountAPI(apiBackend.AccountManager()),
 			Public:    true,
