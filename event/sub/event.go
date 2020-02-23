@@ -19,7 +19,6 @@ package sub
 import (
 	"errors"
 	"fmt"
-	"github.com/hpb-project/sphinx/common/log"
 	"reflect"
 	"sync"
 	"time"
@@ -95,7 +94,6 @@ func (mux *TypeMux) Post(ev interface{}) error {
 		return ErrMuxClosed
 	}
 	subs := mux.subm[rtyp]
-	log.Debug("TypeMux Post", "subs len", len(subs))
 	mux.mutex.RUnlock()
 	for _, sub := range subs {
 		sub.deliver(event)

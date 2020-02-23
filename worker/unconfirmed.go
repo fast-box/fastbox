@@ -19,6 +19,7 @@ package worker
 import (
 	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
+	"github.com/hpb-project/sphinx/common/log"
 	"gopkg.in/fatih/set.v0"
 	"sync"
 	"time"
@@ -63,11 +64,13 @@ func (u *unconfirmedProofs) Confirm(addr common.Address, confirm *types.ProofCon
 		info := v.(*proofInfo)
 		if confirm.Confirm == true {
 			info.confirmed.Add(addr)
+			log.Debug("worker confirm , add confirm");
 		}
 		if info.confirmed.Size() >= info.threshold {
 			// send to worker.
+			log.Debug("worker confirm , confirm enough");
 			info.work.confirmed = true
-			u.confirmedCh <- info.work
+			go func(){u.confirmedCh <- info.work}()
 			u.proofs.Delete(sigHash)
 		}
 	}
@@ -91,7 +94,7 @@ func (u *unconfirmedProofs) RoutineLoop () {
 				time.Now().Sub(info.work.createdAt)
 				if now - info.time > waitConfirmTimeout {
 					// unconfirmed proof, drop work.
-					u.confirmedCh <- info.work
+					go func(){u.confirmedCh <- info.work} ()
 					u.proofs.Delete(k)
 				}
 				return true

@@ -73,7 +73,7 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 // VerifyProof
 func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proof *types.WorkProof, update bool) error {
 	if val, ok := c.proofs.Load(addr); ok {
-		pf := val.(PeerProof)
+		pf := val.(*PeerProof)
 		if hash, err := c.verifyProof(pf.RootHash, addr, proof); err == nil && update {
 			c.UpdateProof(addr, hash)
 		} else {
@@ -89,6 +89,7 @@ func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proo
 			return err
 		}
 	}
+	return nil
 }
 
 func (c *Prometheus) UpdateProof(addr common.Address, hash common.Hash) {
