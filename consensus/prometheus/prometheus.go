@@ -71,15 +71,24 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 }
 
 // VerifyProof
-func (c *Prometheus) VerifyProof(addr common.Address, proof *types.WorkProof, update bool) error {
+func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proof *types.WorkProof, update bool) error {
 	if val, ok := c.proofs.Load(addr); ok {
 		pf := val.(PeerProof)
 		if hash, err := c.verifyProof(pf.RootHash, addr, proof); err == nil && update {
 			c.UpdateProof(addr, hash)
+		} else {
+			return err
 		}
 
+	} else {
+		pf := &PeerProof{time.Now().Unix(), initHash}
+		c.proofs.Store(addr, pf)
+		if hash, err := c.verifyProof(pf.RootHash, addr, proof); err == nil && update {
+			c.UpdateProof(addr, hash)
+		} else {
+			return err
+		}
 	}
-	return errors.New("not found addr")
 }
 
 func (c *Prometheus) UpdateProof(addr common.Address, hash common.Hash) {

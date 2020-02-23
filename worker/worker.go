@@ -210,7 +210,7 @@ func (self *worker) eventListener() {
 				go func() {
 					// 1. receive proof
 					// 2. verify proof
-					if err := self.engine.VerifyProof(ev.Peer.Address(), ev.Proof, true); err == nil {
+					if err := self.engine.VerifyProof(ev.Peer.Address(), ev.Peer.ProofHash(), ev.Proof, true); err == nil {
 						var res= types.ProofConfirm{ev.Proof.Signature, true}
 						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
 					}

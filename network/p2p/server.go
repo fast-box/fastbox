@@ -71,6 +71,7 @@ type Config struct {
 	EnableMsgEvents bool
 	NetworkId       uint64
 	CoinBase        common.Address
+	ProofHash       common.Hash
 
 	TestMode bool
 }
@@ -350,6 +351,7 @@ func (srv *Server) Start() (err error) {
 	}
 	srv.ourHandshake.Caps = append(srv.ourHandshake.Caps, Cap{config.Version, 0})
 	srv.ourHandshake.CoinBase = srv.CoinBase
+	srv.ourHandshake.ProofHash= srv.ProofHash
 
 	if srv.ListenAddr == "" {
 		log.Error("P2P server start, listen address is nil")

@@ -59,7 +59,7 @@ type Engine interface {
 	GenerateProof(chain ChainReader, header *types.Header, txs types.Transactions) (*types.WorkProof,error)
 
 	// VerifyProof check the proof from peer is correct, and return new hash.
-	VerifyProof(addr common.Address, proof *types.WorkProof, update bool) error
+	VerifyProof(addr common.Address, initHash common.Hash, proof *types.WorkProof, update bool) error
 
 	// Finalize runs any post-transaction state modifications
 	// and assembles the final block.
