@@ -33,7 +33,7 @@ type proofInfo struct {
 
 type unconfirmedProofs struct {
 	// proof --> proofInfo
-	proofs 		sync.Map // map[signature]proofInfo record proof's info.
+	proofs 		sync.Map // map[hash(signature)]proofInfo record proof's info.
 	confirmedCh chan *Work
 	stopCh      chan struct{}
 }
@@ -46,16 +46,20 @@ func newUnconfirmedProofs(confirmedCh chan *Work) *unconfirmedProofs{
 }
 
 func (u *unconfirmedProofs) Insert(proof *types.WorkProof, work *Work, threshold int) error {
-	if _, ok := u.proofs.Load(proof.Signature); !ok {
+	sigHash := common.Hash{}
+	sigHash.SetBytes(proof.Signature)
+	if _, ok := u.proofs.Load(sigHash); !ok {
 		info := &proofInfo{threshold:threshold, work:work, confirmed:set.New(), time:time.Now().Unix()}
-		u.proofs.Store(proof.Signature, info)
+		u.proofs.Store(sigHash, info)
 		return nil
 	}
 	return nil
 }
 
 func (u *unconfirmedProofs) Confirm(addr common.Address, confirm *types.ProofConfirm) error {
-	if v, ok := u.proofs.Load(confirm.Signature); ok {
+	sigHash := common.Hash{}
+	sigHash.SetBytes(confirm.Signature)
+	if v, ok := u.proofs.Load(sigHash); ok {
 		info := v.(*proofInfo)
 		if confirm.Confirm == true {
 			info.confirmed.Add(addr)
@@ -64,7 +68,7 @@ func (u *unconfirmedProofs) Confirm(addr common.Address, confirm *types.ProofCon
 			// send to worker.
 			info.work.confirmed = true
 			u.confirmedCh <- info.work
-			u.proofs.Delete(confirm.Signature)
+			u.proofs.Delete(sigHash)
 		}
 	}
 	return nil
