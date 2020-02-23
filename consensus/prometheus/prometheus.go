@@ -89,6 +89,7 @@ func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proo
 			return err
 		}
 	}
+	return nil
 }
 
 func (c *Prometheus) UpdateProof(addr common.Address, hash common.Hash) {
