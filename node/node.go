@@ -284,7 +284,7 @@ func (hpbnode *Node) Start(conf *config.HpbConfig) error {
 		return errors.New("synctrl is nil")
 	}
 	hpbnode.Hpbsyncctr.Start()
-	retval := hpbnode.Hpbpeermanager.Start(hpbnode.hpberbase,bc.InstanceBlockChain().GetLocalProofHash())
+	retval := hpbnode.Hpbpeermanager.Start(hpbnode.hpberbase,hpbnode.Hpbbc.GetLocalProofHash())
 	if retval != nil {
 		log.Error("Start hpbpeermanager error")
 		return errors.New(`start peermanager error ".ipc"`)
