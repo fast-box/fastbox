@@ -89,6 +89,9 @@ var (
 	ExtraVanity = 32 // Fixed number of extra-data prefix bytes reserved for signerHash vanity
 	ExtraSeal   = 65 // Fixed number of extra-data suffix bytes reserved for signerHash seal
 )
+const (
+	MinerNumber = 7
+)
 
 // get current signer
 func Ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, error) {
