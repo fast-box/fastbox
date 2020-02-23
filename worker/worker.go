@@ -389,7 +389,8 @@ func (self *worker) NewMineRound() error {
 				validators++
 			}
 		}
-		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2)
+		log.Debug("Worker add in unconfirmed","threshold", consensus.MinerNumber/2 +1)
+		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1)
 	}
 
 	return nil
