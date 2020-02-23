@@ -241,6 +241,8 @@ func (this *SynCtrl) synchronise(peer *p2p.Peer) {
 	if peer == nil || peer.LocalType() == discover.BootNode {
 		return
 	}
+	// no need sync with other peer.
+	return 
 	// Make sure the peer's TD is higher than our own
 	currentBlock := bc.InstanceBlockChain().CurrentBlock()
 	td := bc.InstanceBlockChain().GetTd(currentBlock.Hash(), currentBlock.NumberU64())

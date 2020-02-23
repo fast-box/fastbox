@@ -376,7 +376,7 @@ func (self *worker) NewMineRound() error {
 	}
 	//log.Info("NewRoundMine", "Finalized",true)
 
-	if config.GetHpbConfigInstance().Node.TestMode != 2 {
+	if config.GetHpbConfigInstance().Node.TestMode == 2 {
 		// single test, direct pass confirm.
 		work.confirmed = true
 		go func() {self.confirmCh <- work}()
