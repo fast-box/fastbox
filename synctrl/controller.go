@@ -201,10 +201,12 @@ func (this *SynCtrl) UnregisterNetPeer(peer *p2p.Peer) error {
 
 // Mined routing loop
 func (this *SynCtrl) minedRoutingLoop() {
+	log.Debug("synctrl minedRoutingLoop enter")
 	// automatically stops if unsubscribe
 	for obj := range this.minedBlockSub.Chan() {
 		switch ev := obj.Data.(type) {
 		case bc.NewWorkProofEvent:
+			log.Debug("synctrl got proof to rout")
 			go routProof(ev.Proof)
 		}
 	}
