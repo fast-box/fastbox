@@ -619,6 +619,10 @@ func (bc *BlockChain) GetBlocksFromHash(hash common.Hash, n int) (blocks []*type
 	return
 }
 
+func (bc *BlockChain) GetLocalProofHash() common.Hash {
+	return bc.CurrentHeader().ProofHash
+}
+
 // Stop stops the blockchain service. If any imports are currently in progress
 // it will abort them using the procInterrupt.
 func (bc *BlockChain) Stop() {
