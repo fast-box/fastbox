@@ -22,7 +22,7 @@ var Modules = map[string]string{
 	"chequebook": Chequebook_JS,
 	"prometheus": Prometheus_JS,
 	"debug":      Debug_JS,
-	"sph":        Hpb_JS,
+	"hpb":        Hpb_JS,
 	"miner":      Miner_JS,
 	"net":        Net_JS,
 	"personal":   Personal_JS,
@@ -374,7 +374,7 @@ web3._extend({
 
 const Hpb_JS = `
 web3._extend({
-	property: 'sph',
+	property: 'hpb',
 	methods: [
 		new web3._extend.Method({
 			name: 'getStatediffbyblock',
