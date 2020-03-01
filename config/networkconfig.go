@@ -226,8 +226,8 @@ var DefaultHTTPTimeouts = HTTPTimeouts{
 func DefaultNetworkConfig() NetworkConfig {
 	cfg := DefaultNTConfig
 
-	cfg.HTTPModules = append(cfg.HTTPModules, "hpb")
-	cfg.WSModules = append(cfg.WSModules, "hpb")
+	cfg.HTTPModules = append(cfg.HTTPModules, "shx")
+	cfg.WSModules = append(cfg.WSModules, "shx")
 
 	cfg.HTTPVirtualHosts = append(cfg.HTTPVirtualHosts, "localhost")
 	cfg.HTTPTimeouts = DefaultHTTPTimeouts
