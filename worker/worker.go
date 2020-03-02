@@ -110,14 +110,14 @@ type worker struct {
 	mining int32
 }
 
-func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase common.Address, mux *sub.TypeMux) *worker {
+func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase common.Address, mux *sub.TypeMux, db shxdb.Database) *worker {
 
 	worker := &worker{
 		config:      config,
 		engine:      engine,
 		mux:         mux,
 		chainHeadCh: make(chan bc.ChainHeadEvent, chainHeadChanSize),
-		chainDb:     nil,
+		chainDb:     db,
 		confirmCh: 	 make(chan *Work, 10),
 		chain:       bc.InstanceBlockChain(),
 		coinbase:    coinbase,
@@ -215,6 +215,13 @@ func (self *worker) eventListener() {
 						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
 					}
 					// Todo: 3. update tx info (tx's signed count)
+					//for _, tx := range ev.Proof.Txs {
+					//	if receipt, blockHash, blockNumber, index := bc.GetReceipt(self.chainDb, tx.Hash()); receipt != nil {
+					//		// update receipt
+					//		receipt.Logs
+					//
+					//	}
+					//}
 				}()
 			}
 		}

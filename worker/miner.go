@@ -19,6 +19,7 @@ package worker
 
 import (
 	"fmt"
+	"github.com/hpb-project/sphinx/blockchain/storage"
 	"sync/atomic"
 
 	"github.com/hpb-project/sphinx/blockchain/state"
@@ -47,11 +48,11 @@ type Miner struct {
 	shouldStart int32 // should start indicates whether we should start after sync
 }
 
-func New(config *config.ChainConfig, mux *sub.TypeMux, engine consensus.Engine,coinbase common.Address) *Miner {
+func New(config *config.ChainConfig, mux *sub.TypeMux, engine consensus.Engine,coinbase common.Address,db shxdb.Database) *Miner {
 	miner := &Miner{
 		mux:      mux,
 		engine:   engine,
-		worker:   newWorker(config, engine, coinbase, mux),
+		worker:   newWorker(config, engine, coinbase, mux, db),
 		canStart: 1,
 		controlStarted:false,
 	}
