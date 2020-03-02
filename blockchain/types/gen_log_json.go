@@ -20,7 +20,6 @@ func (l Log) MarshalJSON() ([]byte, error) {
 		TxIndex     hexutil.Uint   `json:"transactionIndex" gencodec:"required"`
 		BlockHash   common.Hash    `json:"blockHash"`
 		Index       hexutil.Uint   `json:"logIndex" gencodec:"required"`
-		ConfirmCount hexutil.Uint64 `json:"confirmed" gencodec:"required"`
 		Removed     bool           `json:"removed"`
 	}
 	var enc Log
@@ -32,7 +31,6 @@ func (l Log) MarshalJSON() ([]byte, error) {
 	enc.TxIndex = hexutil.Uint(l.TxIndex)
 	enc.BlockHash = l.BlockHash
 	enc.Index = hexutil.Uint(l.Index)
-	enc.ConfirmCount = hexutil.Uint64(l.ConfirmCount)
 	enc.Removed = l.Removed
 	return json.Marshal(&enc)
 }
@@ -47,7 +45,6 @@ func (l *Log) UnmarshalJSON(input []byte) error {
 		TxIndex     *hexutil.Uint   `json:"transactionIndex" gencodec:"required"`
 		BlockHash   *common.Hash    `json:"blockHash"`
 		Index       *hexutil.Uint   `json:"logIndex" gencodec:"required"`
-		ConfirmCount *hexutil.Uint64 `json:"confirmed" gencodec:"required"`
 		Removed     *bool           `json:"removed"`
 	}
 	var dec Log
@@ -84,7 +81,6 @@ func (l *Log) UnmarshalJSON(input []byte) error {
 		return errors.New("missing required field 'logIndex' for Log")
 	}
 	l.Index = uint(*dec.Index)
-	l.ConfirmCount = uint64(*dec.ConfirmCount)
 	if dec.Removed != nil {
 		l.Removed = *dec.Removed
 	}
