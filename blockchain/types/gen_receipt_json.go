@@ -24,7 +24,7 @@ func (r Receipt) MarshalJSON() ([]byte, error) {
 	enc.Bloom = r.Bloom
 	enc.Logs = r.Logs
 	enc.TxHash = r.TxHash
-	enc.ConfirmCount = r.ConfirmCount
+	enc.ConfirmCount = hexutil.Uint64(r.ConfirmCount)
 	return json.Marshal(&enc)
 }
 
@@ -59,6 +59,6 @@ func (r *Receipt) UnmarshalJSON(input []byte) error {
 		return errors.New("missing required field 'transactionHash' for Receipt")
 	}
 	r.TxHash = *dec.TxHash
-	r.ConfirmCount = *dec.ConfirmCount
+	r.ConfirmCount = uint64(*dec.ConfirmCount)
 	return nil
 }
