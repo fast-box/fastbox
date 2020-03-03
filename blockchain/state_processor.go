@@ -91,5 +91,6 @@ func ApplyTransaction(config *config.ChainConfig, bc *BlockChain, author *common
 	// milestone 1, not need apply tx.
 	var root []byte
 	receipt := types.NewReceipt(root,false)
+	receipt.TxHash = tx.Hash()
 	return receipt, nil
 }
