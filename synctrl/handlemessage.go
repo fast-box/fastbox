@@ -418,6 +418,7 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 			return p2p.ErrResp(p2p.ErrDecode, "transaction %d is nil", i)
 		}
 		p.KnownTxsAdd(tx.Hash())
+		log.Debug("SHX profile", "Receive tx ", tx.Hash(), "at time ", time.Now().UnixNano()/1000/1000)
 
 		if nil != txpool.GetTxPool().GetTxByHash(tx.Hash()) {
 			continue

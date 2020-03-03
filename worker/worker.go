@@ -233,17 +233,17 @@ func (self *worker) eventListener() {
 							if err := bc.UpdateTxReceiptWithBlock(self.chainDb, tx.Hash(), blockHash, blockNumber, index, receipt); err != nil {
 								log.Error("worker updateTx receipt", "failed", err)
 							} else {
-								log.Debug("worker update tx receipt", "hash", tx.Hash(), "count", receipt.ConfirmCount)
+								//log.Debug("worker update tx receipt", "hash", tx.Hash(), "count", receipt.ConfirmCount)
 							}
 						} else {
 							// add to unconfirmed tx.
 							if v,ok := self.txConfirmPool[tx.Hash()]; ok {
 								v += 1
 								self.txConfirmPool[tx.Hash()] = v
-								log.Debug("worker update tx map", "hash", tx.Hash(), "count", v)
+								//log.Debug("worker update tx map", "hash", tx.Hash(), "count", v)
 							} else {
 								self.txConfirmPool[tx.Hash()] = 1
-								log.Debug("worker update tx map", "new hash", tx.Hash(), "count", 1)
+								//log.Debug("worker update tx map", "new hash", tx.Hash(), "count", 1)
 							}
 						}
 					}
@@ -329,6 +329,7 @@ func (self *worker) RoutineMine() {
 				// 1. receive proof response
 				// 2. calc response count
 				// 3. if count > peers/2 , final mined.
+				log.Debug("SHX profile","get confirm for Proof ", ev.Confirm.Signature.Hash(),"from peer", ev.Peer.ID(), "at time ",time.Now().UnixNano()/1000/1000)
 				self.unconfirmed.Confirm(ev.Peer.Address(), ev.Confirm)
 			}
 		case work:= <- self.confirmCh:
@@ -399,9 +400,6 @@ func (self *worker) NewMineRound() error {
 		return err
 	}
 
-	// broadcast proof.
-	self.mux.Post(bc.NewWorkProofEvent{Proof:proof})
-
 	// Create the new block to seal with the consensus engine
 	if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, work.receipts); err != nil {
 		log.Error("Failed to finalize block for sealing", "err", err)
@@ -414,15 +412,10 @@ func (self *worker) NewMineRound() error {
 		work.confirmed = true
 		go func() {self.confirmCh <- work}()
 	} else {
+		// broadcast proof.
+		self.mux.Post(bc.NewWorkProofEvent{Proof:proof})
+		log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Signature.Hash())
 		// wait confirm.
-		peers := p2p.PeerMgrInst().PeersAll()
-		validators := 0
-		for _, peer := range peers {
-			if peer.RemoteType() != discover.BootNode {
-				validators++
-			}
-		}
-		log.Debug("Worker add in unconfirmed","threshold", consensus.MinerNumber/2 +1)
 		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1)
 	}
 
@@ -434,17 +427,17 @@ func (self *worker) FinalMine(work *Work) error {
 		// 1. gen block with proof and header.
 		if result, err := self.engine.GenBlockWithSig(self.chain, work.Block); result != nil {
 			log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
-				"difficulty -> ", result.Difficulty())
-
+				"txs -> ", len(result.Transactions()))
+			log.Debug("SHX profile", "sealed new block number ", result.Number(), "txs", len(result.Transactions()), "at time", time.Now().UnixNano()/1000/1000)
 			// update tx receipts from txConfirmPool
 			self.txMu.Lock()
 			for _, receipt := range work.receipts {
 				if v,ok := self.txConfirmPool[receipt.TxHash]; ok {
 					receipt.ConfirmCount = v + 1
-					log.Debug("worker finalMine", "update tx confirmCount hash", receipt.TxHash, "count", receipt.ConfirmCount)
+					//log.Debug("worker finalMine", "update tx confirmCount hash", receipt.TxHash, "count", receipt.ConfirmCount)
 					delete(self.txConfirmPool,receipt.TxHash)
 				} else {
-					log.Debug("worker finalMine", "not find in txConfirmPool hash", receipt.TxHash)
+					//log.Debug("worker finalMine", "not find in txConfirmPool hash", receipt.TxHash)
 					receipt.ConfirmCount = 1
 				}
 			}
@@ -463,7 +456,7 @@ func (self *worker) FinalMine(work *Work) error {
 				events []interface{}
 				logs   = work.state.Logs()
 			)
-			log.Debug("WriteBlockAndState", "Stat", stat)
+			//log.Debug("WriteBlockAndState", "Stat", stat)
 			events = append(events, bc.ChainEvent{Block: result, Hash: result.Hash(), Logs: logs})
 			if stat == bc.CanonStatTy {
 				// 2. send event and update txpool.
