@@ -127,6 +127,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 		exitCh:		 make(chan struct {}),
 		newRoundCh:  make(chan struct {}, 1),
 		roundState:		IDLE,
+		txConfirmPool: make(map[common.Hash]uint64),
 	}
 
 	worker.txpool = txpool.GetTxPool()
