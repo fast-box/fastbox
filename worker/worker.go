@@ -48,6 +48,7 @@ const (
 	chainHeadChanSize = 10
 
 	blockMaxTxs = 5000 * 10
+	minTxsToMine = 2000
 
 	waitConfirmTimeout = 40 // a proof wait confirm timeout seconds
 )
@@ -281,7 +282,7 @@ func (self *worker) CheckNeedStartMine() bool {
 	pending,_ := self.txpool.Pended()
 	delta := now - head.Time.Int64()
 	//log.Info("CheckNeedStartMine", "Head.tm", head.Time.Int64(), "Now", now, "delta", delta)
-	if delta >= int64(self.config.Prometheus.Period) || len(pending) >= 10 {
+	if delta >= int64(self.config.Prometheus.Period) || len(pending) >= minTxsToMine {
 		return true
 	}
 	return false
