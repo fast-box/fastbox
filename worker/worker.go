@@ -106,6 +106,9 @@ type worker struct {
 
 	unconfirmed *unconfirmedProofs // set of locally mined blocks pending canonicalness confirmations
 
+	txMu			sync.Mutex
+	txConfirmPool map[common.Hash]uint64
+
 	// atomic status counters
 	mining int32
 }
@@ -178,6 +181,9 @@ func (self *worker) pendingBlock() *types.Block {
 func (self *worker) start() {
 	self.mu.Lock()
 	defer self.mu.Unlock()
+	if atomic.LoadInt32(&self.mining) == 1 {
+		return
+	}
 	atomic.StoreInt32(&self.mining, 1)
 	go self.RoutineMine()
 }
@@ -185,6 +191,9 @@ func (self *worker) start() {
 func (self *worker) stop() {
 	self.mu.Lock()
 	defer self.mu.Unlock()
+	if atomic.LoadInt32(&self.mining) == 0 {
+		return
+	}
 	self.exitCh <- struct{}{}
 	self.wg.Wait()
 	atomic.StoreInt32(&self.mining, 0)
@@ -214,14 +223,24 @@ func (self *worker) eventListener() {
 						var res= types.ProofConfirm{ev.Proof.Signature, true}
 						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
 					}
-					// Todo: 3. update tx info (tx's signed count)
-					//for _, tx := range ev.Proof.Txs {
-					//	if receipt, blockHash, blockNumber, index := bc.GetReceipt(self.chainDb, tx.Hash()); receipt != nil {
-					//		// update receipt
-					//		receipt.Logs
-					//
-					//	}
-					//}
+					// 3. update tx info (tx's signed count)
+					self.txMu.Lock()
+					for _, tx := range ev.Proof.Txs {
+						if receipt, blockHash, blockNumber, index := bc.GetReceipt(self.chainDb, tx.Hash()); receipt != nil {
+							// update receipt
+							receipt.ConfirmCount += 1
+							bc.UpdateTxReceiptWithBlock(self.chainDb, tx.Hash(), blockHash, blockNumber, index, receipt)
+						} else {
+							// add to unconfirmed tx.
+							if v,ok := self.txConfirmPool[tx.Hash()]; ok {
+								v += 1
+								self.txConfirmPool[tx.Hash()] = v
+							} else {
+								self.txConfirmPool[tx.Hash()] = 1
+							}
+						}
+					}
+					self.txMu.Unlock()
 				}()
 			}
 		}
@@ -410,11 +429,25 @@ func (self *worker) FinalMine(work *Work) error {
 			log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
 				"difficulty -> ", result.Difficulty())
 
+			// update tx receipts from txConfirmPool
+			self.txMu.Lock()
+			for _, receipt := range work.receipts {
+				if v,ok := self.txConfirmPool[receipt.TxHash]; ok {
+					receipt.ConfirmCount = v + 1
+					delete(self.txConfirmPool,receipt.TxHash)
+				} else {
+					receipt.ConfirmCount = 1
+				}
+			}
+
 			stat, err := self.chain.WriteBlockAndState(result, work.receipts, work.state)
 			if err != nil {
 				log.Error("Failed writing block to chain", "err", err)
 				return err
 			}
+
+			self.txMu.Unlock()
+
 			// Broadcast the block and announce chain insertion event
 			self.mux.Post(bc.NewMinedBlockEvent{Block: result})
 			var (

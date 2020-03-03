@@ -332,6 +332,40 @@ func GetTransaction(db DatabaseReader, hash common.Hash) (*types.Transaction, co
 	return &tx, entry.BlockHash, entry.BlockIndex, entry.Index
 }
 
+
+func UpdateTxReceiptWithBlock(db shxdb.Database, hash common.Hash, blockHash common.Hash, blockNumber uint64, receiptIndex uint64, receipt *types.Receipt) error {
+	if blockHash != (common.Hash{}) {
+		receipts := GetBlockReceipts(db, blockHash, blockNumber)
+		if len(receipts) <= int(receiptIndex) {
+			log.Error("Receipt refereced missing", "number", blockNumber, "hash", blockHash, "index", receiptIndex)
+			return errors.New("receipt refereced missing")
+		}
+		// update tx receipt
+		receipts[receiptIndex] = receipt
+
+		// update block receipts.
+
+		// Convert the receipts into their storage form and serialize them
+		storageReceipts := make([]*types.ReceiptForStorage, len(receipts))
+		for i, receipt := range receipts {
+			storageReceipts[i] = (*types.ReceiptForStorage)(receipt)
+		}
+		bytes, err := rlp.EncodeToBytes(storageReceipts)
+		if err != nil {
+			return err
+		}
+		// Store the flattened receipt slice
+		key := append(append(blockReceiptsPrefix, encodeBlockNumber(blockNumber)...), hash.Bytes()...)
+		if err := db.Put(key, bytes); err != nil {
+			log.Crit("Failed to update block receipts", "err", err)
+			return err
+		}
+		return nil
+	} else {
+		return errors.New("not find origin receipt")
+	}
+}
+
 func UpdateTxReceipt(db shxdb.Database, hash common.Hash, receipt *types.Receipt) error {
 	// Retrieve the lookup metadata and resolve the receipt from the receipts
 	blockHash, blockNumber, receiptIndex := GetTxLookupEntry(db, hash)
