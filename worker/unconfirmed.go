@@ -49,8 +49,7 @@ func newUnconfirmedProofs(confirmedCh chan *Work) *unconfirmedProofs{
 }
 
 func (u *unconfirmedProofs) Insert(proof *types.WorkProof, work *Work, threshold int) error {
-	sigHash := common.Hash{}
-	sigHash.SetBytes(proof.Signature)
+	sigHash := proof.Signature.Hash()
 	if _, ok := u.proofs.Load(sigHash); !ok {
 		info := &proofInfo{threshold:threshold, work:work, confirmed:set.New(), time:time.Now().Unix()}
 		u.proofs.Store(sigHash, info)
@@ -60,8 +59,7 @@ func (u *unconfirmedProofs) Insert(proof *types.WorkProof, work *Work, threshold
 }
 
 func (u *unconfirmedProofs) Confirm(addr common.Address, confirm *types.ProofConfirm) error {
-	sigHash := common.Hash{}
-	sigHash.SetBytes(confirm.Signature)
+	sigHash := confirm.Signature.Hash()
 	if v, ok := u.proofs.Load(sigHash); ok {
 		info := v.(*proofInfo)
 		if confirm.Confirm == true {

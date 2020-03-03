@@ -373,7 +373,7 @@ func TxsPoolLoop() {
 
 	txCap := 2000
 	txs := make([]*types.Transaction, 0, txCap)
-	poolTxsCh = make(chan *types.Transaction, 2000)
+	poolTxsCh = make(chan *types.Transaction, 20000)
 
 	for {
 		select {
