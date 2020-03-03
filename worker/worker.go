@@ -230,14 +230,20 @@ func (self *worker) eventListener() {
 						if receipt, blockHash, blockNumber, index := bc.GetReceipt(self.chainDb, tx.Hash()); receipt != nil {
 							// update receipt
 							receipt.ConfirmCount += 1
-							bc.UpdateTxReceiptWithBlock(self.chainDb, tx.Hash(), blockHash, blockNumber, index, receipt)
+							if err := bc.UpdateTxReceiptWithBlock(self.chainDb, tx.Hash(), blockHash, blockNumber, index, receipt); err != nil {
+								log.Error("worker updateTx receipt", "failed", err)
+							} else {
+								log.Debug("worker update tx receipt", "hash", tx.Hash(), "count", receipt.ConfirmCount)
+							}
 						} else {
 							// add to unconfirmed tx.
 							if v,ok := self.txConfirmPool[tx.Hash()]; ok {
 								v += 1
 								self.txConfirmPool[tx.Hash()] = v
+								log.Debug("worker update tx map", "hash", tx.Hash(), "count", v)
 							} else {
 								self.txConfirmPool[tx.Hash()] = 1
+								log.Debug("worker update tx map", "new hash", tx.Hash(), "count", 1)
 							}
 						}
 					}
@@ -435,8 +441,10 @@ func (self *worker) FinalMine(work *Work) error {
 			for _, receipt := range work.receipts {
 				if v,ok := self.txConfirmPool[receipt.TxHash]; ok {
 					receipt.ConfirmCount = v + 1
+					log.Debug("worker finalMine", "update tx confirmCount hash", receipt.TxHash, "count", receipt.ConfirmCount)
 					delete(self.txConfirmPool,receipt.TxHash)
 				} else {
+					log.Debug("worker finalMine", "not find in txConfirmPool hash", receipt.TxHash)
 					receipt.ConfirmCount = 1
 				}
 			}
