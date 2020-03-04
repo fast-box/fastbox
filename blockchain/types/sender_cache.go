@@ -2,7 +2,7 @@ package types
 
 import (
 	"errors"
-	"github.com/hpb-project/go-hpb/common"
+	"github.com/hpb-project/sphinx/common"
 	"sync"
 	"sync/atomic"
 	"time"
