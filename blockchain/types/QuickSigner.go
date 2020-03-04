@@ -5,7 +5,6 @@ import (
 	"github.com/hpb-project/sphinx/common/crypto"
 	"github.com/hpb-project/sphinx/common/log"
 	"runtime"
-	"time"
 )
 
 var (
@@ -52,17 +51,9 @@ func QSGetInstance() *QSHandle {
 
 // receive msg and call rpFunc to external module
 func postCallback(qs *QSHandle) {
-	duration := time.Millisecond * 2
-	timer := time.NewTimer(duration)
-	defer timer.Stop()
 
 	for {
-		timer.Reset(duration)
 		select {
-		case <-timer.C:
-			if !qs.bcontinue {
-				return
-			}
 		case p, ok := <-qs.postCh:
 			if !ok {
 				return
@@ -101,17 +92,9 @@ func (qs *QSHandle) postToSoft(rs *RecoverPubkey) bool {
 
 // receive task and execute soft ecc-recover
 func (qs *QSHandle) asyncSoftRecoverPubTask(queue chan RecoverPubkey) {
-	duration := time.Millisecond * 2
-	timer := time.NewTimer(duration)
-	defer timer.Stop()
 
 	for {
-		timer.Reset(duration)
 		select {
-		case <-timer.C:
-			if !qs.bcontinue {
-				return
-			}
 		case rs, ok := <-queue:
 			if !ok {
 				return
@@ -151,6 +134,10 @@ func (qs *QSHandle) Init() error {
 
 func (qs *QSHandle) Release() error {
 	qs.bcontinue = false
+	close(qs.postCh)
+	for i := 0; i < qs.maxThNum; i++ {
+		close(qs.thPool[i].queue)
+	}
 	return nil
 }
 
