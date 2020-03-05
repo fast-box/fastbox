@@ -115,8 +115,8 @@ func (qs *QSHandle) Init() error {
 
 	qs.bcontinue = true
 	// use 1/4 cpu
-	if runtime.NumCPU()/4 > qs.maxThNum {
-		qs.maxThNum = runtime.NumCPU() / 4
+	if runtime.NumCPU() > qs.maxThNum {
+		qs.maxThNum = runtime.NumCPU() - 1
 	}
 
 	qs.thPool = make([]*TaskTh, qs.maxThNum)

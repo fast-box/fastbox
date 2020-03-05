@@ -109,6 +109,7 @@ type worker struct {
 
 	txMu			sync.Mutex
 	txConfirmPool map[common.Hash]uint64
+	updating 		bool
 
 	// atomic status counters
 	mining int32
@@ -129,6 +130,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 		newRoundCh:  make(chan struct {}, 1),
 		roundState:		IDLE,
 		txConfirmPool: make(map[common.Hash]uint64),
+		updating:	false,
 	}
 
 	worker.txpool = txpool.GetTxPool()
@@ -201,11 +203,32 @@ func (self *worker) stop() {
 	atomic.StoreInt32(&self.mining, 0)
 }
 
+func (self *worker) updateTxConfirm() {
+	self.txMu.Lock()
+	defer self.txMu.Unlock()
+	self.updating = true
+	for hash,confirm := range self.txConfirmPool {
+		if receipt, blockHash, blockNumber, index := bc.GetReceipt(self.chainDb, hash); receipt != nil {
+			// update receipt
+			receipt.ConfirmCount += confirm
+			if err := bc.UpdateTxReceiptWithBlock(self.chainDb, hash, blockHash, blockNumber, index, receipt); err != nil {
+				log.Debug("worker updateTx receipt", "failed", err)
+			} else {
+				delete(self.txConfirmPool,hash)
+			}
+		}
+	}
+	self.updating = false
+}
+
 func (self *worker) eventListener() {
 	events := self.mux.Subscribe(bc.WorkProofEvent{})
 	defer events.Unsubscribe()
 
 	defer self.chainHeadSub.Unsubscribe()
+
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
 	for {
 		// A real event arrived, process interesting content
 		select {
@@ -214,6 +237,12 @@ func (self *worker) eventListener() {
 			//Todo: self.PreMiner()
 		case <-self.chainHeadSub.Err():
 			//return
+
+		case <-timer.C:
+			timer.Reset(time.Second)
+			if !self.updating {
+				go self.updateTxConfirm()
+			}
 
 		case obj := <-events.Chan():
 			switch ev:= obj.Data.(type) {
@@ -430,26 +459,12 @@ func (self *worker) FinalMine(work *Work) error {
 			log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
 				"txs -> ", len(result.Transactions()))
 			log.Debug("SHX profile", "sealed new block number ", result.Number(), "txs", len(result.Transactions()), "at time", time.Now().UnixNano()/1000/1000)
-			// update tx receipts from txConfirmPool
-			self.txMu.Lock()
-			for _, receipt := range work.receipts {
-				if v,ok := self.txConfirmPool[receipt.TxHash]; ok {
-					receipt.ConfirmCount = v + 1
-					//log.Debug("worker finalMine", "update tx confirmCount hash", receipt.TxHash, "count", receipt.ConfirmCount)
-					delete(self.txConfirmPool,receipt.TxHash)
-				} else {
-					//log.Debug("worker finalMine", "not find in txConfirmPool hash", receipt.TxHash)
-					receipt.ConfirmCount = 1
-				}
-			}
 
 			stat, err := self.chain.WriteBlockAndState(result, work.receipts, work.state)
 			if err != nil {
 				log.Error("Failed writing block to chain", "err", err)
 				return err
 			}
-
-			self.txMu.Unlock()
 
 			// Broadcast the block and announce chain insertion event
 			self.mux.Post(bc.NewMinedBlockEvent{Block: result})

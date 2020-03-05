@@ -92,5 +92,6 @@ func ApplyTransaction(config *config.ChainConfig, bc *BlockChain, author *common
 	var root []byte
 	receipt := types.NewReceipt(root,false)
 	receipt.TxHash = tx.Hash()
+	receipt.ConfirmCount = 1
 	return receipt, nil
 }
