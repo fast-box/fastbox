@@ -67,6 +67,7 @@ type Work struct {
 	header   *types.Header
 	txs      []*types.Transaction
 	receipts []*types.Receipt
+	proofs   []*types.ProofState
 	createdAt time.Time
 	confirmed  bool
 }
@@ -162,6 +163,7 @@ func (self *worker) pending() (*types.Block, *state.StateDB) {
 		return types.NewBlock(
 			self.current.header,
 			self.current.txs,
+			self.current.proofs,
 			self.current.receipts,
 		), self.current.state.Copy()
 	}
@@ -176,6 +178,7 @@ func (self *worker) pendingBlock() *types.Block {
 		return types.NewBlock(
 			self.current.header,
 			self.current.txs,
+			self.current.proofs,
 			self.current.receipts,
 		)
 	}
@@ -295,8 +298,20 @@ func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error
 		signer:    types.NewQSSigner(self.config.ChainId),
 		state:     state,
 		header:    header,
+		proofs:	   make([]*types.ProofState,0),
 		createdAt: time.Now(),
 		confirmed: false,
+	}
+
+	peers := p2p.PeerMgrInst().PeersAll()
+	for _, peer := range peers {
+		if peer.RemoteType() == discover.MineNode {
+			proofState := types.ProofState{Addr:peer.Address(), Root:peer.ProofHash()}
+			if root,err := self.engine.GetNodeProof(peer.Address()); err != nil {
+				proofState.Root = root
+			}
+			work.proofs = append(work.proofs, &proofState)
+		}
 	}
 
 	// Keep track of transactions which return errors so they can be removed
@@ -424,14 +439,14 @@ func (self *worker) NewMineRound() error {
 	work.commitTransactions(self.mux, txs, self.coinbase)
 
 	// generate workproof
-	proof, err := self.engine.GenerateProof(self.chain, self.current.header, work.txs)
+	proof, err := self.engine.GenerateProof(self.chain, self.current.header, work.txs, work.proofs)
 	if err != nil {
 		log.Error("Premine","GenerateProof failed, err", err, "headerNumber", header.Number)
 		return err
 	}
 
 	// Create the new block to seal with the consensus engine
-	if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, work.receipts); err != nil {
+	if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, work.proofs, work.receipts); err != nil {
 		log.Error("Failed to finalize block for sealing", "err", err)
 		return err
 	}

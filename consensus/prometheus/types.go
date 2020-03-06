@@ -34,7 +34,7 @@ var (
 
 type PeerProof struct {
 	Latest   int64 //time stamp for update.
-	RootHash common.Hash
+	Root 	 common.Hash
 }
 
 type Prometheus struct {

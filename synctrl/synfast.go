@@ -1070,7 +1070,7 @@ func (this *fastSync) importBlockResults(results []*fetchResult) error {
 		)
 		blocks := make([]*types.Block, items)
 		for i, result := range results[:items] {
-			blocks[i] = types.NewBlockWithHeader(result.Header).WithBody(result.Transactions)
+			blocks[i] = types.NewBlockWithHeader(result.Header).WithBody(result.Transactions,nil)
 		}
 		if index, err := bc.InstanceBlockChain().InsertChain(blocks); err != nil {
 			log.Debug("fast synced item processing failed", "number", results[index].Header.Number, "hash", results[index].Header.Hash(), "err", err)
@@ -1160,7 +1160,7 @@ func (this *fastSync) commitFastSyncData(results []*fetchResult, stateSync *stat
 		blocks := make([]*types.Block, items)
 		receipts := make([]types.Receipts, items)
 		for i, result := range results[:items] {
-			blocks[i] = types.NewBlockWithHeader(result.Header).WithBody(result.Transactions)
+			blocks[i] = types.NewBlockWithHeader(result.Header).WithBody(result.Transactions,nil)
 			receipts[i] = result.Receipts
 		}
 		if index, err := bc.InstanceBlockChain().InsertReceiptChain(blocks, receipts); err != nil {
@@ -1174,7 +1174,7 @@ func (this *fastSync) commitFastSyncData(results []*fetchResult, stateSync *stat
 }
 
 func (this *fastSync) commitPivotBlock(result *fetchResult) error {
-	b := types.NewBlockWithHeader(result.Header).WithBody(result.Transactions)
+	b := types.NewBlockWithHeader(result.Header).WithBody(result.Transactions,nil)
 	// Sync the pivot block state. This should complete reasonably quickly because
 	// we've already synced up to the reported head block state earlier.
 	if err := this.syncState(b.Root()).Wait(); err != nil {

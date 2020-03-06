@@ -996,7 +996,7 @@ func (this *fullSync) importBlockResults(results []*fetchResult) error {
 		)
 		blocks := make([]*types.Block, items)
 		for i, result := range results[:items] {
-			blocks[i] = types.NewBlockWithHeader(result.Header).WithBody(result.Transactions)
+			blocks[i] = types.NewBlockWithHeader(result.Header).WithBody(result.Transactions, nil)
 		}
 		if index, err := bc.InstanceBlockChain().InsertChain(blocks); err != nil {
 			log.Debug("synced item processing failed", "number", results[index].Header.Number, "hash", results[index].Header.Hash(), "err", err)

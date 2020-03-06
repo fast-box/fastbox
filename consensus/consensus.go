@@ -55,8 +55,11 @@ type Engine interface {
 	// generate
 	PrepareBlockHeader(chain ChainReader, header *types.Header, state *state.StateDB) error
 
+	// GetNodeProof return a proofstate
+	GetNodeProof(addr common.Address) (root common.Hash, err error)
+
 	// GerateProof return a workproof
-	GenerateProof(chain ChainReader, header *types.Header, txs types.Transactions) (*types.WorkProof,error)
+	GenerateProof(chain ChainReader, header *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof,error)
 
 	// VerifyProof check the proof from peer is correct, and return new hash.
 	VerifyProof(addr common.Address, initHash common.Hash, proof *types.WorkProof, update bool) error
@@ -66,7 +69,7 @@ type Engine interface {
 	// Note: The block header and state database might be updated to reflect any
 	// consensus rules that happen at finalization.
 	Finalize(chain ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction,
-		receipts []*types.Receipt) (*types.Block, error)
+		proofs []*types.ProofState,	receipts []*types.Receipt) (*types.Block, error)
 
 	// Seal generates a new block for the given input block with the local miner's
 	// seal place on top.
