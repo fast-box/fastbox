@@ -139,7 +139,7 @@ func New(conf *config.HpbConfig) (*Node, error) {
 		bloomIndexer:  nil,
 		stop:          make(chan struct{}),
 	}
-	log.Info("Initialising Hpb node", "network", conf.Node.NetworkId)
+	log.Info("Initialising Shx node", "network", conf.Node.NetworkId)
 
 	hpbdatabase, _ := db.CreateDB(&conf.Node, "chaindata")
 	// Ensure that the AccountManager method works before the node has started.

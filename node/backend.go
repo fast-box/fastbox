@@ -45,7 +45,7 @@ func (s *Node) APIs() []rpc.API {
 	// Append all the local APIs and return
 	apis = append(apis, []rpc.API{
 		{
-			Namespace: "hpb",
+			Namespace: "shx",
 			Version:   "1.0",
 			Service:   NewPublicHpbAPI(s),
 			Public:    true,
@@ -55,7 +55,7 @@ func (s *Node) APIs() []rpc.API {
 			Service:   NewPrivateMinerAPI(s),
 			Public:    false,
 		},{
-			Namespace: "hpb",
+			Namespace: "shx",
 			Version:   "1.0",
 			Service:   filters.NewPublicFilterAPI(s.ApiBackend, false),
 			Public:    true,
@@ -85,7 +85,7 @@ func (s *Node) APIs() []rpc.API {
 	if s.Hpbengine != nil {
 		apis = append(apis, s.Hpbengine.APIs(s.BlockChain())...)
 		apis = append(apis, []rpc.API{
-			{Namespace: "hpb",
+			{Namespace: "shx",
 				Version:   "1.0",
 					Service:   synctrl.NewPublicSyncerAPI(s.Hpbsyncctr.Syncer(), s.newBlockMux),
 					Public:    true,
