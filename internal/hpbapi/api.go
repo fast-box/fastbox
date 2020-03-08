@@ -702,6 +702,7 @@ func (s *PublicTransactionPoolAPI) GetTransactionReceipt(hash common.Hash) (map[
 		"from":             from,
 		"logs":             receipt.Logs,
 		"logsBloom":        receipt.Bloom,
+		"confirmCount":		receipt.ConfirmCount,
 	}
 
 	// Assign receipt status or post state.

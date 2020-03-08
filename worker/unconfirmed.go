@@ -33,6 +33,7 @@ type proofInfo struct {
 }
 
 type unconfirmedProofs struct {
+	checking 	bool
 	// proof --> proofInfo
 	proofs 		sync.Map // map[hash(signature)]proofInfo record proof's info.
 	confirmedCh chan *Work
@@ -43,12 +44,12 @@ func newUnconfirmedProofs(confirmedCh chan *Work) *unconfirmedProofs{
 	return &unconfirmedProofs{
 		confirmedCh:confirmedCh,
 		stopCh:make(chan struct{}),
+		checking:false,
 	}
 }
 
 func (u *unconfirmedProofs) Insert(proof *types.WorkProof, work *Work, threshold int) error {
-	sigHash := common.Hash{}
-	sigHash.SetBytes(proof.Signature)
+	sigHash := proof.Signature.Hash()
 	if _, ok := u.proofs.Load(sigHash); !ok {
 		info := &proofInfo{threshold:threshold, work:work, confirmed:set.New(), time:time.Now().Unix()}
 		u.proofs.Store(sigHash, info)
@@ -58,8 +59,7 @@ func (u *unconfirmedProofs) Insert(proof *types.WorkProof, work *Work, threshold
 }
 
 func (u *unconfirmedProofs) Confirm(addr common.Address, confirm *types.ProofConfirm) error {
-	sigHash := common.Hash{}
-	sigHash.SetBytes(confirm.Signature)
+	sigHash := confirm.Signature.Hash()
 	if v, ok := u.proofs.Load(sigHash); ok {
 		info := v.(*proofInfo)
 		if confirm.Confirm == true {
@@ -81,6 +81,23 @@ func (u *unconfirmedProofs) Stop() {
 	u.stopCh <- struct{}{}
 }
 
+func (u *unconfirmedProofs) CheckTimeout() {
+	u.checking = true
+	defer func() { u.checking = false } ()
+
+	u.proofs.Range(func(k, v interface{}) bool {
+		info := v.(*proofInfo)
+		now := time.Now().Unix()
+		time.Now().Sub(info.work.createdAt)
+		if now - info.time > waitConfirmTimeout {
+			// unconfirmed proof, drop work.
+			go func(){u.confirmedCh <- info.work} ()
+			u.proofs.Delete(k)
+		}
+		return true
+	})
+}
+
 
 func (u *unconfirmedProofs) RoutineLoop () {
 	evict := time.NewTicker(10 * time.Second)
@@ -88,17 +105,9 @@ func (u *unconfirmedProofs) RoutineLoop () {
 	for {
 		select {
 		case <-evict.C:
-			u.proofs.Range(func(k, v interface{}) bool {
-				info := v.(*proofInfo)
-				now := time.Now().Unix()
-				time.Now().Sub(info.work.createdAt)
-				if now - info.time > waitConfirmTimeout {
-					// unconfirmed proof, drop work.
-					go func(){u.confirmedCh <- info.work} ()
-					u.proofs.Delete(k)
-				}
-				return true
-			})
+			if !u.checking {
+				go u.CheckTimeout()
+			}
 		case <-u.stopCh:
 			return
 		}

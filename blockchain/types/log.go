@@ -51,9 +51,6 @@ type Log struct {
 	// index of the log in the receipt
 	Index uint `json:"logIndex" gencodec:"required"`
 
-	//Confirm count by miner node.
-	ConfirmCount uint64 `json:"confirmed" gencodec:"required"`
-
 	// The Removed field is true if this log was reverted due to a chain reorganisation.
 	// You must pay attention to this field if you receive logs through a filter query.
 	Removed bool `json:"removed"`
@@ -81,7 +78,6 @@ type rlpStorageLog struct {
 	TxIndex     uint
 	BlockHash   common.Hash
 	Index       uint
-	ConfirmCount uint64
 }
 
 // EncodeRLP implements rlp.Encoder.
@@ -118,7 +114,6 @@ func (l *LogForStorage) EncodeRLP(w io.Writer) error {
 		TxIndex:     l.TxIndex,
 		BlockHash:   l.BlockHash,
 		Index:       l.Index,
-		ConfirmCount:l.ConfirmCount,
 	})
 }
 
@@ -136,7 +131,6 @@ func (l *LogForStorage) DecodeRLP(s *rlp.Stream) error {
 			TxIndex:     dec.TxIndex,
 			BlockHash:   dec.BlockHash,
 			Index:       dec.Index,
-			ConfirmCount:dec.ConfirmCount,
 		}
 	}
 	return err

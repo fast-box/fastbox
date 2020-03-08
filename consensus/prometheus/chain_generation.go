@@ -76,9 +76,9 @@ func (c *Prometheus) Author(header *types.Header) (common.Address, error) {
 	return consensus.Ecrecover(header, c.signatures)
 }
 
-func (c *Prometheus) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, receipts []*types.Receipt) (*types.Block, error) {
+func (c *Prometheus) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, proofs []*types.ProofState, receipts []*types.Receipt) (*types.Block, error) {
 	header.Root = state.IntermediateRoot(true)
-	return types.NewBlock(header, txs, receipts), nil
+	return types.NewBlock(header, txs, proofs, receipts), nil
 }
 
 // API for the terminal

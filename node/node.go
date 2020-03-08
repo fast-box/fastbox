@@ -209,7 +209,7 @@ func (hpbnode *Node) WorkerInit(conf *config.HpbConfig) error {
 		hpbnode.Hpbsyncctr = synctrl.InstanceSynCtrl()
 		hpbnode.newBlockMux = hpbnode.Hpbsyncctr.NewBlockMux()
 
-		hpbnode.miner = worker.New(&conf.BlockChain, hpbnode.NewBlockMux(), hpbnode.Hpbengine, hpbnode.hpberbase)
+		hpbnode.miner = worker.New(&conf.BlockChain, hpbnode.NewBlockMux(), hpbnode.Hpbengine, hpbnode.hpberbase, hpbnode.ShxDb)
 		hpbnode.bloomIndexer.Start(hpbnode.Hpbbc.CurrentHeader(), hpbnode.Hpbbc.SubscribeChainEvent)
 
 	} else {

@@ -18,7 +18,9 @@ package node
 
 import (
 	"context"
+	"github.com/hpb-project/sphinx/common/log"
 	"math/big"
+	"time"
 
 	"github.com/hpb-project/sphinx/account"
 	"github.com/hpb-project/sphinx/blockchain"
@@ -121,6 +123,7 @@ func (b *HpbApiBackend) SubscribeLogsEvent(ch chan<- []*types.Log) sub.Subscript
 }
 
 func (b *HpbApiBackend) SendTx(ctx context.Context, signedTx *types.Transaction) error {
+	log.Debug("SHX profile", "Send tx ", signedTx.Hash(), "at time ", time.Now().UnixNano()/1000/1000)
 	return b.hpb.TxPool().AddTx(signedTx)
 }
 

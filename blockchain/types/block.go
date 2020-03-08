@@ -72,6 +72,7 @@ type Header struct {
 	Root        common.Hash    `json:"stateRoot"        gencodec:"required"`
 	TxHash      common.Hash    `json:"transactionsRoot" gencodec:"required"`
 	ReceiptHash common.Hash    `json:"receiptsRoot"     gencodec:"required"`
+	ProofRoot   common.Hash	   `json:"proofRoot"		gencodec:"required"`
 	Bloom       Bloom          `json:"logsBloom"        gencodec:"required"`
 	Difficulty  *big.Int       `json:"difficulty"       gencodec:"required"`
 	Number      *big.Int       `json:"number"           gencodec:"required"`
@@ -94,6 +95,7 @@ func (h *Header) HashNoNonce() common.Hash {
 		h.Root,
 		h.TxHash,
 		h.ReceiptHash,
+		h.ProofRoot,
 		h.Bloom,
 		h.Difficulty,
 		h.Number,
@@ -106,12 +108,14 @@ func (h *Header) HashNoNonce() common.Hash {
 // a block's data contents (transactions and uncles) together.
 type Body struct {
 	Transactions []*Transaction
+	Proofs       []*ProofState
 }
 
 // Block represents an entire block in the Hpb blockchain.
 type Block struct {
 	header       *Header
 	transactions Transactions
+	proofs 		 ProofStates
 
 	// caches
 	hash atomic.Value
@@ -144,6 +148,7 @@ type StorageBlock Block
 type extblock struct {
 	Header *Header
 	Txs    []*Transaction
+	Proofs []*ProofState
 }
 
 // [deprecated by eth/63]
@@ -151,6 +156,7 @@ type extblock struct {
 type storageblock struct {
 	Header *Header
 	Txs    []*Transaction
+	Proofs []*ProofState
 	TD     *big.Int
 }
 
@@ -161,7 +167,7 @@ type storageblock struct {
 // The values of TxHash, UncleHash, ReceiptHash and Bloom in header
 // are ignored and set to values derived from the given txs, uncles
 // and receipts.
-func NewBlock(header *Header, txs []*Transaction, receipts []*Receipt) *Block {
+func NewBlock(header *Header, txs []*Transaction, proofs []*ProofState, receipts []*Receipt) *Block {
 	b := &Block{header: CopyHeader(header), td: new(big.Int)}
 
 	if len(txs) == 0 {
@@ -170,6 +176,14 @@ func NewBlock(header *Header, txs []*Transaction, receipts []*Receipt) *Block {
 		b.header.TxHash = DeriveSha(Transactions(txs))
 		b.transactions = make(Transactions, len(txs))
 		copy(b.transactions, txs)
+	}
+
+	if proofs == nil || len(proofs) == 0 {
+		b.header.ProofRoot = EmptyRootHash
+	} else {
+		b.header.ProofRoot = DeriveSha(ProofStates(proofs))
+		b.proofs = make(ProofStates, len(proofs))
+		copy(b.proofs, proofs)
 	}
 
 	if len(receipts) == 0 {
@@ -222,6 +236,7 @@ func (b *Block) DecodeRLP(s *rlp.Stream) error {
 		return err
 	}
 	b.header, b.transactions = eb.Header, eb.Txs
+	b.proofs = eb.Proofs
 	b.size.Store(common.StorageSize(rlp.ListSize(size)))
 	return nil
 }
@@ -231,6 +246,7 @@ func (b *Block) EncodeRLP(w io.Writer) error {
 	return rlp.Encode(w, extblock{
 		Header: b.header,
 		Txs:    b.transactions,
+		Proofs: b.proofs,
 	})
 }
 
@@ -241,10 +257,13 @@ func (b *StorageBlock) DecodeRLP(s *rlp.Stream) error {
 		return err
 	}
 	b.header, b.transactions, b.td = sb.Header, sb.Txs, sb.TD
+	b.proofs = sb.Proofs
 	return nil
 }
 
 func (b *Block) Transactions() Transactions { return b.transactions }
+
+func (b *Block) Proofs() ProofStates { return b.proofs }
 
 func (b *Block) Transaction(hash common.Hash) *Transaction {
 	for _, transaction := range b.transactions {
@@ -263,6 +282,7 @@ func (b *Block) NumberU64() uint64        { return b.header.Number.Uint64() }
 func (b *Block) Bloom() Bloom             { return b.header.Bloom }
 func (b *Block) Coinbase() common.Address { return b.header.Coinbase }
 func (b *Block) ProofHash() common.Hash { return b.header.ProofHash }
+func (b *Block) ProofRoot() common.Hash { return b.header.ProofRoot }
 func (b *Block) Root() common.Hash        { return b.header.Root }
 func (b *Block) ParentHash() common.Hash  { return b.header.ParentHash }
 func (b *Block) TxHash() common.Hash      { return b.header.TxHash }
@@ -272,7 +292,7 @@ func (b *Block) Extra() []byte            { return common.CopyBytes(b.header.Ext
 func (b *Block) Header() *Header { return CopyHeader(b.header) }
 
 // Body returns the non-header content of the block.
-func (b *Block) Body() *Body { return &Body{b.transactions} }
+func (b *Block) Body() *Body { return &Body{b.transactions, b.proofs} }
 
 func (b *Block) HashNoNonce() common.Hash {
 	return b.header.HashNoNonce()
@@ -296,16 +316,21 @@ func (b *Block) WithSeal(header *Header) *Block {
 	return &Block{
 		header:       &cpy,
 		transactions: b.transactions,
+		proofs: 	  b.proofs,
 	}
 }
 
 // WithBody returns a new block with the given transaction and uncle contents.
-func (b *Block) WithBody(transactions []*Transaction) *Block {
+func (b *Block) WithBody(transactions []*Transaction, proofs []*ProofState) *Block {
 	block := &Block{
 		header:       CopyHeader(b.header),
 		transactions: make([]*Transaction, len(transactions)),
+		proofs:       make([]*ProofState, len(proofs)),
 	}
 	copy(block.transactions, transactions)
+	if proofs != nil && len(proofs) > 0 {
+		copy(block.proofs, proofs)
+	}
 	return block
 }
 
@@ -340,12 +365,13 @@ func (h *Header) String() string {
 	Root:		    %x
 	TxSha		    %x
 	ReceiptSha:	    %x
+	ProofRoot:		%x
 	Bloom:		    %x
 	Difficulty:	    %v
 	Number:		    %v
 	Time:		    %v
 	Extra:		    %s
-]`, h.Hash(), h.ParentHash, h.Coinbase, h.ProofHash, h.Root, h.TxHash, h.ReceiptHash, h.Bloom, h.Difficulty, h.Number, h.Time, h.Extra)
+]`, h.Hash(), h.ParentHash, h.Coinbase, h.ProofHash, h.Root, h.TxHash, h.ReceiptHash, h.ProofRoot, h.Bloom, h.Difficulty, h.Number, h.Time, h.Extra)
 }
 
 type Blocks []*Block

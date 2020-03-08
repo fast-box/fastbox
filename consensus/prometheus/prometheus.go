@@ -51,7 +51,7 @@ func (c *Prometheus)MixHash(first, second common.Hash) common.Hash {
 }
 
 // GenerateProof
-func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.Header, txs types.Transactions) (*types.WorkProof, error) {
+func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof, error) {
 	number := header.Number.Uint64()
 	parent := chain.GetHeaderByNumber(number - 1)
 	if parent == nil {
@@ -60,21 +60,24 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 	lastHash := parent.ProofHash
 
 	txroot := types.DeriveSha(txs)
-	proofHash := c.MixHash(lastHash, txroot)
+	proofRoot := types.DeriveSha(proofs)
+	proofHash := c.MixHash(txroot, proofRoot)
+	proofHash = c.MixHash(lastHash, proofHash)
+
 	signer, signFn := c.signer, c.signFn
 	sighash, err := signFn(accounts.Account{Address: signer}, proofHash.Bytes())
 	if err != nil {
 		return nil, err
 	}
 	header.ProofHash = proofHash
-	return &types.WorkProof{sighash, txs}, nil
+	return &types.WorkProof{sighash, txs,proofs}, nil
 }
 
 // VerifyProof
 func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proof *types.WorkProof, update bool) error {
 	if val, ok := c.proofs.Load(addr); ok {
 		pf := val.(*PeerProof)
-		if hash, err := c.verifyProof(pf.RootHash, addr, proof); err == nil && update {
+		if hash, err := c.verifyProof(pf.Root, addr, proof); err == nil && update {
 			c.UpdateProof(addr, hash)
 		} else {
 			return err
@@ -83,7 +86,7 @@ func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proo
 	} else {
 		pf := &PeerProof{time.Now().Unix(), initHash}
 		c.proofs.Store(addr, pf)
-		if hash, err := c.verifyProof(pf.RootHash, addr, proof); err == nil && update {
+		if hash, err := c.verifyProof(pf.Root, addr, proof); err == nil && update {
 			c.UpdateProof(addr, hash)
 		} else {
 			return err
@@ -92,14 +95,25 @@ func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proo
 	return nil
 }
 
-func (c *Prometheus) UpdateProof(addr common.Address, hash common.Hash) {
+func (c *Prometheus) UpdateProof(addr common.Address, root common.Hash) {
 	if val, ok := c.proofs.Load(addr); ok {
 		if pf, ok := val.(*PeerProof); ok {
-			pf.RootHash = hash
+			pf.Root = root
 			pf.Latest = time.Now().Unix()
 		}
 	} else {
-		pf := &PeerProof{time.Now().Unix(), hash}
+		pf := &PeerProof{time.Now().Unix(), root}
 		c.proofs.Store(addr, pf)
+	}
+}
+
+func (c *Prometheus)GetNodeProof(addr common.Address) (common.Hash,error) {
+	if val, ok := c.proofs.Load(addr); ok {
+		if pf, ok := val.(*PeerProof); ok {
+			return pf.Root, nil
+		}
+		return common.Hash{}, errors.New("not find")
+	} else {
+		return common.Hash{}, errors.New("not find")
 	}
 }

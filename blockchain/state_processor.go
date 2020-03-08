@@ -76,7 +76,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 	}
 
 	// Finalize the block, applying any consensus engine specific extras.
-	if _, errfinalize := p.engine.Finalize(p.bc, header, statedb, block.Transactions(), receipts); nil != errfinalize {
+	if _, errfinalize := p.engine.Finalize(p.bc, header, statedb, block.Transactions(), block.Proofs(), receipts); nil != errfinalize {
 		return nil, nil, errfinalize
 	}
 
@@ -91,5 +91,7 @@ func ApplyTransaction(config *config.ChainConfig, bc *BlockChain, author *common
 	// milestone 1, not need apply tx.
 	var root []byte
 	receipt := types.NewReceipt(root,false)
+	receipt.TxHash = tx.Hash()
+	receipt.ConfirmCount = 1
 	return receipt, nil
 }

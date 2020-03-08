@@ -48,6 +48,7 @@ const (
 	chainHeadChanSize = 10
 
 	blockMaxTxs = 5000 * 10
+	minTxsToMine = 2000
 
 	waitConfirmTimeout = 40 // a proof wait confirm timeout seconds
 )
@@ -66,6 +67,7 @@ type Work struct {
 	header   *types.Header
 	txs      []*types.Transaction
 	receipts []*types.Receipt
+	proofs   []*types.ProofState
 	createdAt time.Time
 	confirmed  bool
 }
@@ -106,24 +108,30 @@ type worker struct {
 
 	unconfirmed *unconfirmedProofs // set of locally mined blocks pending canonicalness confirmations
 
+	txMu			sync.Mutex
+	txConfirmPool map[common.Hash]uint64
+	updating 		bool
+
 	// atomic status counters
 	mining int32
 }
 
-func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase common.Address, mux *sub.TypeMux) *worker {
+func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase common.Address, mux *sub.TypeMux, db shxdb.Database) *worker {
 
 	worker := &worker{
 		config:      config,
 		engine:      engine,
 		mux:         mux,
 		chainHeadCh: make(chan bc.ChainHeadEvent, chainHeadChanSize),
-		chainDb:     nil,
+		chainDb:     db,
 		confirmCh: 	 make(chan *Work, 10),
 		chain:       bc.InstanceBlockChain(),
 		coinbase:    coinbase,
 		exitCh:		 make(chan struct {}),
 		newRoundCh:  make(chan struct {}, 1),
 		roundState:		IDLE,
+		txConfirmPool: make(map[common.Hash]uint64),
+		updating:	false,
 	}
 
 	worker.txpool = txpool.GetTxPool()
@@ -155,6 +163,7 @@ func (self *worker) pending() (*types.Block, *state.StateDB) {
 		return types.NewBlock(
 			self.current.header,
 			self.current.txs,
+			self.current.proofs,
 			self.current.receipts,
 		), self.current.state.Copy()
 	}
@@ -169,6 +178,7 @@ func (self *worker) pendingBlock() *types.Block {
 		return types.NewBlock(
 			self.current.header,
 			self.current.txs,
+			self.current.proofs,
 			self.current.receipts,
 		)
 	}
@@ -178,6 +188,9 @@ func (self *worker) pendingBlock() *types.Block {
 func (self *worker) start() {
 	self.mu.Lock()
 	defer self.mu.Unlock()
+	if atomic.LoadInt32(&self.mining) == 1 {
+		return
+	}
 	atomic.StoreInt32(&self.mining, 1)
 	go self.RoutineMine()
 }
@@ -185,9 +198,30 @@ func (self *worker) start() {
 func (self *worker) stop() {
 	self.mu.Lock()
 	defer self.mu.Unlock()
+	if atomic.LoadInt32(&self.mining) == 0 {
+		return
+	}
 	self.exitCh <- struct{}{}
 	self.wg.Wait()
 	atomic.StoreInt32(&self.mining, 0)
+}
+
+func (self *worker) updateTxConfirm() {
+	self.txMu.Lock()
+	defer self.txMu.Unlock()
+	self.updating = true
+	for hash,confirm := range self.txConfirmPool {
+		if receipt, blockHash, blockNumber, index := bc.GetReceipt(self.chainDb, hash); receipt != nil {
+			// update receipt
+			receipt.ConfirmCount += confirm
+			if err := bc.UpdateTxReceiptWithBlock(self.chainDb, hash, blockHash, blockNumber, index, receipt); err != nil {
+				log.Debug("worker updateTx receipt", "failed", err)
+			} else {
+				delete(self.txConfirmPool,hash)
+			}
+		}
+	}
+	self.updating = false
 }
 
 func (self *worker) eventListener() {
@@ -195,6 +229,9 @@ func (self *worker) eventListener() {
 	defer events.Unsubscribe()
 
 	defer self.chainHeadSub.Unsubscribe()
+
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
 	for {
 		// A real event arrived, process interesting content
 		select {
@@ -203,6 +240,12 @@ func (self *worker) eventListener() {
 			//Todo: self.PreMiner()
 		case <-self.chainHeadSub.Err():
 			//return
+
+		case <-timer.C:
+			timer.Reset(time.Second)
+			if !self.updating {
+				go self.updateTxConfirm()
+			}
 
 		case obj := <-events.Chan():
 			switch ev:= obj.Data.(type) {
@@ -214,7 +257,30 @@ func (self *worker) eventListener() {
 						var res= types.ProofConfirm{ev.Proof.Signature, true}
 						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
 					}
-					// Todo: 3. update tx info (tx's signed count)
+					// 3. update tx info (tx's signed count)
+					self.txMu.Lock()
+					for _, tx := range ev.Proof.Txs {
+						if receipt, blockHash, blockNumber, index := bc.GetReceipt(self.chainDb, tx.Hash()); receipt != nil {
+							// update receipt
+							receipt.ConfirmCount += 1
+							if err := bc.UpdateTxReceiptWithBlock(self.chainDb, tx.Hash(), blockHash, blockNumber, index, receipt); err != nil {
+								log.Error("worker updateTx receipt", "failed", err)
+							} else {
+								//log.Debug("worker update tx receipt", "hash", tx.Hash(), "count", receipt.ConfirmCount)
+							}
+						} else {
+							// add to unconfirmed tx.
+							if v,ok := self.txConfirmPool[tx.Hash()]; ok {
+								v += 1
+								self.txConfirmPool[tx.Hash()] = v
+								//log.Debug("worker update tx map", "hash", tx.Hash(), "count", v)
+							} else {
+								self.txConfirmPool[tx.Hash()] = 1
+								//log.Debug("worker update tx map", "new hash", tx.Hash(), "count", 1)
+							}
+						}
+					}
+					self.txMu.Unlock()
 				}()
 			}
 		}
@@ -232,8 +298,20 @@ func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error
 		signer:    types.NewQSSigner(self.config.ChainId),
 		state:     state,
 		header:    header,
+		proofs:	   make([]*types.ProofState,0),
 		createdAt: time.Now(),
 		confirmed: false,
+	}
+
+	peers := p2p.PeerMgrInst().PeersAll()
+	for _, peer := range peers {
+		if peer.RemoteType() == discover.MineNode {
+			proofState := types.ProofState{Addr:peer.Address(), Root:peer.ProofHash()}
+			if root,err := self.engine.GetNodeProof(peer.Address()); err != nil {
+				proofState.Root = root
+			}
+			work.proofs = append(work.proofs, &proofState)
+		}
 	}
 
 	// Keep track of transactions which return errors so they can be removed
@@ -248,7 +326,7 @@ func (self *worker) CheckNeedStartMine() bool {
 	pending,_ := self.txpool.Pended()
 	delta := now - head.Time.Int64()
 	//log.Info("CheckNeedStartMine", "Head.tm", head.Time.Int64(), "Now", now, "delta", delta)
-	if delta >= int64(self.config.Prometheus.Period) || len(pending) >= 10 {
+	if delta >= int64(self.config.Prometheus.Period) || len(pending) >= minTxsToMine {
 		return true
 	}
 	return false
@@ -296,6 +374,7 @@ func (self *worker) RoutineMine() {
 				// 1. receive proof response
 				// 2. calc response count
 				// 3. if count > peers/2 , final mined.
+				log.Debug("SHX profile","get confirm for Proof ", ev.Confirm.Signature.Hash(),"from peer", ev.Peer.ID(), "at time ",time.Now().UnixNano()/1000/1000)
 				self.unconfirmed.Confirm(ev.Peer.Address(), ev.Confirm)
 			}
 		case work:= <- self.confirmCh:
@@ -360,17 +439,14 @@ func (self *worker) NewMineRound() error {
 	work.commitTransactions(self.mux, txs, self.coinbase)
 
 	// generate workproof
-	proof, err := self.engine.GenerateProof(self.chain, self.current.header, work.txs)
+	proof, err := self.engine.GenerateProof(self.chain, self.current.header, work.txs, work.proofs)
 	if err != nil {
 		log.Error("Premine","GenerateProof failed, err", err, "headerNumber", header.Number)
 		return err
 	}
 
-	// broadcast proof.
-	self.mux.Post(bc.NewWorkProofEvent{Proof:proof})
-
 	// Create the new block to seal with the consensus engine
-	if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, work.receipts); err != nil {
+	if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, work.proofs, work.receipts); err != nil {
 		log.Error("Failed to finalize block for sealing", "err", err)
 		return err
 	}
@@ -381,15 +457,10 @@ func (self *worker) NewMineRound() error {
 		work.confirmed = true
 		go func() {self.confirmCh <- work}()
 	} else {
+		// broadcast proof.
+		self.mux.Post(bc.NewWorkProofEvent{Proof:proof})
+		log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Signature.Hash())
 		// wait confirm.
-		peers := p2p.PeerMgrInst().PeersAll()
-		validators := 0
-		for _, peer := range peers {
-			if peer.RemoteType() != discover.BootNode {
-				validators++
-			}
-		}
-		log.Debug("Worker add in unconfirmed","threshold", consensus.MinerNumber/2 +1)
 		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1)
 	}
 
@@ -401,20 +472,22 @@ func (self *worker) FinalMine(work *Work) error {
 		// 1. gen block with proof and header.
 		if result, err := self.engine.GenBlockWithSig(self.chain, work.Block); result != nil {
 			log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
-				"difficulty -> ", result.Difficulty())
+				"txs -> ", len(result.Transactions()))
+			log.Debug("SHX profile", "sealed new block number ", result.Number(), "txs", len(result.Transactions()), "at time", time.Now().UnixNano()/1000/1000)
 
 			stat, err := self.chain.WriteBlockAndState(result, work.receipts, work.state)
 			if err != nil {
 				log.Error("Failed writing block to chain", "err", err)
 				return err
 			}
+
 			// Broadcast the block and announce chain insertion event
 			self.mux.Post(bc.NewMinedBlockEvent{Block: result})
 			var (
 				events []interface{}
 				logs   = work.state.Logs()
 			)
-			log.Debug("WriteBlockAndState", "Stat", stat)
+			//log.Debug("WriteBlockAndState", "Stat", stat)
 			events = append(events, bc.ChainEvent{Block: result, Hash: result.Hash(), Logs: logs})
 			if stat == bc.CanonStatTy {
 				// 2. send event and update txpool.

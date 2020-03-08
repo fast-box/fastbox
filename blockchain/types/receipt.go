@@ -48,6 +48,10 @@ type Receipt struct {
 	Bloom             Bloom    `json:"logsBloom"         gencodec:"required"`
 	Logs              []*Log   `json:"logs"              gencodec:"required"`
 
+	// Not consensus fields
+	//Confirm count by miner node.
+	ConfirmCount 	uint64 `json:"confirmed" gencodec:"required"`
+
 	// Implementation fields (don't reorder!)
 	TxHash common.Hash `json:"transactionHash" gencodec:"required"`
 }
@@ -67,6 +71,7 @@ type receiptRLP struct {
 type receiptStorageRLP struct {
 	PostStateOrStatus []byte
 	Bloom             Bloom
+	ConfirmCount 	  uint64
 	TxHash            common.Hash
 	Logs              []*LogForStorage
 }
@@ -129,9 +134,9 @@ func (r *Receipt) statusEncoding() []byte {
 // String implements the Stringer interface.
 func (r *Receipt) String() string {
 	if len(r.PostState) == 0 {
-		return fmt.Sprintf("receipt{status=%d bloom=%x logs=%v}", r.Status, r.Bloom, r.Logs)
+		return fmt.Sprintf("receipt{status=%d bloom=%x confirm=%d logs=%v}", r.Status, r.Bloom, r.ConfirmCount, r.Logs)
 	}
-	return fmt.Sprintf("receipt{med=%x bloom=%x logs=%v}", r.PostState, r.Bloom, r.Logs)
+	return fmt.Sprintf("receipt{med=%x bloom=%x confirm=%d logs=%v}", r.PostState, r.Bloom, r.ConfirmCount, r.Logs)
 }
 
 // ReceiptForStorage is a wrapper around a Receipt that flattens and parses the
@@ -145,6 +150,7 @@ func (r *ReceiptForStorage) EncodeRLP(w io.Writer) error {
 		PostStateOrStatus: (*Receipt)(r).statusEncoding(),
 		Bloom:             r.Bloom,
 		TxHash:            r.TxHash,
+		ConfirmCount:	   r.ConfirmCount,
 		Logs:              make([]*LogForStorage, len(r.Logs)),
 	}
 	for i, log := range r.Logs {
@@ -171,6 +177,7 @@ func (r *ReceiptForStorage) DecodeRLP(s *rlp.Stream) error {
 	}
 	// Assign the implementation fields
 	r.TxHash = dec.TxHash
+	r.ConfirmCount = dec.ConfirmCount
 	return nil
 }
 
