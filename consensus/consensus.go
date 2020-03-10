@@ -21,6 +21,8 @@ import (
 	"github.com/hpb-project/sphinx/blockchain/state"
 	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
+	"gopkg.in/fatih/set.v0"
+
 	//"github.com/hpb-project/sphinx/common/constant"
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/network/rpc"
@@ -63,6 +65,7 @@ type Engine interface {
 
 	// VerifyProof check the proof from peer is correct, and return new hash.
 	VerifyProof(addr common.Address, initHash common.Hash, proof *types.WorkProof, update bool) error
+	VerifyState(coinbase common.Address, history *set.Set, proof *types.WorkProof) bool
 
 	// Finalize runs any post-transaction state modifications
 	// and assembles the final block.

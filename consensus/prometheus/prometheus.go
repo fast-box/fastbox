@@ -8,6 +8,7 @@ import (
 	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/consensus"
+	"gopkg.in/fatih/set.v0"
 
 	"math/big"
 	"time"
@@ -93,6 +94,19 @@ func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proo
 		}
 	}
 	return nil
+}
+
+
+// VerifyState
+func (c *Prometheus) VerifyState(coinbase common.Address, history *set.Set, proof *types.WorkProof) bool {
+	for _, stat := range proof.States {
+		if stat.Addr == coinbase {
+			if history.Has(stat.Root) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (c *Prometheus) UpdateProof(addr common.Address, root common.Hash) {

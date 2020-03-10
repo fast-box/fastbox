@@ -18,6 +18,7 @@ package worker
 
 import (
 	"errors"
+	"gopkg.in/fatih/set.v0"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -111,6 +112,7 @@ type worker struct {
 	txMu			sync.Mutex
 	txConfirmPool map[common.Hash]uint64
 	updating 		bool
+	history 		[]common.Hash
 
 	// atomic status counters
 	mining int32
@@ -132,10 +134,12 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 		roundState:		IDLE,
 		txConfirmPool: make(map[common.Hash]uint64),
 		updating:	false,
+		history: 	make([]common.Hash,0),
 	}
 
 	worker.txpool = txpool.GetTxPool()
 	worker.chainHeadSub = bc.InstanceBlockChain().SubscribeChainHeadEvent(worker.chainHeadCh)
+	worker.history = append(worker.history, worker.chain.CurrentHeader().ProofHash)
 
 	// goto listen the event
 	go worker.eventListener()
@@ -253,7 +257,24 @@ func (self *worker) eventListener() {
 				go func() {
 					// 1. receive proof
 					// 2. verify proof
-					if err := self.engine.VerifyProof(ev.Peer.Address(), ev.Peer.ProofHash(), ev.Proof, true); err == nil {
+					pastLocalRoot := set.New()
+					pastLocalRoot.Add(self.history[:])
+
+					if atomic.LoadInt32(&self.mining) == 1 {
+						pastLocalRoot.Add(self.current.header.ProofHash)
+					}
+
+					if !self.engine.VerifyState(self.coinbase, pastLocalRoot, ev.Proof) {
+						var res= types.ProofConfirm{ev.Proof.Signature, false}
+						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
+						return
+					}
+
+					if err := self.engine.VerifyProof(ev.Peer.Address(), ev.Peer.ProofHash(), ev.Proof, true); err != nil {
+						var res= types.ProofConfirm{ev.Proof.Signature, false}
+						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
+						return
+					} else {
 						var res= types.ProofConfirm{ev.Proof.Signature, true}
 						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
 					}
@@ -474,6 +495,12 @@ func (self *worker) FinalMine(work *Work) error {
 			log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
 				"txs -> ", len(result.Transactions()))
 			log.Debug("SHX profile", "sealed new block number ", result.Number(), "txs", len(result.Transactions()), "at time", time.Now().UnixNano()/1000/1000)
+
+			newhist := append(self.history, result.ProofHash())
+			if len(newhist) > 10 {
+				self.history = make([]common.Hash,10)
+				copy(self.history,newhist[len(newhist)-10:])
+			}
 
 			stat, err := self.chain.WriteBlockAndState(result, work.receipts, work.state)
 			if err != nil {
