@@ -17,7 +17,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -26,7 +25,6 @@ import (
 	"time"
 	//"encoding/hex"
 
-	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/blockchain"
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/config"
@@ -37,9 +35,7 @@ func (p *prometh) makeGenesis() {
 	
 	genesis := &bc.Genesis{
 		Timestamp:  uint64(time.Now().Unix()),
-		GasLimit:   config.GenesisGasLimit.Uint64(),
 		Difficulty: big.NewInt(1048576),
-		Alloc:      make(bc.GenesisAlloc),
 		Config: &config.ChainConfig{
 		},
 	}
@@ -49,69 +45,17 @@ func (p *prometh) makeGenesis() {
 
 	genesis.Difficulty = big.NewInt(1)
 	genesis.Config.Prometheus = &config.PrometheusConfig{
-		Period: 15,
+		Period: 4,
 		Epoch:  30000,
 	}
 	fmt.Println()
-	fmt.Println("How many seconds should blocks take? (default = 15)")
-	genesis.Config.Prometheus.Period = uint64(p.readDefaultInt(15))
+	fmt.Println("How many seconds should blocks take? (default = 4)")
+	genesis.Config.Prometheus.Period = uint64(p.readDefaultInt(4))
 
 	fmt.Println()
 	fmt.Println("How many blocks should voting epoch be ? (default = 30000)")
 	genesis.Config.Prometheus.Epoch = uint64(p.readDefaultInt(30000))
 
-	// We also need the initial list of signers
-	fmt.Println()
-	fmt.Println("Which accounts are allowed to seal? (initialise miner addresses)")
-
-	var signers []common.Address
-
-	for {
-		if address := p.readAddress(); address != nil {
-			signers = append(signers, *address)
-			continue
-		}
-		if len(signers) > 0 {
-			break
-		}
-	}
-
-	// Sort the signers and embed into the extra-data section
-	for i := 0; i < len(signers); i++ {
-		for j := i + 1; j < len(signers); j++ {
-			if bytes.Compare(signers[i][:], signers[j][:]) > 0 {
-				signers[i], signers[j] = signers[j], signers[i]
-			}
-		}
-	}
-
-	genesis.ExtraData = make([]byte, 32+len(signers)*common.AddressLength+65)
-	for i, signer := range signers {
-		copy(genesis.ExtraData[32+i*common.AddressLength:], signer[:])
-	}
-   
-	fmt.Println()
-	fmt.Println("Which accounts should be pre-funded? (advisable at least one)")
-	for {
-		// Read the address of the account to fund
-		if address := p.readAddress(); address != nil {
-			genesis.Alloc[*address] = bc.GenesisAccount{
-				Balance: new(big.Int).Lsh(big.NewInt(1), 3), // 2^256 / 128 (allow many pre-funds without balance overflows)
-			}
-			continue
-		}
-		break
-	}
-	
-	
-	fmt.Println()
-	fmt.Println("Please input the initialization hardware random")
-	
-	genesis.HardwareRandom = make([]byte, 32)
-	if hardwareRandom := p.readAddress(); hardwareRandom != nil {
-		copy(genesis.HardwareRandom[0:], hardwareRandom[:])
-	}
-	
 	fmt.Println()
 	fmt.Println("Specify your chain/network ID if you want an explicit one (default = random)")
 	genesis.Config.ChainId = new(big.Int).SetUint64(uint64(p.readDefaultInt(rand.Intn(65536))))
