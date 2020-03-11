@@ -264,7 +264,10 @@ func (self *worker) eventListener() {
 
 
 					if atomic.LoadInt32(&self.mining) == 1 {
-						pastLocalRoot.Add(self.current.header.ProofHash)
+						if self.current != nil && self.current.header != nil {
+							pastLocalRoot.Add(self.current.header.ProofHash)
+						}
+
 					}
 
 					if !self.engine.VerifyState(self.coinbase, pastLocalRoot, ev.Proof) {
