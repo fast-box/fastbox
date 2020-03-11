@@ -46,17 +46,17 @@ const (
 
 // PublicHpbAPI provides an API to access Hpb related information.
 // It offers only methods that operate on public data that is freely available to anyone.
-type PublicHpbAPI struct {
+type PublicShxAPI struct {
 	b Backend
 }
 
 // NewPublicHpbAPI creates a new Hpb protocol API.
-func NewPublicHpbAPI(b Backend) *PublicHpbAPI {
-	return &PublicHpbAPI{b}
+func NewPublicShxAPI(b Backend) *PublicShxAPI {
+	return &PublicShxAPI{b}
 }
 
 // ProtocolVersion returns the current Hpb protocol version this node supports
-func (s *PublicHpbAPI) ProtocolVersion() hexutil.Uint {
+func (s *PublicShxAPI) ProtocolVersion() hexutil.Uint {
 	return hexutil.Uint(s.b.ProtocolVersion())
 }
 
@@ -67,7 +67,7 @@ func (s *PublicHpbAPI) ProtocolVersion() hexutil.Uint {
 // - highestBlock:  block number of the highest block header this node has received from peers
 // - pulledStates:  number of state entries processed until now
 // - knownStates:   number of known state entries that still need to be pulled
-func (s *PublicHpbAPI) Syncing() (interface{}, error) {
+func (s *PublicShxAPI) Syncing() (interface{}, error) {
 	progress := s.b.Downloader().Progress()
 
 	// Return not syncing if the synchronisation already completed

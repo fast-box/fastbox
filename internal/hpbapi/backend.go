@@ -72,7 +72,7 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 		{
 			Namespace: "shx",
 			Version:   "1.0",
-			Service:   NewPublicHpbAPI(apiBackend),
+			Service:   NewPublicShxAPI(apiBackend),
 			Public:    true,
 		}, {
 			Namespace: "shx",
