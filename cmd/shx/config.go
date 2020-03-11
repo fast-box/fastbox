@@ -64,7 +64,7 @@ func dumpConfig(ctx *cli.Context) error {
 	return nil
 }
 
-func MakeConfigNode(ctx *cli.Context) (*config.HpbConfig) {
+func MakeConfigNode(ctx *cli.Context) (*config.ShxConfig) {
 	// Load defaults config
 	cfg := config.New()
 	if cfg == nil{

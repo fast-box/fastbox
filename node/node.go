@@ -59,7 +59,7 @@ type Node struct {
 	accman      *accounts.Manager
 	newBlockMux *sub.TypeMux
 
-	Hpbconfig      *config.HpbConfig
+	Shxconfig      *config.ShxConfig
 	Hpbpeermanager *p2p.PeerManager
 	Hpbrpcmanager  *rpc.RpcManager
 	Hpbsyncctr     *synctrl.SynCtrl
@@ -98,7 +98,7 @@ type Node struct {
 }
 
 // New creates a hpb node, create all object and start
-func New(conf *config.HpbConfig) (*Node, error) {
+func New(conf *config.ShxConfig) (*Node, error) {
 	if conf.Node.DataDir != "" {
 		absdatadir, err := filepath.Abs(conf.Node.DataDir)
 		if err != nil {
@@ -121,7 +121,7 @@ func New(conf *config.HpbConfig) (*Node, error) {
 	}
 
 	hpbnode := &Node{
-		Hpbconfig:      conf,
+		Shxconfig:      conf,
 		Hpbpeermanager: nil, //peermanager,
 		Hpbsyncctr:     nil, //syncctr,
 		Hpbtxpool:      nil, //hpbtxpool,
@@ -188,7 +188,7 @@ func New(conf *config.HpbConfig) (*Node, error) {
 	hpbnode.bloomIndexer = NewBloomIndexer(hpbdatabase, params.BloomBitsBlocks)
 	return hpbnode, nil
 }
-func (hpbnode *Node) WorkerInit(conf *config.HpbConfig) error {
+func (hpbnode *Node) WorkerInit(conf *config.ShxConfig) error {
 	stored := bc.GetCanonicalHash(hpbnode.ShxDb, 0)
 	if stored != (common.Hash{}) {
 		if !conf.Node.SkipBcVersionCheck {
@@ -226,7 +226,7 @@ type ConsensuscfgF struct {
 	Nodeids          []string //`json:"Nodeids"`				//bootnode`s nodeid only add one
 }
 
-func parseConsensusConfigFile(conf *config.HpbConfig) {
+func parseConsensusConfigFile(conf *config.ShxConfig) {
 
 	path := conf.Node.DataDir + "/" + conf.Node.FNameConsensusCfg
 	_, err := os.Stat(path)
@@ -261,7 +261,7 @@ func parseConsensusConfigFile(conf *config.HpbConfig) {
 	}
 }
 
-func (hpbnode *Node) Start(conf *config.HpbConfig) error {
+func (hpbnode *Node) Start(conf *config.ShxConfig) error {
 
 	if conf.Node.FNameConsensusCfg != "" {
 		parseConsensusConfigFile(conf)
@@ -338,11 +338,11 @@ func makeAccountManager(conf *config.Nodeconfig) (*accounts.Manager, string, err
 }
 
 func (n *Node) openDataDir() error {
-	if n.Hpbconfig.Node.DataDir == "" {
+	if n.Shxconfig.Node.DataDir == "" {
 		return nil // ephemeral
 	}
 
-	instdir := filepath.Join(n.Hpbconfig.Node.DataDir, n.Hpbconfig.Node.StringName())
+	instdir := filepath.Join(n.Shxconfig.Node.DataDir, n.Shxconfig.Node.StringName())
 	if err := os.MkdirAll(instdir, 0700); err != nil {
 		return err
 	}
@@ -442,12 +442,12 @@ func (n *Node) RPCHandler() (*rpc.Server, error) {
 // DataDir retrieves the current datadir used by the protocol stack.
 // Deprecated: No files should be stored in this directory, use InstanceDir instead.
 func (n *Node) DataDir() string {
-	return n.Hpbconfig.Node.DataDir
+	return n.Shxconfig.Node.DataDir
 }
 
 // InstanceDir retrieves the instance directory used by the protocol stack.
 func (n *Node) InstanceDir() string {
-	return n.Hpbconfig.Node.InstanceDir()
+	return n.Shxconfig.Node.InstanceDir()
 }
 
 // AccountManager retrieves the account manager used by the protocol stack.
@@ -463,7 +463,7 @@ func (n *Node) NewBlockMux() *sub.TypeMux {
 
 // ResolvePath returns the absolute path of a resource in the instance directory.
 func (n *Node) ResolvePath(x string) string {
-	return n.Hpbconfig.Node.ResolvePath(x)
+	return n.Shxconfig.Node.ResolvePath(x)
 }
 
 // apis returns the collection of RPC descriptors this node offers.

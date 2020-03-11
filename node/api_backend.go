@@ -41,7 +41,7 @@ type HpbApiBackend struct {
 }
 
 func (b *HpbApiBackend) ChainConfig() *config.ChainConfig {
-	return &b.hpb.Hpbconfig.BlockChain
+	return &b.hpb.Shxconfig.BlockChain
 }
 
 func (b *HpbApiBackend) CurrentBlock() *types.Block {

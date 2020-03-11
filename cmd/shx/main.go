@@ -207,7 +207,7 @@ func shx(ctx *cli.Context) error {
 }
 
 //create node object
-func createNode(conf *config.HpbConfig) (*node.Node, error) {
+func createNode(conf *config.ShxConfig) (*node.Node, error) {
 	//create node object
 	stack, err := node.New(conf)
 	if err != nil {
@@ -220,7 +220,7 @@ func createNode(conf *config.HpbConfig) (*node.Node, error) {
 // startNode boots up the system node and all registered protocols, after which
 // it unlocks any requested accounts, and starts the RPC/IPC interfaces and the
 // miner.
-func startNode(ctx *cli.Context, stack *node.Node, conf *config.HpbConfig) {
+func startNode(ctx *cli.Context, stack *node.Node, conf *config.ShxConfig) {
 
 	// Unlock any account specifically requested
 	ks := stack.AccountManager().KeyStore().(*keystore.KeyStore)

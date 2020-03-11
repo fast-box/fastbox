@@ -71,7 +71,7 @@ func (s *Node) APIs() []rpc.API {
 		}, {
 			Namespace: "debug",
 			Version:   "1.0",
-			Service:   NewPrivateDebugAPI(&s.Hpbconfig.BlockChain, s),
+			Service:   NewPrivateDebugAPI(&s.Shxconfig.BlockChain, s),
 		}, {
 			Namespace: "net",
 			Version:   "1.0",

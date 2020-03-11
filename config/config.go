@@ -29,7 +29,7 @@ import (
 	"sync/atomic"
 )
 
-var HpbConfigIns *HpbConfig
+var HpbConfigIns *ShxConfig
 
 const (
 	DatadirPrivateKey      = "nodekey"            // Path within the datadir to the node's private key
@@ -118,7 +118,7 @@ type hpbStatsConfig struct {
 // Config represents a small collection of configuration values to fine tune the
 // P2P network layer of a protocol stack. These values can be further extended by
 // all registered services.
-type HpbConfig struct {
+type ShxConfig struct {
 	Node Nodeconfig
 	// Configuration of peer-to-peer networking.
 	Network NetworkConfig
@@ -152,7 +152,7 @@ var tomlSettings = toml.Config{
 	},
 }
 
-func loadConfig(file string, cfg *HpbConfig) error {
+func loadConfig(file string, cfg *ShxConfig) error {
 	f, err := os.Open(file)
 	if err != nil {
 		return err
@@ -166,13 +166,13 @@ func loadConfig(file string, cfg *HpbConfig) error {
 	}
 	return err
 }
-func New() *HpbConfig {
+func New() *ShxConfig {
 	if INSTANCE.Load() != nil {
-		return INSTANCE.Load().(*HpbConfig)
+		return INSTANCE.Load().(*ShxConfig)
 	}
 
 	if HpbConfigIns == nil {
-		HpbConfigIns := &HpbConfig{
+		HpbConfigIns := &ShxConfig{
 			Node: defaultNodeConfig(),
 			// Configuration of peer-to-peer networking.
 			Network: DefaultNetworkConfig(),
@@ -194,11 +194,11 @@ func New() *HpbConfig {
 	return HpbConfigIns
 
 }
-func GetHpbConfigInstance() *HpbConfig {
+func GetHpbConfigInstance() *ShxConfig {
 	if INSTANCE.Load() != nil {
-		return INSTANCE.Load().(*HpbConfig)
+		return INSTANCE.Load().(*ShxConfig)
 	}
-	HpbConfigIns := &HpbConfig{
+	HpbConfigIns := &ShxConfig{
 		Node: defaultNodeConfig(),
 		// Configuration of peer-to-peer networking.
 		Network: DefaultNetworkConfig(),
@@ -213,5 +213,5 @@ func GetHpbConfigInstance() *HpbConfig {
 	}
 	log.Info("Create New HpbConfig object")
 	INSTANCE.Store(HpbConfigIns)
-	return INSTANCE.Load().(*HpbConfig)
+	return INSTANCE.Load().(*ShxConfig)
 }

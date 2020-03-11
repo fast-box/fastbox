@@ -719,7 +719,7 @@ func MakePasswordList(ctx *cli.Context) []string {
 	return lines
 }
 
-func SetNetWorkConfig(ctx *cli.Context, cfg *config.HpbConfig) {
+func SetNetWorkConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 
 	setNAT(ctx, &cfg.Network)
 	setListenAddress(ctx, &cfg.Network)
@@ -816,14 +816,14 @@ func SetNetWorkConfig(ctx *cli.Context, cfg *config.HpbConfig) {
 
 }
 
-func SetConfig(ctx *cli.Context, cfg *config.HpbConfig) {
+func SetConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 
 	SetNodeConfig(ctx, cfg)
 	SetNetWorkConfig(ctx, cfg)
 }
 
 // SetNodeConfig applies node-related command line flags to the config.
-func SetNodeConfig(ctx *cli.Context, cfg *config.HpbConfig) {
+func SetNodeConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 	switch {
 	case ctx.GlobalIsSet(DataDirFlag.Name):
 		cfg.Node.DataDir = ctx.GlobalString(DataDirFlag.Name)
