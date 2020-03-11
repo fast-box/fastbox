@@ -258,7 +258,10 @@ func (self *worker) eventListener() {
 					// 1. receive proof
 					// 2. verify proof
 					pastLocalRoot := set.New()
-					pastLocalRoot.Add(self.history[:])
+					for _,h := range self.history {
+						pastLocalRoot.Add(h)
+					}
+
 
 					if atomic.LoadInt32(&self.mining) == 1 {
 						pastLocalRoot.Add(self.current.header.ProofHash)
