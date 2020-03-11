@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hpb-project/sphinx/internal/shxapi"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -44,7 +45,6 @@ import (
 	"github.com/hpb-project/sphinx/consensus/prometheus"
 	"github.com/hpb-project/sphinx/event/sub"
 	"github.com/hpb-project/sphinx/internal/debug"
-	"github.com/hpb-project/sphinx/internal/hpbapi"
 	"github.com/hpb-project/sphinx/network/p2p"
 	"github.com/hpb-project/sphinx/network/rpc"
 	"github.com/hpb-project/sphinx/node/db"
@@ -69,7 +69,7 @@ type Node struct {
 	ShxDb shxdb.Database
 
 	networkId     uint64
-	netRPCService *hpbapi.PublicNetAPI
+	netRPCService *shxapi.PublicNetAPI
 
 	Hpbengine     consensus.Engine
 	bloomRequests chan chan *bloombits.Retrieval // Channel receiving bloom data retrieval requests

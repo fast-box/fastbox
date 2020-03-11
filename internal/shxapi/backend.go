@@ -15,7 +15,7 @@
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
 // Package ethapi implements the general Hpb API functions.
-package hpbapi
+package shxapi
 
 import (
 	"context"

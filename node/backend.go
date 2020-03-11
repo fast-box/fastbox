@@ -19,16 +19,16 @@ package node
 
 import (
 	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/internal/hpbapi"
-	"github.com/hpb-project/sphinx/network/p2p"
-	"github.com/hpb-project/sphinx/network/rpc"
 	"github.com/hpb-project/sphinx/blockchain"
 	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/worker"
-	"github.com/hpb-project/sphinx/txpool"
-	"github.com/hpb-project/sphinx/synctrl"
+	"github.com/hpb-project/sphinx/consensus"
+	"github.com/hpb-project/sphinx/internal/shxapi"
+	"github.com/hpb-project/sphinx/network/p2p"
+	"github.com/hpb-project/sphinx/network/rpc"
 	"github.com/hpb-project/sphinx/node/filters"
+	"github.com/hpb-project/sphinx/synctrl"
+	"github.com/hpb-project/sphinx/txpool"
+	"github.com/hpb-project/sphinx/worker"
 )
 
 type LesServer interface {
@@ -40,7 +40,7 @@ type LesServer interface {
 // APIs returns the collection of RPC services the hpb package offers.
 // NOTE, some of these services probably need to be moved to somewhere else.
 func (s *Node) APIs() []rpc.API {
-	apis := hpbapi.GetAPIs(s.ApiBackend)
+	apis := shxapi.GetAPIs(s.ApiBackend)
 
 	// Append all the local APIs and return
 	apis = append(apis, []rpc.API{
@@ -75,7 +75,7 @@ func (s *Node) APIs() []rpc.API {
 		}, {
 			Namespace: "net",
 			Version:   "1.0",
-			Service:   hpbapi.NewPublicNetAPI(p2p.PeerMgrInst().P2pSvr(), s.networkId), //s.netRPCService,
+			Service:   shxapi.NewPublicNetAPI(p2p.PeerMgrInst().P2pSvr(), s.networkId), //s.netRPCService,
 			Public:    true,
 		},
 	}...)
