@@ -251,8 +251,8 @@ var (
 		Usage: "Target gas limit sets the artificial target gas floor for the blocks to mine",
 		Value: params.GenesisGasLimit.Uint64(),
 	}
-	HpberbaseFlag = cli.StringFlag{
-		Name:  "hpberbase",
+	ShxerbaseFlag = cli.StringFlag{
+		Name:  "shxerbase",
 		Usage: "Public address for block mining rewards (default = first account created)",
 		Value: "0",
 	}
@@ -683,10 +683,10 @@ func MakeAddress(ks *keystore.KeyStore, account string) (accounts.Account, error
 // setHpberbase retrieves the etherbase either from the directly specified
 // command line flags or from the keystore if CLI indexed.
 func setHpberbase(ctx *cli.Context, ks *keystore.KeyStore, cfg *config.Nodeconfig) {
-	if ctx.GlobalIsSet(HpberbaseFlag.Name) {
-		account, err := MakeAddress(ks, ctx.GlobalString(HpberbaseFlag.Name))
+	if ctx.GlobalIsSet(ShxerbaseFlag.Name) {
+		account, err := MakeAddress(ks, ctx.GlobalString(ShxerbaseFlag.Name))
 		if err != nil {
-			Fatalf("Option %q: %v", HpberbaseFlag.Name, err)
+			Fatalf("Option %q: %v", ShxerbaseFlag.Name, err)
 		}
 		cfg.Hpberbase = account.Address
 		return
