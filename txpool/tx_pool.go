@@ -289,7 +289,7 @@ func (pool *TxPool) AddTxs(txs []*types.Transaction) error {
 		err := pool.AddTx(tx)
 		if err != nil {
 			log.Debug("AddTxs to add tx failed", "index", i, "err", err)
-			return err
+			continue
 		}
 	}
 	return nil

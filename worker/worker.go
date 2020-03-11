@@ -48,7 +48,7 @@ const (
 	// chainHeadChanSize is the size of channel listening to ChainHeadEvent.
 	chainHeadChanSize = 10
 
-	blockMaxTxs = 5000 * 10
+	blockMaxTxs = 8000 * 10
 	minTxsToMine = 2000
 
 	waitConfirmTimeout = 40 // a proof wait confirm timeout seconds
@@ -453,7 +453,7 @@ func (self *worker) NewMineRound() error {
 	}
 	// Create the current work task and check any fork transitions needed
 
-	pending := txpool.GetTxPool().Pending(10000)
+	pending := txpool.GetTxPool().Pending(blockMaxTxs)
 	txs := types.NewTransactionsByPayload(self.current.signer, pending)
 
 	work := self.current
