@@ -136,9 +136,9 @@ func (c *Prometheus) verifySeal(chain consensus.ChainReader, header *types.Heade
 
 func (c *Prometheus) verifyProof(lHash common.Hash, address common.Address, proof *types.WorkProof) (common.Hash,error) {
 	txroot := types.DeriveSha(proof.Txs)
-	proofRoot := types.DeriveSha(proof.States)
-	proofHash := c.MixHash(txroot,proofRoot)
-	proofHash = c.MixHash(lHash,proofHash)
+	//proofRoot := types.DeriveSha(proof.States)
+	//proofHash := c.MixHash(txroot,proofRoot)
+	proofHash := c.MixHash(lHash,txroot)
 
 	if pub, err := crypto.Ecrecover(proofHash.Bytes(), proof.Signature); err == nil {
 		var addr common.Address

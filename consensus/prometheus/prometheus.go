@@ -61,9 +61,9 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 	lastHash := parent.ProofHash
 
 	txroot := types.DeriveSha(txs)
-	proofRoot := types.DeriveSha(proofs)
-	proofHash := c.MixHash(txroot, proofRoot)
-	proofHash = c.MixHash(lastHash, proofHash)
+	//proofRoot := types.DeriveSha(proofs)
+	//proofHash := c.MixHash(txroot, proofRoot)
+	proofHash := c.MixHash(lastHash, txroot)
 
 	signer, signFn := c.signer, c.signFn
 	sighash, err := signFn(accounts.Account{Address: signer}, proofHash.Bytes())
@@ -99,6 +99,7 @@ func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proo
 
 // VerifyState
 func (c *Prometheus) VerifyState(coinbase common.Address, history *set.Set, proof *types.WorkProof) bool {
+	return true
 	for _, stat := range proof.States {
 		if stat.Addr == coinbase {
 			if history.Has(stat.Root) {
