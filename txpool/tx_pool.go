@@ -27,6 +27,7 @@ import (
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/event"
 	"github.com/hpb-project/sphinx/event/sub"
+	"gopkg.in/fatih/set.v0"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -42,6 +43,7 @@ var (
 
 var INSTANCE = atomic.Value{}
 var STOPPED = atomic.Value{}
+var handleKnownTx = set.New()
 
 // blockChain provides the state of blockchain and current gas limit to do
 // some pre checks in tx pool.
@@ -102,6 +104,17 @@ func NewTxPool(config config.TxPoolConfiguration, chainConfig *config.ChainConfi
 	}
 	INSTANCE.Store(pool)
 	return pool
+}
+
+func (pool *TxPool)KnownTxAdd(hash common.Hash) {
+	if handleKnownTx.Size() >= 2000000 {
+		handleKnownTx.Clear()
+	}
+	handleKnownTx.Add(hash)
+}
+
+func (pool *TxPool)Signer() types.Signer {
+	return pool.signer
 }
 
 func (pool *TxPool) Start() {
@@ -193,8 +206,12 @@ func (pool *TxPool) validateTx(tx *types.Transaction) error {
 	return nil
 }
 
-func (pool *TxPool) dupTx(tx *types.Transaction) error {
+func (pool *TxPool) DupTx(tx *types.Transaction) error {
 	hash := tx.Hash()
+	if handleKnownTx.Has(hash) {
+		log.Trace("Discarding already known transaction", "hash", hash)
+		return fmt.Errorf("known transaction: %x", hash)
+	}
 	if _, ok := pool.queue.Load(hash); ok {
 		log.Trace("Discarding already known transaction", "hash", hash)
 		return fmt.Errorf("known transaction: %x", hash)
@@ -272,9 +289,10 @@ func (pool *TxPool) AddTx(tx *types.Transaction) error {
 	if err := pool.validateTx(tx); err != nil {
 		return err
 	}
-	if dup := pool.dupTx(tx); dup != nil {
+	if dup := pool.DupTx(tx); dup != nil {
 		return dup
 	}
+	handleKnownTx.Add(tx.Hash())
 	select {
 	case pool.fullCh <- tx:
 		log.Trace("AddTx", "tx.Hash", tx.Hash())
@@ -338,7 +356,6 @@ func (pool *TxPool) GetTxByHash(hash common.Hash) *types.Transaction {
 	}
 	tx := v.(*types.Transaction)
 	return tx
-
 }
 
 // Pending retrieves all currently processable transactions, groupped by origin

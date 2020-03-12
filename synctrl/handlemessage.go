@@ -32,7 +32,7 @@ import (
 )
 
 var handleKnownBlocks = set.New()
-var handleKnownTx = set.New()
+
 
 // HandleGetBlockHeadersMsg deal received GetBlockHeadersMsg
 func HandleGetBlockHeadersMsg(p *p2p.Peer, msg p2p.Msg) error {
@@ -360,12 +360,7 @@ func handleKnownBlocksAdd(hash common.Hash) {
 	handleKnownBlocks.Add(hash)
 }
 
-func handleKnownTxAdd(hash common.Hash) {
-	if handleKnownTx.Size() >= 1000000 {
-		handleKnownTx.Clear()
-	}
-	handleKnownTx.Add(hash)
-}
+
 
 // HandleNewBlockMsg deal received NewBlockMsg
 func HandleNewHashBlockMsg(p *p2p.Peer, msg p2p.Msg) error {
@@ -427,11 +422,11 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 		}
 		p.KnownTxsAdd(tx.Hash())
 		log.Debug("SHX profile", "Receive tx ", tx.Hash(), "at time ", time.Now().UnixNano()/1000/1000)
-		if handleKnownTx.Has(tx.Hash()) || nil != txpool.GetTxPool().GetTxByHash(tx.Hash()) {
-			handleKnownTxAdd(tx.Hash())
+		signer := txpool.GetTxPool().Signer()
+		if txpool.GetTxPool().DupTx(tx) == nil {
 			continue
 		} else {
-			handleKnownTxAdd(tx.Hash())
+			types.ASynSender(signer, tx)
 			tx.SetForward(true) // not need route to other peers.
 			go func() {
 				poolTxsCh <- tx
