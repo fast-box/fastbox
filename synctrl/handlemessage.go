@@ -423,7 +423,7 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 		p.KnownTxsAdd(tx.Hash())
 		log.Debug("SHX profile", "Receive tx ", tx.Hash(), "at time ", time.Now().UnixNano()/1000/1000)
 		signer := txpool.GetTxPool().Signer()
-		if txpool.GetTxPool().DupTx(tx) == nil {
+		if txpool.GetTxPool().DupTx(tx) != nil {
 			continue
 		} else {
 			types.ASynSender(signer, tx)
