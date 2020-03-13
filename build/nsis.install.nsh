@@ -3,9 +3,9 @@ InstallDir "$InstDir"
 OutFile "${OUTPUTFILE}" # set through command line arguments
 
 # Links for "Add/Remove Programs"
-!define HELPURL "https://github.com/hpb-project/ghpb/issues"
-!define UPDATEURL "https://github.com/hpb-project/ghpb/releases"
-!define ABOUTURL "github.com/hpb-project/ghpb"
+!define HELPURL "https://github.com/shx-project/ghpb/issues"
+!define UPDATEURL "https://github.com/shx-project/ghpb/releases"
+!define ABOUTURL "github.com/shx-project/ghpb"
 !define /date NOW "%Y%m%d"
 
 PageEx license

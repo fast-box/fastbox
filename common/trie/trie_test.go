@@ -30,10 +30,10 @@ import (
 	"testing/quick"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/rlp"
 )
 
 func init() {

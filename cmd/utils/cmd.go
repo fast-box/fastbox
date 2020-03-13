@@ -26,12 +26,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/hpb-project/sphinx/internal/debug"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/node"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/internal/debug"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/node"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/blockchain/types"
 )
 
 const (

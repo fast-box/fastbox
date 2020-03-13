@@ -19,8 +19,8 @@ package state
 import (
 	"testing"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/blockchain/storage"
 )
 
 var addr = common.BytesToAddress([]byte("test"))

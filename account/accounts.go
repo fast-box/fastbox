@@ -18,10 +18,10 @@
 package accounts
 
 import (
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/blockchain/types"
 	"math/big"
-	"github.com/hpb-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/event/sub"
 )
 
 // Account represents an Hpb account located at a specific location defined

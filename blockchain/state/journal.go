@@ -19,7 +19,7 @@ package state
 import (
 	"math/big"
 
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/common"
 )
 
 type journalEntry interface {

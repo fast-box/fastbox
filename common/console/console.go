@@ -27,9 +27,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hpb-project/sphinx/internal/jsre"
-	"github.com/hpb-project/sphinx/internal/web3ext"
-	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/internal/jsre"
+	"github.com/shx-project/sphinx/internal/web3ext"
+	"github.com/shx-project/sphinx/network/rpc"
 	"github.com/mattn/go-colorable"
 	"github.com/peterh/liner"
 	"github.com/robertkrimen/otto"

@@ -29,11 +29,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/event/sub"
-	"github.com/hpb-project/sphinx/network/p2p"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/network/p2p"
 )
 
 const (

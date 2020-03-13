@@ -23,8 +23,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/rlp"
 )
 
 // from bcValidBlockTest.json, "SimpleTx"

@@ -16,14 +16,14 @@
 package prometheus
 
 import (
-	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/account"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/consensus"
 
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/network/rpc"
 )
 
 // generate blocks by giving the signature

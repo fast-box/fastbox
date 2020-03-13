@@ -31,10 +31,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/log"
 
 	"github.com/rs/cors"
-	"github.com/hpb-project/sphinx/config"
+	"github.com/shx-project/sphinx/config"
 )
 
 const (

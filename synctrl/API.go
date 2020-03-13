@@ -18,9 +18,9 @@ package synctrl
 
 import (
 	"context"
-	"github.com/hpb-project/sphinx/event/sub"
-	hpb "github.com/hpb-project/sphinx/interface"
-	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/event/sub"
+	hpb "github.com/shx-project/sphinx/interface"
+	"github.com/shx-project/sphinx/network/rpc"
 	"sync"
 )
 

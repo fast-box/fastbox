@@ -25,9 +25,9 @@ import (
 	"time"
 	//"encoding/hex"
 
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/config"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/config"
 )
 
 // generate genesis file with user input.

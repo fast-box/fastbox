@@ -7,10 +7,10 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/hexutil"
-	"github.com/hpb-project/sphinx/common/math"
-	"github.com/hpb-project/sphinx/config"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/hexutil"
+	"github.com/shx-project/sphinx/common/math"
+	"github.com/shx-project/sphinx/config"
 )
 
 func (g Genesis) MarshalJSON() ([]byte, error) {

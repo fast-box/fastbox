@@ -3,11 +3,11 @@ package prometheus
 import (
 	"bytes"
 	"errors"
-	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/account"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/consensus"
 	"gopkg.in/fatih/set.v0"
 
 	"math/big"

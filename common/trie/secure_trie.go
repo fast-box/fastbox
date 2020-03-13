@@ -19,8 +19,8 @@ package trie
 import (
 	"fmt"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
 )
 
 var secureKeyPrefix = []byte("secure-key-")

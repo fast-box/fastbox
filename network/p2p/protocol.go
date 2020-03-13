@@ -23,9 +23,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/network/p2p/discover"
 )
 
 // Protocol represents a P2P subprotocol implementation.

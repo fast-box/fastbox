@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/hexutil"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/hexutil"
 )
 
 type bytesBacked interface {

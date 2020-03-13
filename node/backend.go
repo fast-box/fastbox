@@ -18,17 +18,17 @@
 package node
 
 import (
-	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/internal/shxapi"
-	"github.com/hpb-project/sphinx/network/p2p"
-	"github.com/hpb-project/sphinx/network/rpc"
-	"github.com/hpb-project/sphinx/node/filters"
-	"github.com/hpb-project/sphinx/synctrl"
-	"github.com/hpb-project/sphinx/txpool"
-	"github.com/hpb-project/sphinx/worker"
+	"github.com/shx-project/sphinx/account"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/internal/shxapi"
+	"github.com/shx-project/sphinx/network/p2p"
+	"github.com/shx-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/node/filters"
+	"github.com/shx-project/sphinx/synctrl"
+	"github.com/shx-project/sphinx/txpool"
+	"github.com/shx-project/sphinx/worker"
 )
 
 type LesServer interface {

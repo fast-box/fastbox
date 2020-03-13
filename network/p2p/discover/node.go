@@ -30,9 +30,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/crypto/secp256k1"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/crypto/secp256k1"
 )
 
 const NodeIDBits = 512

@@ -21,11 +21,11 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/network/p2p"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/network/p2p"
 	"gopkg.in/karalabe/cookiejar.v2/collections/prque"
 )
 

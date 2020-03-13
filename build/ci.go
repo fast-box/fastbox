@@ -49,7 +49,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hpb-project/sphinx/internal/build"
+	"github.com/shx-project/sphinx/internal/build"
 )
 
 var (

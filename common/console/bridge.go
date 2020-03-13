@@ -23,8 +23,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/network/rpc"
 	"github.com/robertkrimen/otto"
 )
 

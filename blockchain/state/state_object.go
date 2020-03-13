@@ -22,10 +22,10 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/common/trie"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/common/trie"
 )
 
 var emptyCodeHash = crypto.Keccak256(nil)

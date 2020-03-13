@@ -24,12 +24,12 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/hexutil"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/network/rpc"
-	"github.com/hpb-project/sphinx/interface"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/hexutil"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/interface"
 )
 
 // Client defines typed wrappers for the Hpb RPC API.

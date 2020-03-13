@@ -22,7 +22,7 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/common"
 )
 
 var (

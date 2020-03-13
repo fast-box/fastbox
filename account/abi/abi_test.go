@@ -27,8 +27,8 @@ import (
 
 	"reflect"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto"
 )
 
 const jsondata = `

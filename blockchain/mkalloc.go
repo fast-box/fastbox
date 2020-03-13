@@ -34,8 +34,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/common/rlp"
 )
 
 type allocItem struct{ Addr, Balance *big.Int }

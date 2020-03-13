@@ -25,10 +25,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/config"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/config"
 	"github.com/rcrowley/go-metrics"
 	"gopkg.in/karalabe/cookiejar.v2/collections/prque"
 )

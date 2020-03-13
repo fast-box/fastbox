@@ -18,7 +18,7 @@ package synctrl
 
 import (
 	"fmt"
-	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/blockchain/types"
 )
 
 const (

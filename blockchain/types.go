@@ -17,8 +17,8 @@
 package bc
 
 import (
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/types"
 )
 
 // Validator is an interface which defines the standard for block validation. It

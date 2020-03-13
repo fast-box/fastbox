@@ -18,14 +18,14 @@
 package consensus
 
 import (
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
 	"gopkg.in/fatih/set.v0"
 
-	//"github.com/hpb-project/sphinx/common/constant"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/network/rpc"
+	//"github.com/shx-project/sphinx/common/constant"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/network/rpc"
 )
 
 // ChainReader defines a small collection of methods needed to access the local

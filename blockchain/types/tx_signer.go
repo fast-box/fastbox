@@ -20,10 +20,10 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/config"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/config"
 	"math/big"
 )
 

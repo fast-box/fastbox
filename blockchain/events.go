@@ -17,9 +17,9 @@
 package bc
 
 import (
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/network/p2p"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/network/p2p"
 )
 
 // TxPreEvent is posted when a transaction enters the transaction pool.

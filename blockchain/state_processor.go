@@ -17,11 +17,11 @@
 package bc
 
 import (
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/consensus"
 )
 
 // StateProcessor is a basic Processor, which takes care of transitioning

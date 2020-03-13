@@ -20,8 +20,8 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/math"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/math"
 )
 
 // packBytesSlice packs the given bytes as [L, V] as the canonical representation

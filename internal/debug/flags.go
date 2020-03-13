@@ -24,10 +24,10 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/log"
 	colorable "github.com/mattn/go-colorable"
 	"gopkg.in/urfave/cli.v1"
-	"github.com/hpb-project/sphinx/common/log/term"
+	"github.com/shx-project/sphinx/common/log/term"
 )
 
 var (

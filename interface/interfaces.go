@@ -22,8 +22,8 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/blockchain/types"
 )
 
 // NotFound is returned by API methods if the requested item does not exist.

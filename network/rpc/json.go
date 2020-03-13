@@ -26,7 +26,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/log"
 )
 
 const (

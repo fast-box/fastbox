@@ -18,9 +18,9 @@ package db
 
 import (
 	"sync/atomic"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/common/log"
 )
 
 

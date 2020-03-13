@@ -23,11 +23,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/event/sub"
 )
 
 // ChainIndexerBackend defines the methods needed to process chain segments in

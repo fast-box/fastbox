@@ -25,7 +25,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/log"
 )
 
 const (

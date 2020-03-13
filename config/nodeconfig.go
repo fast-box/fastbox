@@ -10,12 +10,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/log"
-	//"github.com/hpb-project/sphinx/network/rpc"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
-	//TODO: shanlin "github.com/hpb-project/sphinx/node/gasprice"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/log"
+	//"github.com/shx-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/network/p2p/discover"
+	//TODO: shanlin "github.com/shx-project/sphinx/node/gasprice"
 )
 
 // SyncMode represents the synchronisation mode of the downloader.

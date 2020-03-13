@@ -23,14 +23,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/bitutil"
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/blockchain/bloombits"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/event/sub"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/config"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/bitutil"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/blockchain/bloombits"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/config"
 )
 
 func BenchmarkBloomBits512(b *testing.B) {

@@ -21,9 +21,9 @@ import (
 	"sync"
 
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/trie"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/trie"
 )
 
 // Trie cache generation limit after which to evic trie nodes from memory.

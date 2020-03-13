@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/account/keystore"
-	"github.com/hpb-project/sphinx/cmd/utils"
-	"github.com/hpb-project/sphinx/common/console"
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/account"
+	"github.com/shx-project/sphinx/account/keystore"
+	"github.com/shx-project/sphinx/cmd/utils"
+	"github.com/shx-project/sphinx/common/console"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/log"
 	"gopkg.in/urfave/cli.v1"
 )
 
