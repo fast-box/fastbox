@@ -282,7 +282,7 @@ var (
 		Usage: "Record information useful for VM and contract debugging",
 	}
 	// Logging and debug settings
-	HpbStatsURLFlag = cli.StringFlag{
+	ShxStatsURLFlag = cli.StringFlag{
 		Name:  "ethstats",
 		Usage: "Reporting URL of a ethstats service (nodename:secret@host:port)",
 	}
@@ -680,21 +680,21 @@ func MakeAddress(ks *keystore.KeyStore, account string) (accounts.Account, error
 	return accs[index], nil
 }
 
-// setHpberbase retrieves the etherbase either from the directly specified
+// setShxerbase retrieves the etherbase either from the directly specified
 // command line flags or from the keystore if CLI indexed.
-func setHpberbase(ctx *cli.Context, ks *keystore.KeyStore, cfg *config.Nodeconfig) {
+func setShxerbase(ctx *cli.Context, ks *keystore.KeyStore, cfg *config.Nodeconfig) {
 	if ctx.GlobalIsSet(ShxerbaseFlag.Name) {
 		account, err := MakeAddress(ks, ctx.GlobalString(ShxerbaseFlag.Name))
 		if err != nil {
 			Fatalf("Option %q: %v", ShxerbaseFlag.Name, err)
 		}
-		cfg.Hpberbase = account.Address
+		cfg.Shxerbase = account.Address
 		return
 	}
 	accounts := ks.Accounts()
-	if (cfg.Hpberbase == common.Address{}) {
+	if (cfg.Shxerbase == common.Address{}) {
 		if len(accounts) > 0 {
-			cfg.Hpberbase = accounts[0].Address
+			cfg.Shxerbase = accounts[0].Address
 		} else {
 			log.Warn("No hpberbase set and no accounts found as default")
 		}

@@ -42,29 +42,29 @@ import (
 const defaultTraceTimeout = 5 * time.Second
 const defaultHashlen = 66
 
-// PublicHpbAPI provides an API to access Hpb full node-related
+// PublicShxAPI provides an API to access Shx full node-related
 // information.
-type PublicHpbAPI struct {
+type PublicShxAPI struct {
 	e *Node
 }
 
-// NewPublicHpbAPI creates a new Hpb protocol API for full nodes.
-func NewPublicHpbAPI(e *Node) *PublicHpbAPI {
-	return &PublicHpbAPI{e}
+// NewPublicShxAPI creates a new Shx protocol API for full nodes.
+func NewPublicShxAPI(e *Node) *PublicShxAPI {
+	return &PublicShxAPI{e}
 }
 
-// Hpberbase is the address that mining rewards will be send to
-func (api *PublicHpbAPI) Hpberbase() (common.Address, error) {
-	return api.e.Hpberbase()
+// Shxerbase is the address that mining rewards will be send to
+func (api *PublicShxAPI) Shxerbase() (common.Address, error) {
+	return api.e.Shxerbase()
 }
 
-// Coinbase is the address that mining rewards will be send to (alias for Hpberbase)
-func (api *PublicHpbAPI) Coinbase() (common.Address, error) {
-	return api.Hpberbase()
+// Coinbase is the address that mining rewards will be send to (alias for Shxerbase)
+func (api *PublicShxAPI) Coinbase() (common.Address, error) {
+	return api.Shxerbase()
 }
 
 // Mining returns the miner is mining
-func (api *PublicHpbAPI) Mining() bool {
+func (api *PublicShxAPI) Mining() bool {
 	return api.e.miner.Mining()
 }
 
@@ -94,7 +94,7 @@ func (api *PrivateMinerAPI) Start(threads *int) error {
 	type threaded interface {
 		SetThreads(threads int)
 	}
-	if th, ok := api.e.Hpbengine.(threaded); ok {
+	if th, ok := api.e.Shxengine.(threaded); ok {
 		log.Info("Updated mining threads", "threads", *threads)
 		th.SetThreads(*threads)
 	}
@@ -111,7 +111,7 @@ func (api *PrivateMinerAPI) Stop() bool {
 	type threaded interface {
 		SetThreads(threads int)
 	}
-	if th, ok := api.e.Hpbengine.(threaded); ok {
+	if th, ok := api.e.Shxengine.(threaded); ok {
 		th.SetThreads(-1)
 	}
 	api.e.StopMining()
@@ -126,20 +126,20 @@ func (api *PrivateMinerAPI) SetExtra(extra string) (bool, error) {
 	return true, nil
 }
 
-// SetHpberbase sets the hpberbase of the miner
-func (api *PrivateMinerAPI) SetHpberbase(hpberbase common.Address) bool {
-	api.e.SetHpberbase(hpberbase)
+// SetShxerbase sets the hpberbase of the miner
+func (api *PrivateMinerAPI) SetShxerbase(hpberbase common.Address) bool {
+	api.e.SetShxerbase(hpberbase)
 	return true
 }
 
-// PrivateAdminAPI is the collection of Hpb full node-related APIs
+// PrivateAdminAPI is the collection of Shx full node-related APIs
 // exposed over the private admin endpoint.
 type PrivateAdminAPI struct {
 	hpb *Node
 }
 
 // NewPrivateAdminAPI creates a new API definition for the full node private
-// admin methods of the Hpb service.
+// admin methods of the Shx service.
 func NewPrivateAdminAPI(hpb *Node) *PrivateAdminAPI {
 	return &PrivateAdminAPI{hpb: hpb}
 }
@@ -225,14 +225,14 @@ func (api *PrivateAdminAPI) ImportChain(file string) (bool, error) {
 	return true, nil
 }
 
-// PublicDebugAPI is the collection of Hpb full node APIs exposed
+// PublicDebugAPI is the collection of Shx full node APIs exposed
 // over the public debugging endpoint.
 type PublicDebugAPI struct {
 	hpb *Node
 }
 
 // NewPublicDebugAPI creates a new API definition for the full node-
-// related public debug methods of the Hpb service.
+// related public debug methods of the Shx service.
 func NewPublicDebugAPI(hpb *Node) *PublicDebugAPI {
 	return &PublicDebugAPI{hpb: hpb}
 }
@@ -248,9 +248,9 @@ func (api *PublicDebugAPI) DumpBlock(blockNr rpc.BlockNumber) (state.Dump, error
 	}
 	var block *types.Block
 	if blockNr == rpc.LatestBlockNumber {
-		block = api.hpb.Hpbbc.CurrentBlock()
+		block = api.hpb.Shxbc.CurrentBlock()
 	} else {
-		block = api.hpb.Hpbbc.GetBlockByNumber(uint64(blockNr))
+		block = api.hpb.Shxbc.GetBlockByNumber(uint64(blockNr))
 	}
 	if block == nil {
 		return state.Dump{}, fmt.Errorf("block #%d not found", blockNr)
@@ -262,7 +262,7 @@ func (api *PublicDebugAPI) DumpBlock(blockNr rpc.BlockNumber) (state.Dump, error
 	return stateDb.RawDump(), nil
 }
 
-// PrivateDebugAPI is the collection of Hpb full node APIs exposed over
+// PrivateDebugAPI is the collection of Shx full node APIs exposed over
 // the private debugging endpoint.
 type PrivateDebugAPI struct {
 	config *config.ChainConfig
@@ -270,7 +270,7 @@ type PrivateDebugAPI struct {
 }
 
 // NewPrivateDebugAPI creates a new API definition for the full node-related
-// private debug methods of the Hpb service.
+// private debug methods of the Shx service.
 func NewPrivateDebugAPI(config *config.ChainConfig, hpb *Node) *PrivateDebugAPI {
 	return &PrivateDebugAPI{config: config, hpb: hpb}
 }
@@ -363,7 +363,7 @@ func NewPublicAdminAPI(node *Node) *PublicAdminAPI {
 // Peers retrieves all the information we know about each individual peer at the
 // protocol granularity.
 func (api *PublicAdminAPI) Peers() ([]*p2p.PeerInfo, error) {
-	pm := api.node.Hpbpeermanager
+	pm := api.node.Shxpeermanager
 	if pm == nil {
 		return nil, ErrNodeStopped
 	}
@@ -373,7 +373,7 @@ func (api *PublicAdminAPI) Peers() ([]*p2p.PeerInfo, error) {
 // NodeInfo retrieves all the information we know about the host node at the
 // protocol granularity.
 func (api *PublicAdminAPI) NodeInfo() (*p2p.NodeInfo, error) {
-	pm := api.node.Hpbpeermanager
+	pm := api.node.Shxpeermanager
 	if pm == nil {
 		return nil, ErrNodeStopped
 	}
@@ -397,7 +397,7 @@ func NewPublicWeb3API(stack *Node) *PublicWeb3API {
 
 // ClientVersion returns the node name
 func (s *PublicWeb3API) ClientVersion() string {
-	return config.GetHpbConfigInstance().Network.Name
+	return config.GetShxConfigInstance().Network.Name
 }
 
 // Sha3 applies the hpb sha3 implementation on the input.

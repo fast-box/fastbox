@@ -32,7 +32,7 @@ func RpcMgrInst() *RpcManager {
 
 func (prm *RpcManager)Start(apis []API ) error {
 
-	config :=config.GetHpbConfigInstance()
+	config :=config.GetShxConfigInstance()
 	// for-test
 	log.Debug("Para from config.","IpcEndpoint",config.Network.IpcEndpoint,"HttpEndpoint",config.Network.HttpEndpoint,"WsEndpoint",config.Network.WsEndpoint)
 

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package types contains data types related to Hpb consensus.
+// Package types contains data types related to Shx consensus.
 package types
 
 import (
@@ -64,7 +64,7 @@ func (n *BlockNonce) UnmarshalText(input []byte) error {
 
 //go:generate gencodec -type Header -field-override headerMarshaling -out gen_header_json.go
 
-// Header represents a block header in the Hpb blockchain.
+// Header represents a block header in the Shx blockchain.
 type Header struct {
 	ParentHash  common.Hash    `json:"parentHash"       gencodec:"required"`
 	Coinbase    common.Address `json:"miner"            gencodec:"required"`
@@ -111,7 +111,7 @@ type Body struct {
 	Proofs       []*ProofState
 }
 
-// Block represents an entire block in the Hpb blockchain.
+// Block represents an entire block in the Shx blockchain.
 type Block struct {
 	header       *Header
 	transactions Transactions
@@ -228,7 +228,7 @@ func CopyHeader(h *Header) *Header {
 	return &cpy
 }
 
-// DecodeRLP decodes the Hpb
+// DecodeRLP decodes the Shx
 func (b *Block) DecodeRLP(s *rlp.Stream) error {
 	var eb extblock
 	_, size, _ := s.Kind()
@@ -241,7 +241,7 @@ func (b *Block) DecodeRLP(s *rlp.Stream) error {
 	return nil
 }
 
-// EncodeRLP serializes b into the Hpb RLP block format.
+// EncodeRLP serializes b into the Shx RLP block format.
 func (b *Block) EncodeRLP(w io.Writer) error {
 	return rlp.Encode(w, extblock{
 		Header: b.header,

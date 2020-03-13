@@ -29,9 +29,9 @@ Section "Ghpb" GHPB_IDX
   SimpleFC::AdvRemoveRule "Ghpb UDP discovery (UDP:30303)"
 
   # Firewall - add rules
-  SimpleFC::AdvAddRule "Ghpb incoming peers (TCP:30303)" ""  6 1 1 2147483647 1 "$INSTDIR\ghpb.exe" "" "" "Hpb" 30303 "" "" ""
-  SimpleFC::AdvAddRule "Ghpb outgoing peers (TCP:30303)" ""  6 2 1 2147483647 1 "$INSTDIR\ghpb.exe" "" "" "Hpb" "" 30303 "" ""
-  SimpleFC::AdvAddRule "Ghpb UDP discovery (UDP:30303)" "" 17 2 1 2147483647 1 "$INSTDIR\ghpb.exe" "" "" "Hpb" "" 30303 "" ""
+  SimpleFC::AdvAddRule "Ghpb incoming peers (TCP:30303)" ""  6 1 1 2147483647 1 "$INSTDIR\ghpb.exe" "" "" "Shx" 30303 "" "" ""
+  SimpleFC::AdvAddRule "Ghpb outgoing peers (TCP:30303)" ""  6 2 1 2147483647 1 "$INSTDIR\ghpb.exe" "" "" "Shx" "" 30303 "" ""
+  SimpleFC::AdvAddRule "Ghpb UDP discovery (UDP:30303)" "" 17 2 1 2147483647 1 "$INSTDIR\ghpb.exe" "" "" "Shx" "" 30303 "" ""
 
   # Set default IPC endpoint
   ${EnvVarUpdate} $0 "HPB_SOCKET" "R" "HKLM" "\\.\pipe\ghpb.ipc"

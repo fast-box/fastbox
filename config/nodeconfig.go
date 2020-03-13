@@ -110,7 +110,7 @@ type Nodeconfig struct {
 	DataDir string
 
 	// The genesis block, which is inserted if the database is empty.
-	// If nil, the Hpb main net block is used.
+	// If nil, the Shx main net block is used.
 	//Genesis *bc.Genesis `toml:",omitempty"`
 
 	// Protocol options
@@ -127,7 +127,7 @@ type Nodeconfig struct {
 	DatabaseCache      int
 
 	// Mining-related options
-	Hpberbase    common.Address `toml:",omitempty"`
+	Shxerbase    common.Address `toml:",omitempty"`
 	MinerThreads int            `toml:",omitempty"`
 	ExtraData    []byte         `toml:",omitempty"`
 	GasPrice     *big.Int
@@ -340,9 +340,9 @@ func DefaultDataDir() string {
 	home := homeDir()
 	if home != "" {
 		if runtime.GOOS == "darwin" {
-			return filepath.Join(home, "Library", "Hpb")
+			return filepath.Join(home, "Library", "Shx")
 		} else if runtime.GOOS == "windows" {
-			return filepath.Join(home, "AppData", "Roaming", "Hpb")
+			return filepath.Join(home, "AppData", "Roaming", "Shx")
 		} else {
 			return filepath.Join(home, ".hpb")
 		}

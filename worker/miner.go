@@ -94,7 +94,7 @@ func (self *Miner) Start(coinbase common.Address) {
 	}
 
 	atomic.StoreInt32(&self.shouldStart, 1)
-	self.worker.setHpberbase(coinbase)
+	self.worker.setShxerbase(coinbase)
 	self.coinbase = coinbase
 
 	if atomic.LoadInt32(&self.canStart) == 0 {

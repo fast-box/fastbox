@@ -49,7 +49,7 @@ type Database interface {
 	CopyTrie(Trie) Trie
 }
 
-// Trie is a Hpb Merkle Trie.
+// Trie is a Shx Merkle Trie.
 type Trie interface {
 	TryGet(key []byte) ([]byte, error)
 	TryUpdate(key, value []byte) error

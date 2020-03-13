@@ -49,7 +49,7 @@ type filter struct {
 }
 
 // PublicFilterAPI offers support to create and manage filters. This will allow external clients to retrieve various
-// information related to the Hpb protocol such als blocks, transactions and logs.
+// information related to the Shx protocol such als blocks, transactions and logs.
 type PublicFilterAPI struct {
 	backend   Backend
 	mux       *sub.TypeMux

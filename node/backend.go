@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package eth implements the Hpb protocol.
+// Package eth implements the Shx protocol.
 package node
 
 import (
@@ -47,7 +47,7 @@ func (s *Node) APIs() []rpc.API {
 		{
 			Namespace: "shx",
 			Version:   "1.0",
-			Service:   NewPublicHpbAPI(s),
+			Service:   NewPublicShxAPI(s),
 			Public:    true,
 		}, {
 			Namespace: "miner",
@@ -82,12 +82,12 @@ func (s *Node) APIs() []rpc.API {
 
 
 	// Append any APIs exposed explicitly by the consensus engine
-	if s.Hpbengine != nil {
-		apis = append(apis, s.Hpbengine.APIs(s.BlockChain())...)
+	if s.Shxengine != nil {
+		apis = append(apis, s.Shxengine.APIs(s.BlockChain())...)
 		apis = append(apis, []rpc.API{
 			{Namespace: "shx",
 				Version:   "1.0",
-					Service:   synctrl.NewPublicSyncerAPI(s.Hpbsyncctr.Syncer(), s.newBlockMux),
+					Service:   synctrl.NewPublicSyncerAPI(s.Shxsyncctr.Syncer(), s.newBlockMux),
 					Public:    true,
 			},
 		}...)
@@ -101,10 +101,10 @@ func (s *Node) IsMining() bool      { return s.miner.Mining() }
 func (s *Node) Miner() *worker.Miner { return s.miner }
 
 func (s *Node) APIAccountManager() *accounts.Manager  { return s.accman }
-func (s *Node) BlockChain() *bc.BlockChain         { return s.Hpbbc }
-func (s *Node) TxPool() *txpool.TxPool             { return s.Hpbtxpool }
-func (s *Node) Engine() consensus.Engine           { return s.Hpbengine }
+func (s *Node) BlockChain() *bc.BlockChain         { return s.Shxbc }
+func (s *Node) TxPool() *txpool.TxPool             { return s.Shxtxpool }
+func (s *Node) Engine() consensus.Engine           { return s.Shxengine }
 func (s *Node) ChainDb() shxdb.Database            { return s.ShxDb }
 func (s *Node) IsListening() bool                  { return true } // Always listening
-func (s *Node) EthVersion() int                    { return int(s.Hpbpeermanager.Protocol()[0].Version)}
+func (s *Node) EthVersion() int                    { return int(s.Shxpeermanager.Protocol()[0].Version)}
 func (s *Node) NetVersion() uint64                 { return s.networkId }

@@ -56,7 +56,7 @@ func OpenDatabase(name string, cache int, handles int) (shxdb.Database, error) {
 		return DBINSTANCE.Load().(*shxdb.LDBDatabase),nil
 	}
 
-	var cfg = config.GetHpbConfigInstance()
+	var cfg = config.GetShxConfigInstance()
 	if cfg.Node.DataDir == ""{
 		return shxdb.NewMemDatabase()
 	}

@@ -19,7 +19,7 @@ package synctrl
 import (
 	"context"
 	"github.com/shx-project/sphinx/event/sub"
-	hpb "github.com/shx-project/sphinx/interface"
+	shx "github.com/shx-project/sphinx/interface"
 	"github.com/shx-project/sphinx/network/rpc"
 	"sync"
 )
@@ -88,7 +88,7 @@ func (api *PublicSyncerAPI) eventLoop() {
 	}
 }
 
-// Syncing provides information when this nodes starts synchronising with the Hpb network and when it's finished.
+// Syncing provides information when this nodes starts synchronising with the Shx network and when it's finished.
 func (api *PublicSyncerAPI) Syncing(ctx context.Context) (*rpc.Subscription, error) {
 	notifier, supported := rpc.NotifierFromContext(ctx)
 	if !supported {
@@ -121,7 +121,7 @@ func (api *PublicSyncerAPI) Syncing(ctx context.Context) (*rpc.Subscription, err
 // SyncingResult provides information about the current synchronisation status for this node.
 type SyncingResult struct {
 	Syncing bool                  `json:"syncing"`
-	Status  hpb.SyncProgress      `json:"status"`
+	Status  shx.SyncProgress      `json:"status"`
 }
 
 // uninstallSyncSubscriptionRequest uninstalles a syncing subscription in the API event loop.

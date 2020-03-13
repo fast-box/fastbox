@@ -55,7 +55,7 @@ func (self Storage) Copy() Storage {
 	return cpy
 }
 
-// stateObject represents an Hpb account which is being modified.
+// stateObject represents an Shx account which is being modified.
 //
 // The usage pattern is as follows:
 // First you need to obtain a state object.
@@ -96,7 +96,7 @@ func (s *stateObject) empty() bool {
 	return bytes.Equal(s.data.Root.Bytes(), emptyCodeHash)
 }
 
-// Account is the Hpb consensus representation of accounts.
+// Account is the Shx consensus representation of accounts.
 // These objects are stored in the main account trie.
 type Account struct {
 	Root common.Hash // merkle root of the storage trie

@@ -29,7 +29,7 @@ import (
 	"sync/atomic"
 )
 
-var HpbConfigIns *ShxConfig
+var ShxConfigIns *ShxConfig
 
 const (
 	DatadirPrivateKey      = "nodekey"            // Path within the datadir to the node's private key
@@ -103,7 +103,7 @@ const (
 	Shannon  = 1e9
 	Szabo    = 1e12
 	Finney   = 1e15
-	Hpber    = 1e18
+	Shxer    = 1e18
 	Einstein = 1e21
 	Douglas  = 1e42
 )
@@ -132,7 +132,7 @@ type ShxConfig struct {
 	//configuration of consensus
 	Prometheus PrometheusConfig
 
-	HpbStats hpbStatsConfig
+	ShxStats hpbStatsConfig
 }
 
 // These settings ensure that TOML keys use the same names as Go struct fields.
@@ -171,8 +171,8 @@ func New() *ShxConfig {
 		return INSTANCE.Load().(*ShxConfig)
 	}
 
-	if HpbConfigIns == nil {
-		HpbConfigIns := &ShxConfig{
+	if ShxConfigIns == nil {
+		ShxConfigIns := &ShxConfig{
 			Node: defaultNodeConfig(),
 			// Configuration of peer-to-peer networking.
 			Network: DefaultNetworkConfig(),
@@ -185,20 +185,20 @@ func New() *ShxConfig {
 			//configuration of consensus
 			Prometheus: DefaultPrometheusConfig,
 		}
-		log.Info("Create New HpbConfig object")
-		INSTANCE.Store(HpbConfigIns)
-		return HpbConfigIns
+		log.Info("Create New ShxConfig object")
+		INSTANCE.Store(ShxConfigIns)
+		return ShxConfigIns
 	}
 
-	INSTANCE.Store(HpbConfigIns)
-	return HpbConfigIns
+	INSTANCE.Store(ShxConfigIns)
+	return ShxConfigIns
 
 }
-func GetHpbConfigInstance() *ShxConfig {
+func GetShxConfigInstance() *ShxConfig {
 	if INSTANCE.Load() != nil {
 		return INSTANCE.Load().(*ShxConfig)
 	}
-	HpbConfigIns := &ShxConfig{
+	ShxConfigIns := &ShxConfig{
 		Node: defaultNodeConfig(),
 		// Configuration of peer-to-peer networking.
 		Network: DefaultNetworkConfig(),
@@ -211,7 +211,7 @@ func GetHpbConfigInstance() *ShxConfig {
 		//configuration of consensus
 		Prometheus: DefaultPrometheusConfig,
 	}
-	log.Info("Create New HpbConfig object")
-	INSTANCE.Store(HpbConfigIns)
+	log.Info("Create New ShxConfig object")
+	INSTANCE.Store(ShxConfigIns)
 	return INSTANCE.Load().(*ShxConfig)
 }

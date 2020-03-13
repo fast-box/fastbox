@@ -147,7 +147,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 	return worker
 }
 
-func (self *worker) setHpberbase(addr common.Address) {
+func (self *worker) setShxerbase(addr common.Address) {
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	self.coinbase = addr
@@ -479,7 +479,7 @@ func (self *worker) NewMineRound() error {
 	}
 	//log.Info("NewRoundMine", "Finalized",true)
 
-	if config.GetHpbConfigInstance().Node.TestMode == 2 {
+	if config.GetShxConfigInstance().Node.TestMode == 2 {
 		// single test, direct pass confirm.
 		work.confirmed = true
 		go func() {self.confirmCh <- work}()
