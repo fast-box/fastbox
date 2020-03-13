@@ -19,7 +19,7 @@ package trie
 import (
 	"fmt"
 
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/common"
 )
 
 // MissingNodeError is returned by the trie functions (TryGet, TryUpdate, TryDelete)

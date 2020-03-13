@@ -19,11 +19,11 @@ import "C"
 import (
 	"bytes"
 	"errors"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/consensus"
 )
 
 // Verify one header

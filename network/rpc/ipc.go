@@ -19,8 +19,8 @@ package rpc
 import (
 	"context"
 	"net"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/network/p2p/netutil"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/network/p2p/netutil"
 )
 
 // CreateIPCListener creates an listener, on Unix platforms this is a unix socket, on

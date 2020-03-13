@@ -23,9 +23,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/network/p2p/discover"
 )
 
 // Protocol represents a P2P subprotocol implementation.
@@ -49,7 +49,7 @@ func (cap Cap) String() string {
 }
 
 ////////////////////////////////////////////////////////
-type HpbProto struct {
+type ShxProto struct {
 	networkId   uint64
 	protos      []Protocol
 
@@ -86,8 +86,8 @@ const (
 	ErrNoExchangeMsg
 )
 
-func NewProtos() *HpbProto {
-	hpb :=&HpbProto{
+func NewProtos() *ShxProto {
+	hpb :=&ShxProto{
 		protos:       make([]Protocol, 0, len(ProtocolVersions)),
 		msgProcess:   make(map[uint64]MsgProcessCB),
 	}
@@ -110,7 +110,7 @@ func NewProtos() *HpbProto {
 	return hpb
 }
 
-func (s *HpbProto) Protocols() []Protocol {
+func (s *ShxProto) Protocols() []Protocol {
 	return s.protos
 }
 
@@ -121,7 +121,7 @@ func ErrResp(code errCode, format string, v ...interface{}) error {
 
 // handle is the callback invoked to manage the life cycle of an eth peer. When
 // this function terminates, the peer is disconnected.
-func (hp *HpbProto) handle(p *Peer) error {
+func (hp *ShxProto) handle(p *Peer) error {
 
 	defer func() {
 		p.msgLooping = false
@@ -148,7 +148,7 @@ func (hp *HpbProto) handle(p *Peer) error {
 
 	// Register the peer locally
 	if err := PeerMgrInst().Register(p); err != nil {
-		p.log.Debug("Hpb peer registration failed", "err", err)
+		p.log.Debug("Shx peer registration failed", "err", err)
 		return err
 	}
 
@@ -174,39 +174,39 @@ func (hp *HpbProto) handle(p *Peer) error {
 	}
 }
 
-func (hp *HpbProto) regMsgProcess(msg uint64,cb MsgProcessCB) {
+func (hp *ShxProto) regMsgProcess(msg uint64,cb MsgProcessCB) {
 	hp.msgProcess[msg] = cb
 }
 
-func (hp *HpbProto) regChanStatus(cb ChanStatusCB) {
+func (hp *ShxProto) regChanStatus(cb ChanStatusCB) {
 	hp.chanStatus = cb
 }
 
-func (hp *HpbProto) regOnAddPeer(cb OnAddPeerCB) {
+func (hp *ShxProto) regOnAddPeer(cb OnAddPeerCB) {
 	hp.onAddPeer = cb
 }
 
-func (hp *HpbProto) regOnDropPeer(cb OnDropPeerCB) {
+func (hp *ShxProto) regOnDropPeer(cb OnDropPeerCB) {
 	hp.onDropPeer = cb
 }
 
-func (hp *HpbProto) regStatMining(cb StatMining) {
+func (hp *ShxProto) regStatMining(cb StatMining) {
 	hp.statMining = cb
 }
 
 // handleMsg is invoked whenever an inbound message is received from a remote
 // peer. The remote connection is torn down upon returning any error.
-func (hp *HpbProto) handleMsg(p *Peer) error {
+func (hp *ShxProto) handleMsg(p *Peer) error {
 	msg, err := p.rw.ReadMsg()
 	if err != nil {
-		log.Debug("Hpb protocol read msg error","error",err)
+		log.Debug("Shx protocol read msg error","error",err)
 		return err
 	}
 	p.log.Trace("Protocol handle massage","Msg",msg.String())
 	defer msg.Discard()
 
 	if msg.Size > MaxMsgSize {
-		log.Error("Hpb protocol massage too large.","msg",msg)
+		log.Error("Shx protocol massage too large.","msg",msg)
 		return ErrResp(ErrMsgTooLarge, "msg too large %v > %v", msg.Size, MaxMsgSize)
 	}
 
@@ -336,7 +336,7 @@ func HandleResNodesMsg(p *Peer, msg Msg) error {
 }
 ////////////////////////////////////////////////////////
 
-func (hp *HpbProto) proBondall(p *Peer) {
+func (hp *ShxProto) proBondall(p *Peer) {
 	log.Debug("proBondall start")
 	timer := time.NewTimer(15 * time.Second)
 	defer timer.Stop()

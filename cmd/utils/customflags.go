@@ -27,7 +27,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/hpb-project/sphinx/common/math"
+	"github.com/shx-project/sphinx/common/math"
 	"gopkg.in/urfave/cli.v1"
 )
 

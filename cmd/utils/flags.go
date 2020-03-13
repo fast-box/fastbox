@@ -28,24 +28,24 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/account/keystore"
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/constant"
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/metrics"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/consensus/prometheus"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
-	"github.com/hpb-project/sphinx/network/p2p/nat"
-	"github.com/hpb-project/sphinx/network/p2p/netutil"
-	"github.com/hpb-project/sphinx/node"
-	"github.com/hpb-project/sphinx/node/db"
+	"github.com/shx-project/sphinx/account"
+	"github.com/shx-project/sphinx/account/keystore"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/constant"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/metrics"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/consensus/prometheus"
+	"github.com/shx-project/sphinx/network/p2p/discover"
+	"github.com/shx-project/sphinx/network/p2p/nat"
+	"github.com/shx-project/sphinx/network/p2p/netutil"
+	"github.com/shx-project/sphinx/node"
+	"github.com/shx-project/sphinx/node/db"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -282,7 +282,7 @@ var (
 		Usage: "Record information useful for VM and contract debugging",
 	}
 	// Logging and debug settings
-	HpbStatsURLFlag = cli.StringFlag{
+	ShxStatsURLFlag = cli.StringFlag{
 		Name:  "ethstats",
 		Usage: "Reporting URL of a ethstats service (nodename:secret@host:port)",
 	}
@@ -680,21 +680,21 @@ func MakeAddress(ks *keystore.KeyStore, account string) (accounts.Account, error
 	return accs[index], nil
 }
 
-// setHpberbase retrieves the etherbase either from the directly specified
+// setShxerbase retrieves the etherbase either from the directly specified
 // command line flags or from the keystore if CLI indexed.
-func setHpberbase(ctx *cli.Context, ks *keystore.KeyStore, cfg *config.Nodeconfig) {
+func setShxerbase(ctx *cli.Context, ks *keystore.KeyStore, cfg *config.Nodeconfig) {
 	if ctx.GlobalIsSet(ShxerbaseFlag.Name) {
 		account, err := MakeAddress(ks, ctx.GlobalString(ShxerbaseFlag.Name))
 		if err != nil {
 			Fatalf("Option %q: %v", ShxerbaseFlag.Name, err)
 		}
-		cfg.Hpberbase = account.Address
+		cfg.Shxerbase = account.Address
 		return
 	}
 	accounts := ks.Accounts()
-	if (cfg.Hpberbase == common.Address{}) {
+	if (cfg.Shxerbase == common.Address{}) {
 		if len(accounts) > 0 {
-			cfg.Hpberbase = accounts[0].Address
+			cfg.Shxerbase = accounts[0].Address
 		} else {
 			log.Warn("No hpberbase set and no accounts found as default")
 		}

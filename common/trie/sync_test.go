@@ -20,8 +20,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/common"
 )
 
 // makeTestTrie create a sample test trie to test node-wise reconstruction.

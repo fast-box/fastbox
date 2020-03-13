@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hpb-project/sphinx/internal/shxapi"
+	"github.com/shx-project/sphinx/internal/shxapi"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -29,28 +29,28 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/account/keystore"
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/blockchain/bloombits"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/constant"
-	"github.com/hpb-project/sphinx/common/hexutil"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/consensus/prometheus"
-	"github.com/hpb-project/sphinx/event/sub"
-	"github.com/hpb-project/sphinx/internal/debug"
-	"github.com/hpb-project/sphinx/network/p2p"
-	"github.com/hpb-project/sphinx/network/rpc"
-	"github.com/hpb-project/sphinx/node/db"
-	"github.com/hpb-project/sphinx/synctrl"
-	"github.com/hpb-project/sphinx/txpool"
-	"github.com/hpb-project/sphinx/worker"
+	"github.com/shx-project/sphinx/account"
+	"github.com/shx-project/sphinx/account/keystore"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/blockchain/bloombits"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/constant"
+	"github.com/shx-project/sphinx/common/hexutil"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/consensus/prometheus"
+	"github.com/shx-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/internal/debug"
+	"github.com/shx-project/sphinx/network/p2p"
+	"github.com/shx-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/node/db"
+	"github.com/shx-project/sphinx/synctrl"
+	"github.com/shx-project/sphinx/txpool"
+	"github.com/shx-project/sphinx/worker"
 	"github.com/prometheus/prometheus/util/flock"
 )
 
@@ -60,18 +60,18 @@ type Node struct {
 	newBlockMux *sub.TypeMux
 
 	Shxconfig      *config.ShxConfig
-	Hpbpeermanager *p2p.PeerManager
-	Hpbrpcmanager  *rpc.RpcManager
-	Hpbsyncctr     *synctrl.SynCtrl
-	Hpbtxpool      *txpool.TxPool
-	Hpbbc          *bc.BlockChain
+	Shxpeermanager *p2p.PeerManager
+	Shxrpcmanager  *rpc.RpcManager
+	Shxsyncctr     *synctrl.SynCtrl
+	Shxtxpool      *txpool.TxPool
+	Shxbc          *bc.BlockChain
 	//ShxDb
 	ShxDb shxdb.Database
 
 	networkId     uint64
 	netRPCService *shxapi.PublicNetAPI
 
-	Hpbengine     consensus.Engine
+	Shxengine     consensus.Engine
 	bloomRequests chan chan *bloombits.Retrieval // Channel receiving bloom data retrieval requests
 	bloomIndexer  *bc.ChainIndexer               // Bloom indexer operating during block imports
 
@@ -89,7 +89,7 @@ type Node struct {
 	inprocHandler *rpc.Server // In-process RPC request handler to process the API requests
 
 	lock       sync.RWMutex
-	ApiBackend *HpbApiBackend
+	ApiBackend *ShxApiBackend
 
 	RpcAPIs []rpc.API // List of APIs currently provided by the node
 
@@ -122,17 +122,17 @@ func New(conf *config.ShxConfig) (*Node, error) {
 
 	hpbnode := &Node{
 		Shxconfig:      conf,
-		Hpbpeermanager: nil, //peermanager,
-		Hpbsyncctr:     nil, //syncctr,
-		Hpbtxpool:      nil, //hpbtxpool,
-		Hpbbc:          nil, //block,
+		Shxpeermanager: nil, //peermanager,
+		Shxsyncctr:     nil, //syncctr,
+		Shxtxpool:      nil, //hpbtxpool,
+		Shxbc:          nil, //block,
 
 		ShxDb:     nil, //db,
 		networkId: conf.Node.NetworkId,
 
 		newBlockMux: nil,
 		accman:      nil,
-		Hpbengine:   nil,
+		Shxengine:   nil,
 
 		hpberbase:     common.Address{},
 		bloomRequests: make(chan chan *bloombits.Retrieval),
@@ -163,22 +163,22 @@ func New(conf *config.ShxConfig) (*Node, error) {
 	// in the data directory or instance directory is delayed until Start.
 	//create all object
 	peermanager := p2p.PeerMgrInst()
-	hpbnode.Hpbpeermanager = peermanager
-	hpbnode.Hpbrpcmanager = rpc.RpcMgrInst()
+	hpbnode.Shxpeermanager = peermanager
+	hpbnode.Shxrpcmanager = rpc.RpcMgrInst()
 
 	hpbnode.ShxDb = hpbdatabase
 
 	hpbnode.newBlockMux = new(sub.TypeMux)
 
-	hpbnode.Hpbbc = bc.InstanceBlockChain()
+	hpbnode.Shxbc = bc.InstanceBlockChain()
 
-	peermanager.RegChanStatus(hpbnode.Hpbbc.Status)
+	peermanager.RegChanStatus(hpbnode.Shxbc.Status)
 
-	txpool.NewTxPool(conf.TxPool, &conf.BlockChain, hpbnode.Hpbbc)
+	txpool.NewTxPool(conf.TxPool, &conf.BlockChain, hpbnode.Shxbc)
 	hpbtxpool := txpool.GetTxPool()
 
-	hpbnode.Hpbtxpool = hpbtxpool
-	hpbnode.ApiBackend = &HpbApiBackend{hpbnode}
+	hpbnode.Shxtxpool = hpbtxpool
+	hpbnode.ApiBackend = &ShxApiBackend{hpbnode}
 
 	gpoParams := conf.Node.GPO
 	if gpoParams.Default == nil {
@@ -199,18 +199,18 @@ func (hpbnode *Node) WorkerInit(conf *config.ShxConfig) error {
 			bc.WriteBlockChainVersion(hpbnode.ShxDb, bc.BlockChainVersion)
 		}
 		engine := prometheus.InstancePrometheus()
-		hpbnode.Hpbengine = engine
+		hpbnode.Shxengine = engine
 		//add consensus engine to blockchain
-		_, err := hpbnode.Hpbbc.InitWithEngine(engine)
+		_, err := hpbnode.Shxbc.InitWithEngine(engine)
 		if err != nil {
 			log.Error("add engine to blockchain error")
 			return err
 		}
-		hpbnode.Hpbsyncctr = synctrl.InstanceSynCtrl()
-		hpbnode.newBlockMux = hpbnode.Hpbsyncctr.NewBlockMux()
+		hpbnode.Shxsyncctr = synctrl.InstanceSynCtrl()
+		hpbnode.newBlockMux = hpbnode.Shxsyncctr.NewBlockMux()
 
-		hpbnode.miner = worker.New(&conf.BlockChain, hpbnode.NewBlockMux(), hpbnode.Hpbengine, hpbnode.hpberbase, hpbnode.ShxDb)
-		hpbnode.bloomIndexer.Start(hpbnode.Hpbbc.CurrentHeader(), hpbnode.Hpbbc.SubscribeChainEvent)
+		hpbnode.miner = worker.New(&conf.BlockChain, hpbnode.NewBlockMux(), hpbnode.Shxengine, hpbnode.hpberbase, hpbnode.ShxDb)
+		hpbnode.bloomIndexer.Start(hpbnode.Shxbc.CurrentHeader(), hpbnode.Shxbc.SubscribeChainEvent)
 
 	} else {
 		return errors.New(`The genesis block is not inited`)
@@ -279,21 +279,21 @@ func (hpbnode *Node) Start(conf *config.ShxConfig) error {
 		log.Error("Worker init failed", ":", err)
 		return err
 	}
-	if hpbnode.Hpbsyncctr == nil {
+	if hpbnode.Shxsyncctr == nil {
 		log.Error("syncctrl is nil")
 		return errors.New("synctrl is nil")
 	}
-	hpbnode.Hpbsyncctr.Start()
-	retval := hpbnode.Hpbpeermanager.Start(hpbnode.hpberbase,hpbnode.Hpbbc.GetLocalProofHash())
+	hpbnode.Shxsyncctr.Start()
+	retval := hpbnode.Shxpeermanager.Start(hpbnode.hpberbase,hpbnode.Shxbc.GetLocalProofHash())
 	if retval != nil {
 		log.Error("Start hpbpeermanager error")
 		return errors.New(`start peermanager error ".ipc"`)
 	}
-	hpbnode.Hpbpeermanager.RegStatMining(hpbnode.miner.Mining)
+	hpbnode.Shxpeermanager.RegStatMining(hpbnode.miner.Mining)
 
 	hpbnode.SetNodeAPI()
-	hpbnode.Hpbrpcmanager.Start(hpbnode.RpcAPIs)
-	hpbnode.Hpbtxpool.Start()
+	hpbnode.Shxrpcmanager.Start(hpbnode.RpcAPIs)
+	hpbnode.Shxtxpool.Start()
 
 	return nil
 
@@ -363,12 +363,12 @@ func (n *Node) Stop() error {
 	defer n.lock.Unlock()
 
 	//stop all modules
-	n.Hpbsyncctr.Stop()
-	n.Hpbtxpool.Stop()
+	n.Shxsyncctr.Stop()
+	n.Shxtxpool.Stop()
 	n.miner.Stop()
-	n.Hpbpeermanager.Stop()
+	n.Shxpeermanager.Stop()
 
-	n.Hpbrpcmanager.Stop()
+	n.Shxrpcmanager.Stop()
 	n.ShxDb.Close()
 
 	// Release instance directory lock.
@@ -411,7 +411,7 @@ func (n *Node) Restart() error {
 	if err := n.Stop(); err != nil {
 		return err
 	}
-	if err := n.Start(config.HpbConfigIns); err != nil {
+	if err := n.Start(config.ShxConfigIns); err != nil {
 		return err
 	}
 	return nil
@@ -514,10 +514,10 @@ func makeExtraData(extra []byte) []byte {
 }
 
 func (s *Node) ResetWithGenesisBlock(gb *types.Block) {
-	s.Hpbbc.ResetWithGenesisBlock(gb)
+	s.Shxbc.ResetWithGenesisBlock(gb)
 }
 
-func (s *Node) Hpberbase() (eb common.Address, err error) {
+func (s *Node) Shxerbase() (eb common.Address, err error) {
 	s.lock.RLock()
 	hpberbase := s.hpberbase
 	s.lock.RUnlock()
@@ -534,7 +534,7 @@ func (s *Node) Hpberbase() (eb common.Address, err error) {
 }
 
 // set in js console via admin interface or wrapper from cli flags
-func (self *Node) SetHpberbase(hpberbase common.Address) {
+func (self *Node) SetShxerbase(hpberbase common.Address) {
 	self.lock.Lock()
 	self.hpberbase = hpberbase
 	self.lock.Unlock()
@@ -544,22 +544,22 @@ func (s *Node) StartMining(local bool) error {
 	//read coinbase from node
 	eb := s.hpberbase
 
-	if promeengine, ok := s.Hpbengine.(*prometheus.Prometheus); ok {
+	if promeengine, ok := s.Shxengine.(*prometheus.Prometheus); ok {
 		wallet, err := s.accman.Find(accounts.Account{Address: eb})
 		if wallet == nil || err != nil {
-			log.Error("Hpberbase account unavailable locally", "err", err)
+			log.Error("Shxerbase account unavailable locally", "err", err)
 			return fmt.Errorf("signer missing: %v", err)
 		}
 		promeengine.Authorize(eb, wallet.SignHash)
 	} else {
-		log.Error("Cannot start mining without prometheus", "err", s.Hpbengine)
+		log.Error("Cannot start mining without prometheus", "err", s.Shxengine)
 	}
 	if local {
 		// If local (CPU) mining is started, we can disable the transaction rejection
 		// mechanism introduced to speed sync times. CPU mining on mainnet is ludicrous
 		// so noone will ever hit this path, whereas marking sync done on CPU mining
 		// will ensure that private networks work in single miner mode too.
-		atomic.StoreUint32(&s.Hpbsyncctr.AcceptTxs, 1)
+		atomic.StoreUint32(&s.Shxsyncctr.AcceptTxs, 1)
 	}
 	go s.miner.Start(eb)
 	return nil

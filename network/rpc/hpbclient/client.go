@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package ethclient provides a client for the Hpb RPC API.
+// Package ethclient provides a client for the Shx RPC API.
 package hpbclient
 
 import (
@@ -24,15 +24,15 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/hexutil"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/network/rpc"
-	"github.com/hpb-project/sphinx/interface"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/hexutil"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/interface"
 )
 
-// Client defines typed wrappers for the Hpb RPC API.
+// Client defines typed wrappers for the Shx RPC API.
 type Client struct {
 	c *rpc.Client
 }

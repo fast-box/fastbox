@@ -21,17 +21,17 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/consensus/prometheus"
-	"github.com/hpb-project/sphinx/event/sub"
-	"github.com/hpb-project/sphinx/network/p2p"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
-	"github.com/hpb-project/sphinx/node/db"
-	"github.com/hpb-project/sphinx/txpool"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/consensus/prometheus"
+	"github.com/shx-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/network/p2p"
+	"github.com/shx-project/sphinx/network/p2p/discover"
+	"github.com/shx-project/sphinx/node/db"
+	"github.com/shx-project/sphinx/txpool"
 )
 
 const (
@@ -86,7 +86,7 @@ type SynCtrl struct {
 // InstanceSynCtrl returns the singleton of SynCtrl.
 func InstanceSynCtrl() *SynCtrl {
 	once.Do(func() {
-		i, err := newSynCtrl(&config.GetHpbConfigInstance().BlockChain, config.GetHpbConfigInstance().Node.SyncMode, txpool.GetTxPool(), prometheus.InstancePrometheus())
+		i, err := newSynCtrl(&config.GetShxConfigInstance().BlockChain, config.GetShxConfigInstance().Node.SyncMode, txpool.GetTxPool(), prometheus.InstancePrometheus())
 		if err != nil {
 			log.Error("Failed to instance SynCtrl", "err", err)
 		}
@@ -297,7 +297,7 @@ func (this *SynCtrl) Syncer() *Syncer {
 }
 
 func (this *SynCtrl) Stop() {
-	log.Debug("Stopping Hpb data sync")
+	log.Debug("Stopping Shx data sync")
 
 	this.txSub.Unsubscribe()         // quits txRoutingLoop
 	this.minedBlockSub.Unsubscribe() // quits minedRoutingLoop
@@ -312,7 +312,7 @@ func (this *SynCtrl) Stop() {
 	// Wait for all peer handler goroutines and the loops to come down.
 	this.wg.Wait()
 
-	log.Info("Hpb data sync stopped")
+	log.Info("Shx data sync stopped")
 }
 
 func (this *SynCtrl) removePeer(id string) {
@@ -321,9 +321,9 @@ func (this *SynCtrl) removePeer(id string) {
 	if peer == nil {
 		return
 	}
-	log.Debug("Removing Hpb peer", "peer", id)
+	log.Debug("Removing Shx peer", "peer", id)
 
-	// Unregister the peer from the downloader and Hpb peer set
+	// Unregister the peer from the downloader and Shx peer set
 	this.syner.UnregisterPeer(id)
 
 	// Hard disconnect at the networking layer

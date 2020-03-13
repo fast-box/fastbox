@@ -17,11 +17,11 @@
 package synctrl
 
 import (
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/network/p2p"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/network/p2p"
+	"github.com/shx-project/sphinx/network/p2p/discover"
 	"math/rand"
 )
 

@@ -27,9 +27,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hpb-project/sphinx/internal/jsre"
-	"github.com/hpb-project/sphinx/internal/web3ext"
-	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/internal/jsre"
+	"github.com/shx-project/sphinx/internal/web3ext"
+	"github.com/shx-project/sphinx/network/rpc"
 	"github.com/mattn/go-colorable"
 	"github.com/peterh/liner"
 	"github.com/robertkrimen/otto"
@@ -52,7 +52,7 @@ const DefaultPrompt = "> "
 type Config struct {
 	DataDir  string       // Data directory to store the console history at
 	DocRoot  string       // Filesystem path from where to load JavaScript files from
-	Client   *rpc.Client  // RPC client to execute Hpb requests through
+	Client   *rpc.Client  // RPC client to execute Shx requests through
 	Prompt   string       // Input prompt prefix string (defaults to DefaultPrompt)
 	Prompter UserPrompter // Input prompter to allow interactive user feedback (defaults to TerminalPrompter)
 	Printer  io.Writer    // Output writer to serialize any display strings to (defaults to os.Stdout)
@@ -63,7 +63,7 @@ type Config struct {
 // JavaScript console attached to a running node via an external or in-process RPC
 // client.
 type Console struct {
-	client   *rpc.Client  // RPC client to execute Hpb requests through
+	client   *rpc.Client  // RPC client to execute Shx requests through
 	jsre     *jsre.JSRE   // JavaScript runtime environment running the interpreter
 	prompt   string       // Input prompt prefix string
 	prompter UserPrompter // Input prompter to allow interactive user feedback

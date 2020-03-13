@@ -14,20 +14,20 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package accounts implements high level Hpb account management.
+// Package accounts implements high level Shx account management.
 package accounts
 
 import (
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/blockchain/types"
 	"math/big"
-	"github.com/hpb-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/event/sub"
 )
 
-// Account represents an Hpb account located at a specific location defined
+// Account represents an Shx account located at a specific location defined
 // by the optional URL field.
 type Account struct {
-	Address common.Address `json:"address"` // Hpb account address derived from the key
+	Address common.Address `json:"address"` // Shx account address derived from the key
 	URL     URL            `json:"url"`     // Optional resource locator within a backend
 }
 

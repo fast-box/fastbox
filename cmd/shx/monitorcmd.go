@@ -25,9 +25,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hpb-project/sphinx/cmd/utils"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/cmd/utils"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/network/rpc"
 	"github.com/gizak/termui"
 	"gopkg.in/urfave/cli.v1"
 )
@@ -73,7 +73,7 @@ func monitor(ctx *cli.Context) error {
 		client *rpc.Client
 		err    error
 	)
-	// Attach to an Hpb node over IPC or RPC
+	// Attach to an Shx node over IPC or RPC
 	endpoint := ctx.String(monitorCommandAttachFlag.Name)
 	if client, err = dialRPC(endpoint); err != nil {
 		utils.Fatalf("Unable to attach to shx node: %v", err)

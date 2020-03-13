@@ -23,12 +23,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto/sha3"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/trie"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto/sha3"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/trie"
 )
 
 // stateReq represents a batch of state fetch requests groupped together into

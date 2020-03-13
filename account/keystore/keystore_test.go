@@ -26,9 +26,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/account"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/event/sub"
 )
 
 var testSigData = make([]byte, 32)

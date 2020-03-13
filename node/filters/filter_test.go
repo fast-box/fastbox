@@ -23,13 +23,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/event/sub"
-	"github.com/hpb-project/sphinx/config"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/config"
 )
 
 func makeReceipt(addr common.Address) *types.Receipt {

@@ -24,12 +24,12 @@ import (
 	"time"
 
 	"errors"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/mclock"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/event"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/mclock"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/event"
+	"github.com/shx-project/sphinx/network/p2p/discover"
 	"gopkg.in/fatih/set.v0"
 	"math/big"
 )

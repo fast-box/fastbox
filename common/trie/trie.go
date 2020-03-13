@@ -21,10 +21,10 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/hpb-project/sphinx/common/metrics"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto/sha3"
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/metrics"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto/sha3"
+	"github.com/shx-project/sphinx/common/log"
 )
 
 var (

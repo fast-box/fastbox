@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/common"
 )
 
 const testSectionSize = 4096

@@ -2,11 +2,11 @@ package prometheus
 
 import (
 	"github.com/hashicorp/golang-lru"
-	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/node/db"
+	"github.com/shx-project/sphinx/account"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/node/db"
 	"math/big"
 	"sync"
 	"time"
@@ -76,7 +76,7 @@ func InstancePrometheus() *Prometheus {
 	if nil == insPrometheus {
 		reentryMux.Lock()
 		if nil == insPrometheus {
-			insPrometheus = New(&config.GetHpbConfigInstance().Prometheus, db.GetShxDbInstance())
+			insPrometheus = New(&config.GetShxConfigInstance().Prometheus, db.GetShxDbInstance())
 		}
 		reentryMux.Unlock()
 	}

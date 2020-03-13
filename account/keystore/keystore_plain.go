@@ -22,7 +22,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/common"
 )
 
 type keyStorePlain struct {

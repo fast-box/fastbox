@@ -19,7 +19,7 @@
 package synctrl
 
 import (
-	"github.com/hpb-project/sphinx/common/metrics"
+	"github.com/shx-project/sphinx/common/metrics"
 )
 
 var (

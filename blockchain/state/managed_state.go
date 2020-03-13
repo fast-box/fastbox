@@ -19,8 +19,8 @@ package state
 import (
 	"sync"
 
-	"github.com/hpb-project/sphinx/common"
-	//"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common"
+	//"github.com/shx-project/sphinx/common/log"
 )
 
 type account struct {

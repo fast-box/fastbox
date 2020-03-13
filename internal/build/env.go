@@ -81,7 +81,7 @@ func Env() Environment {
 
 // LocalEnv returns build environment metadata gathered from git.
 func LocalEnv() Environment {
-	env := applyEnvFlags(Environment{Name: "local", Repo: "hpb-project/sphinx"})
+	env := applyEnvFlags(Environment{Name: "local", Repo: "shx-project/sphinx"})
 	if _, err := os.Stat(".git"); err != nil {
 		return env
 	}

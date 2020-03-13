@@ -28,9 +28,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/account"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
 	"gopkg.in/fatih/set.v0"
 )
 

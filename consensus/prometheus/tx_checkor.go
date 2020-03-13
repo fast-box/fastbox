@@ -1,6 +1,6 @@
 package prometheus
 
-import "github.com/hpb-project/sphinx/blockchain/types"
+import "github.com/shx-project/sphinx/blockchain/types"
 
 // step 1. verify tx.
 // step 2. dup tx detect.

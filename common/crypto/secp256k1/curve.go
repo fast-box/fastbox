@@ -37,7 +37,7 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/hpb-project/sphinx/common/math"
+	"github.com/shx-project/sphinx/common/math"
 )
 
 /*

@@ -19,7 +19,7 @@ package shxapi
 import (
 	"sync"
 
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/common"
 )
 
 type AddrLocker struct {

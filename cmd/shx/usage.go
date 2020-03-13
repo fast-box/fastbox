@@ -22,8 +22,8 @@ import (
 	"io"
 	"sort"
 
-	"github.com/hpb-project/sphinx/cmd/utils"
-	"github.com/hpb-project/sphinx/internal/debug"
+	"github.com/shx-project/sphinx/cmd/utils"
+	"github.com/shx-project/sphinx/internal/debug"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -74,7 +74,7 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.RinkebyFlag,
 			utils.DevModeFlag,
 			utils.SyncModeFlag,
-			utils.HpbStatsURLFlag,
+			utils.ShxStatsURLFlag,
 			utils.IdentityFlag,
 			utils.LightServFlag,
 			utils.LightPeersFlag,

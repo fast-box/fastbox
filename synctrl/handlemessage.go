@@ -17,14 +17,14 @@
 package synctrl
 
 import (
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/network/p2p"
-	"github.com/hpb-project/sphinx/node/db"
-	"github.com/hpb-project/sphinx/txpool"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/network/p2p"
+	"github.com/shx-project/sphinx/node/db"
+	"github.com/shx-project/sphinx/txpool"
 	"gopkg.in/fatih/set.v0"
 	"math/big"
 	"sync/atomic"

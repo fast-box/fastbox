@@ -34,13 +34,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/crypto/ecies"
-	"github.com/hpb-project/sphinx/common/crypto/secp256k1"
-	"github.com/hpb-project/sphinx/common/crypto/sha3"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/crypto/ecies"
+	"github.com/shx-project/sphinx/common/crypto/secp256k1"
+	"github.com/shx-project/sphinx/common/crypto/sha3"
+	"github.com/shx-project/sphinx/network/p2p/discover"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/common/log"
 )
 
 const (

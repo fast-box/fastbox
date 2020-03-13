@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/hexutil"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/hexutil"
 )
 
 func (l Log) MarshalJSON() ([]byte, error) {

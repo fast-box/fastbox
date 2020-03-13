@@ -14,18 +14,18 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package consensus implements different Hpb consensus engines.
+// Package consensus implements different Shx consensus engines.
 package consensus
 
 import (
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
 	"gopkg.in/fatih/set.v0"
 
-	//"github.com/hpb-project/sphinx/common/constant"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/network/rpc"
+	//"github.com/shx-project/sphinx/common/constant"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/network/rpc"
 )
 
 // ChainReader defines a small collection of methods needed to access the local
@@ -78,7 +78,7 @@ type Engine interface {
 	// seal place on top.
 	GenBlockWithSig(chain ChainReader, block *types.Block) (*types.Block, error)
 
-	// Author retrieves the Hpb address of the account that minted the given
+	// Author retrieves the Shx address of the account that minted the given
 	// block, which may be different from the header's coinbase if a consensus
 	// engine is based on signatures.
 	Author(header *types.Header) (common.Address, error)

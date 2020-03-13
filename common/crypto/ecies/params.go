@@ -42,7 +42,7 @@ import (
 	"fmt"
 	"hash"
 
-	ethcrypto "github.com/hpb-project/sphinx/common/crypto"
+	ethcrypto "github.com/shx-project/sphinx/common/crypto"
 )
 
 var (

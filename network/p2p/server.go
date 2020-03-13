@@ -14,21 +14,21 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package p2p implements the Hpb p2p network protocols.
+// Package p2p implements the Shx p2p network protocols.
 package p2p
 
 import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/mclock"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/event"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
-	"github.com/hpb-project/sphinx/network/p2p/nat"
-	"github.com/hpb-project/sphinx/network/p2p/netutil"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/mclock"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/event"
+	"github.com/shx-project/sphinx/network/p2p/discover"
+	"github.com/shx-project/sphinx/network/p2p/nat"
+	"github.com/shx-project/sphinx/network/p2p/netutil"
 	"math/rand"
 	"net"
 	"os"

@@ -20,7 +20,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/common"
 )
 
 // Tests that the node iterator indeed walks over the entire database contents.

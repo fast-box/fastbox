@@ -20,7 +20,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/common"
 )
 
 /*

@@ -1,18 +1,18 @@
-// Copyright 2016 The hpb-project Authors
-// This file is part of the hpb-project library.
+// Copyright 2016 The shx-project Authors
+// This file is part of the shx-project library.
 //
-// The hpb-project library is free software: you can redistribute it and/or modify
+// The shx-project library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The hpb-project library is distributed in the hope that it will be useful,
+// The shx-project library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the hpb-project library. If not, see <http://www.gnu.org/licenses/>.
+// along with the shx-project library. If not, see <http://www.gnu.org/licenses/>.
 
 package abi
 
@@ -20,8 +20,8 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/math"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/math"
 )
 
 // packBytesSlice packs the given bytes as [L, V] as the canonical representation

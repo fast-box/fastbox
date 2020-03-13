@@ -22,7 +22,7 @@ import (
 	"reflect"
 	"sync"
 	"time"
-	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/blockchain/types"
 )
 
 // TypeMuxEvent is a time-tagged notification pushed to subscribers.

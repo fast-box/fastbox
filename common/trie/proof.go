@@ -21,10 +21,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto/sha3"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto/sha3"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/rlp"
 )
 
 // Prove constructs a merkle proof for key. The result contains all

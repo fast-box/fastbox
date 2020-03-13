@@ -2,8 +2,8 @@ package types
 
 import (
 	"errors"
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/log"
 	"runtime"
 )
 

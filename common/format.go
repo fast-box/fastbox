@@ -48,7 +48,7 @@ func IsAddrHas0xPre(str string) bool {
 	}
 }
 
-func RexRep0xToHpb(str *string) string {
+func RexRep0xToShx(str *string) string {
 	pat := "(0x)([0-9a-f]{40})([^0-9a-f]{1}|$)(.*)?"
 	if ok, _ := regexp.Match(pat, []byte(*str)); ok {
 
@@ -57,13 +57,13 @@ func RexRep0xToHpb(str *string) string {
 		if len(sub) == 5 {
 			*str = re.ReplaceAllString(*str, "hpb"+string(sub[2])+string(sub[3])+string(sub[4]))
 		}
-		RexRep0xToHpb(str)
+		RexRep0xToShx(str)
 	}
 
 	return *str
 }
 
-func RexRepHpbTo0x(str *string) string {
+func RexRepShxTo0x(str *string) string {
 	pat := "(hpb)([0-9a-f]{40})([^0-9a-f]{1}|$)(.*)?"
 	if ok, _ := regexp.Match(pat, []byte(*str)); ok {
 
@@ -72,7 +72,7 @@ func RexRepHpbTo0x(str *string) string {
 		if len(sub) == 5 {
 			*str = re.ReplaceAllString(*str, "0x"+string(sub[2])+string(sub[3])+string(sub[4]))
 		}
-		RexRepHpbTo0x(str)
+		RexRepShxTo0x(str)
 	}
 
 	return *str

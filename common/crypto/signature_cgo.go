@@ -23,8 +23,8 @@ import (
 	"crypto/elliptic"
 	"fmt"
 
-	"github.com/hpb-project/sphinx/common/crypto/secp256k1"
-	"github.com/hpb-project/sphinx/common/math"
+	"github.com/shx-project/sphinx/common/crypto/secp256k1"
+	"github.com/shx-project/sphinx/common/math"
 )
 
 func Ecrecover(hash, sig []byte) ([]byte, error) {

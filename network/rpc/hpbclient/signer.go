@@ -20,8 +20,8 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
 )
 
 // senderFromServer is a types.Signer that remembers the sender address returned by the RPC

@@ -18,10 +18,10 @@ package bc
 
 import (
 	"fmt"
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/consensus"
 )
 
 // BlockValidator is responsible for validating block headers, uncles and

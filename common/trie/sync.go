@@ -20,7 +20,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/common"
 	"gopkg.in/karalabe/cookiejar.v2/collections/prque"
 )
 

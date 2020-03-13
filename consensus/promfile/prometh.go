@@ -29,9 +29,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -72,7 +72,7 @@ type prometh struct {
 	conf    pconfig // Configurations from previous runs
 
 	servers  map[string]*sshClient // SSH connections to servers to administer
-	services map[string][]string   // Hpb services known to be running on servers
+	services map[string][]string   // Shx services known to be running on servers
 
 	in *bufio.Reader
 }
@@ -215,7 +215,7 @@ func (p *prometh) readPassword() string {
 }
 
 // readAddress reads a single line from stdin, trimming if from spaces and converts
-// it to an Hpb address.
+// it to an Shx address.
 func (p *prometh) readAddress() *common.Address {
 	for {
 		// Read the address from the user
@@ -246,7 +246,7 @@ func (p *prometh) readAddress() *common.Address {
 }
 
 // readDefaultAddress reads a single line from stdin, trimming if from spaces and
-// converts it to an Hpb address. If an empty line is entered, the default
+// converts it to an Shx address. If an empty line is entered, the default
 // value is returned.
 func (p *prometh) readDefaultAddress(def common.Address) common.Address {
 	for {

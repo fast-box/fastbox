@@ -18,9 +18,9 @@ package state
 
 import (
 	"bytes"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/common/trie"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/common/trie"
 )
 
 // NodeIterator is an iterator to traverse the entire state trie post-order,

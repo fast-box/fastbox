@@ -23,19 +23,19 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hpb-project/sphinx/network/p2p"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
+	"github.com/shx-project/sphinx/network/p2p"
+	"github.com/shx-project/sphinx/network/p2p/discover"
 
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/event/sub"
-	"github.com/hpb-project/sphinx/txpool"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/txpool"
 )
 
 const (
@@ -147,7 +147,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 	return worker
 }
 
-func (self *worker) setHpberbase(addr common.Address) {
+func (self *worker) setShxerbase(addr common.Address) {
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	self.coinbase = addr
@@ -479,7 +479,7 @@ func (self *worker) NewMineRound() error {
 	}
 	//log.Info("NewRoundMine", "Finalized",true)
 
-	if config.GetHpbConfigInstance().Node.TestMode == 2 {
+	if config.GetShxConfigInstance().Node.TestMode == 2 {
 		// single test, direct pass confirm.
 		work.confirmed = true
 		go func() {self.confirmCh <- work}()

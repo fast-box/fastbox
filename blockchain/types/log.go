@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/hexutil"
-	"github.com/hpb-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/hexutil"
+	"github.com/shx-project/sphinx/common/rlp"
 )
 
 //go:generate gencodec -type Log -field-override logMarshaling -out gen_log_json.go

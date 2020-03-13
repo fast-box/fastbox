@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/network/rpc"
 )
 
 func TestUnmarshalJSONNewFilterArgs(t *testing.T) {

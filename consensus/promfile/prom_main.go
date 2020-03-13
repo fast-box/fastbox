@@ -22,7 +22,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/log"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -30,7 +30,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "promfile"
-	app.Usage = "assemble and maintain private Hpb networks"
+	app.Usage = "assemble and maintain private Shx networks"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "network",

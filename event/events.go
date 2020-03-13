@@ -1,8 +1,8 @@
 package event
 
 import (
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
 )
 
 type RemovedLogsEvent struct {

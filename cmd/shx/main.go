@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// shx is the official command-line client for Hpb.
+// shx is the official command-line client for Shx.
 package main
 
 import (
@@ -25,15 +25,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hpb-project/sphinx/account"
-	"github.com/hpb-project/sphinx/account/keystore"
-	"github.com/hpb-project/sphinx/cmd/utils"
-	"github.com/hpb-project/sphinx/common/console"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/metrics"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/internal/debug"
-	"github.com/hpb-project/sphinx/node"
+	"github.com/shx-project/sphinx/account"
+	"github.com/shx-project/sphinx/account/keystore"
+	"github.com/shx-project/sphinx/cmd/utils"
+	"github.com/shx-project/sphinx/common/console"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/metrics"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/internal/debug"
+	"github.com/shx-project/sphinx/node"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -96,7 +96,7 @@ var (
 		utils.VMEnableDebugFlag,
 		utils.NetworkIdFlag,
 		utils.RPCCORSDomainFlag,
-		utils.HpbStatsURLFlag,
+		utils.ShxStatsURLFlag,
 		utils.MetricsEnabledFlag,
 		utils.FakePoWFlag,
 		utils.NoCompactionFlag,

@@ -22,9 +22,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/hpb-project/sphinx/cmd/utils"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/network/p2p"
+	"github.com/shx-project/sphinx/cmd/utils"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/network/p2p"
 	"gopkg.in/urfave/cli.v1"
 )
 

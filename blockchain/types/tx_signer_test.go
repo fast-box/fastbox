@@ -4,9 +4,9 @@ import (
 	"testing"
 	"crypto/ecdsa"
 	"math/big"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/common/crypto"
 )
 
 func makeTransaction(nonce uint64, gaslimit, gasprice *big.Int, key *ecdsa.PrivateKey) *Transaction {

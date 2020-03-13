@@ -19,17 +19,17 @@ package node
 import (
 	"time"
 
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/bitutil"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/blockchain/bloombits"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/blockchain"
-	"github.com/hpb-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/bitutil"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/blockchain/bloombits"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/blockchain"
+	"github.com/shx-project/sphinx/blockchain/types"
 )
 
 const (
-	// bloomServiceThreads is the number of goroutines used globally by an Hpb
+	// bloomServiceThreads is the number of goroutines used globally by an Shx
 	// instance to service bloombits lookups for all running filters.
 	bloomServiceThreads = 16
 
@@ -86,7 +86,7 @@ const (
 )
 
 // BloomIndexer implements a bc.ChainIndexer, building up a rotated bloom bits index
-// for the Hpb header bloom filters, permitting blazing fast filtering.
+// for the Shx header bloom filters, permitting blazing fast filtering.
 type BloomIndexer struct {
 	size uint64 // section size to generate bloombits for
 

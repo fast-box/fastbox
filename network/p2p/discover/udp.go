@@ -25,11 +25,11 @@ import (
 	"net"
 	"time"
 
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/network/p2p/nat"
-	"github.com/hpb-project/sphinx/network/p2p/netutil"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/network/p2p/nat"
+	"github.com/shx-project/sphinx/network/p2p/netutil"
 )
 
 const Version = 0x01

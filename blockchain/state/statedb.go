@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package state provides a caching layer atop the Hpb state trie.
+// Package state provides a caching layer atop the Shx state trie.
 package state
 
 import (
@@ -23,12 +23,12 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/crypto"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/common/trie"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/common/trie"
 )
 
 type revision struct {

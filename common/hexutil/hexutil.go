@@ -16,7 +16,7 @@
 
 /*
 Package hexutil implements hex encoding with 0x prefix.
-This encoding is used by the Hpb RPC API to transport binary data in JSON payloads.
+This encoding is used by the Shx RPC API to transport binary data in JSON payloads.
 
 Encoding Rules
 

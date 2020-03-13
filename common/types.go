@@ -24,8 +24,8 @@ import (
 	"reflect"
 
 	"bytes"
-	"github.com/hpb-project/sphinx/common/crypto/sha3"
-	"github.com/hpb-project/sphinx/common/hexutil"
+	"github.com/shx-project/sphinx/common/crypto/sha3"
+	"github.com/shx-project/sphinx/common/hexutil"
 )
 
 const (
@@ -138,7 +138,7 @@ func (h UnprefixedHash) MarshalText() ([]byte, error) {
 
 /////////// Address
 
-// Address represents the 20 byte address of an Hpb account.
+// Address represents the 20 byte address of an Shx account.
 type Address [AddressLength]byte
 
 func BytesToAddress(b []byte) Address {
@@ -151,7 +151,7 @@ func BigToAddress(b *big.Int) Address  { return BytesToAddress(b.Bytes()) }
 func HexToAddress(s string) Address    { return BytesToAddress(FromHex(s)) }
 
 // IsHexAddress verifies whether a string can represent a valid hex-encoded
-// Hpb address or not.
+// Shx address or not.
 func IsHexAddress(s string) bool {
 	if len(s) == 2+2*AddressLength && IsHex(s) {
 		return true
@@ -249,7 +249,7 @@ func (a UnprefixedAddress) MarshalText() ([]byte, error) {
 
 /////////// AddressHash /////////////////////////////////////////////////////////
 
-// Address represents the 20 byte address of an Hpb account.
+// Address represents the 20 byte address of an Shx account.
 
 type AddressHash [AddressHashLength]byte
 

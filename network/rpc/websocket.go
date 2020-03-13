@@ -30,7 +30,7 @@ import (
 	"time"
 
 	"github.com/deckarep/golang-set"
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/log"
 	"golang.org/x/net/websocket"
 )
 

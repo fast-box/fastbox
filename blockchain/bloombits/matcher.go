@@ -25,8 +25,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hpb-project/sphinx/common/bitutil"
-	"github.com/hpb-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/bitutil"
+	"github.com/shx-project/sphinx/common/crypto"
 )
 
 // bloomIndexes represents the bit indexes inside the bloom filter that belong

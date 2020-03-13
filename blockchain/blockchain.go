@@ -26,19 +26,19 @@ import (
 	"time"
 
 	"github.com/hashicorp/golang-lru"
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/mclock"
-	"github.com/hpb-project/sphinx/common/metrics"
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/common/trie"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/event/sub"
-	"github.com/hpb-project/sphinx/node/db"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/mclock"
+	"github.com/shx-project/sphinx/common/metrics"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/common/trie"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/node/db"
 )
 
 var (
@@ -114,7 +114,7 @@ type BlockChain struct {
 // InstanceBlockChain returns the singleton of BlockChain.
 func InstanceBlockChain() *BlockChain {
 	once.Do(func() {
-		bcInstance = NewBlockChain(db.GetShxDbInstance(), &config.GetHpbConfigInstance().BlockChain)
+		bcInstance = NewBlockChain(db.GetShxDbInstance(), &config.GetShxConfigInstance().BlockChain)
 	})
 	return bcInstance
 }
@@ -143,7 +143,7 @@ func (bc *BlockChain) InitWithEngine(engine consensus.Engine) (*BlockChain, erro
 }
 
 // NewBlockChain returns a fully initialised block chain using information
-// available in the database. It initialises the default Hpb Validator and
+// available in the database. It initialises the default Shx Validator and
 // Processor.
 func NewBlockChain(chainDb shxdb.Database, config *config.ChainConfig) *BlockChain {
 	bodyCache, _ := lru.New(bodyCacheLimit)
@@ -168,7 +168,7 @@ func NewBlockChain(chainDb shxdb.Database, config *config.ChainConfig) *BlockCha
 }
 
 // NewBlockChain returns a fully initialised block chain using information
-// available in the database. It initialises the default Hpb Validator and
+// available in the database. It initialises the default Shx Validator and
 // Processor.
 func NewBlockChainWithEngine(chainDb shxdb.Database, config *config.ChainConfig, engine consensus.Engine) (*BlockChain, error) {
 	bodyCache, _ := lru.New(bodyCacheLimit)

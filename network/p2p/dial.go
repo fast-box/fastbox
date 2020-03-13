@@ -23,9 +23,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
-	"github.com/hpb-project/sphinx/network/p2p/netutil"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/network/p2p/discover"
+	"github.com/shx-project/sphinx/network/p2p/netutil"
 )
 
 const (

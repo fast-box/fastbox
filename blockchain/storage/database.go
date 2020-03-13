@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/metrics"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/metrics"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"github.com/syndtr/goleveldb/leveldb/filter"

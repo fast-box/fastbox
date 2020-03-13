@@ -23,9 +23,9 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/hpb-project/sphinx/common/rlp"
-	"github.com/hpb-project/sphinx/event"
-	"github.com/hpb-project/sphinx/network/p2p/discover"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/event"
+	"github.com/shx-project/sphinx/network/p2p/discover"
 )
 
 // message of control

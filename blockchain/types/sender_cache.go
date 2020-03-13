@@ -2,7 +2,7 @@ package types
 
 import (
 	"errors"
-	"github.com/hpb-project/sphinx/common"
+	"github.com/shx-project/sphinx/common"
 	"sync"
 	"sync/atomic"
 	"time"

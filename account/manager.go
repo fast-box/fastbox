@@ -21,7 +21,7 @@ import (
 	"sync"
 
 	"sync/atomic"
-	"github.com/hpb-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/event/sub"
 )
 
 var INSTANCE = atomic.Value{}

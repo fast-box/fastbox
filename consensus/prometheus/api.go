@@ -18,10 +18,10 @@ package prometheus
 
 import (
 	//"fmt"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/consensus"
-	"github.com/hpb-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/network/rpc"
 )
 
 type API struct {

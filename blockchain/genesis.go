@@ -21,14 +21,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/common/hexutil"
-	"github.com/hpb-project/sphinx/common/log"
-	"github.com/hpb-project/sphinx/common/math"
-	"github.com/hpb-project/sphinx/config"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/hexutil"
+	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/math"
+	"github.com/shx-project/sphinx/config"
 	"math/big"
 )
 
@@ -234,7 +234,7 @@ func GenesisBlockForTesting(db shxdb.Database, addr common.Address, balance *big
 	return g.MustCommit(db)
 }
 
-// DefaultGenesisBlock returns the Hpb main net genesis block.
+// DefaultGenesisBlock returns the Shx main net genesis block.
 func DefaultGenesisBlock() *Genesis {
 	return &Genesis{
 		Config:         config.MainnetChainConfig,

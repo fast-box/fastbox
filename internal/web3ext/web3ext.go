@@ -64,8 +64,8 @@ web3._extend({
 ` 
 /*
 new web3._extend.Method({
-			name: 'getHpbNodeSnapAtHash',
-			call: 'prometheus_getHpbNodeSnapAtHash',
+			name: 'getShxNodeSnapAtHash',
+			call: 'prometheus_getShxNodeSnapAtHash',
 			params: 1
 		}),
 		
@@ -94,14 +94,14 @@ web3._extend({
 	property: 'prometheus',
 	methods: [
 		new web3._extend.Method({
-			name: 'getHpbNodeSnap',
-			call: 'prometheus_getHpbNodeSnap',
+			name: 'getShxNodeSnap',
+			call: 'prometheus_getShxNodeSnap',
 			params: 1,
 			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
 		}),
 		new web3._extend.Method({
-			name: 'getHpbNodes',
-			call: 'prometheus_getHpbNodes',
+			name: 'getShxNodes',
+			call: 'prometheus_getShxNodes',
 			params: 1,
 			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
 		}),
@@ -458,8 +458,8 @@ web3._extend({
 			call: 'miner_stop'
 		}),
 		new web3._extend.Method({
-			name: 'setHpberbase',
-			call: 'miner_setHpberbase',
+			name: 'setShxerbase',
+			call: 'miner_setShxerbase',
 			params: 1,
 			inputFormatter: [web3._extend.formatters.inputAddressFormatter]
 		}),

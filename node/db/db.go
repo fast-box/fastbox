@@ -18,9 +18,9 @@ package db
 
 import (
 	"sync/atomic"
-	"github.com/hpb-project/sphinx/blockchain/storage"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/blockchain/storage"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/common/log"
 )
 
 
@@ -56,7 +56,7 @@ func OpenDatabase(name string, cache int, handles int) (shxdb.Database, error) {
 		return DBINSTANCE.Load().(*shxdb.LDBDatabase),nil
 	}
 
-	var cfg = config.GetHpbConfigInstance()
+	var cfg = config.GetShxConfigInstance()
 	if cfg.Node.DataDir == ""{
 		return shxdb.NewMemDatabase()
 	}

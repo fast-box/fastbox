@@ -17,11 +17,11 @@
 package bc
 
 import (
-	"github.com/hpb-project/sphinx/blockchain/state"
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common"
-	"github.com/hpb-project/sphinx/config"
-	"github.com/hpb-project/sphinx/consensus"
+	"github.com/shx-project/sphinx/blockchain/state"
+	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/config"
+	"github.com/shx-project/sphinx/consensus"
 )
 
 // StateProcessor is a basic Processor, which takes care of transitioning
@@ -43,7 +43,7 @@ func NewStateProcessor(config *config.ChainConfig, bc *BlockChain, engine consen
 	}
 }
 
-// Process processes the state changes according to the Hpb rules by running
+// Process processes the state changes according to the Shx rules by running
 // the transaction messages using the statedb.
 //
 // Process returns the receipts and logs accumulated during the process.
