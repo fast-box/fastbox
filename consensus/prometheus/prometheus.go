@@ -34,10 +34,7 @@ func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *typ
 		return consensus.ErrUnknownAncestor
 	}
 
-	header.Time = new(big.Int).Add(parent.Time, new(big.Int).SetUint64(c.config.Period))
-	if header.Time.Int64() < time.Now().Unix() {
-		header.Time = big.NewInt(time.Now().Unix())
-	}
+	header.Time = big.NewInt(time.Now().Unix())
 	header.Difficulty = big.NewInt(1)
 
 	return nil

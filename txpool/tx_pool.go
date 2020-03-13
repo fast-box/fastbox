@@ -39,6 +39,7 @@ var (
 	chanHeadBuffer       = 10
 	maxTransactionSize   = common.StorageSize(32 * 1024)
 	tmpQEvictionInterval = 3 * time.Minute // Time interval to check for evictable tmpQueue transactions
+	maxHandleKnownTxs	 = 2000000
 )
 
 var INSTANCE = atomic.Value{}
@@ -107,7 +108,7 @@ func NewTxPool(config config.TxPoolConfiguration, chainConfig *config.ChainConfi
 }
 
 func (pool *TxPool)KnownTxAdd(hash common.Hash) {
-	if handleKnownTx.Size() >= 2000000 {
+	if handleKnownTx.Size() >= maxHandleKnownTxs {
 		handleKnownTx.Clear()
 	}
 	handleKnownTx.Add(hash)
@@ -276,7 +277,10 @@ func (pool *TxPool) DealTxRoutine() {
 				if pool.verifyTx(tx) {
 					pool.pending.Store(tx.Hash(), tx)
 					pool.queue.Delete(tx.Hash())
-					go pool.txFeed.Send(bc.TxPreEvent{tx}) // send to route tx.
+					if !tx.IsForward() {
+						go pool.txFeed.Send(bc.TxPreEvent{tx}) // send to route tx.
+					}
+
 				} else {
 					pool.invalidTxCh <- tx
 				}
@@ -286,13 +290,15 @@ func (pool *TxPool) DealTxRoutine() {
 }
 
 func (pool *TxPool) AddTx(tx *types.Transaction) error {
-	if err := pool.validateTx(tx); err != nil {
-		return err
-	}
 	if dup := pool.DupTx(tx); dup != nil {
 		return dup
 	}
 	handleKnownTx.Add(tx.Hash())
+
+	if err := pool.validateTx(tx); err != nil {
+		return err
+	}
+
 	select {
 	case pool.fullCh <- tx:
 		log.Trace("AddTx", "tx.Hash", tx.Hash())

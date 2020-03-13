@@ -21,6 +21,8 @@ import (
 	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/consensus"
+	"math/big"
+	"time"
 
 	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/network/rpc"
@@ -48,6 +50,7 @@ func (c *Prometheus) GenBlockWithSig(chain consensus.ChainReader, block *types.B
 
 	c.lock.RUnlock()
 	header.Coinbase = signer
+	header.Time = big.NewInt(time.Now().Unix())
 
 	// signing to get the signature
 	sighash, err := signFn(accounts.Account{Address: signer}, consensus.SigHash(header).Bytes())

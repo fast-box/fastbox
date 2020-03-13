@@ -19,13 +19,9 @@ import "C"
 import (
 	"bytes"
 	"errors"
+	"github.com/hpb-project/sphinx/blockchain/types"
 	"github.com/hpb-project/sphinx/common"
 	"github.com/hpb-project/sphinx/common/crypto"
-	"math/big"
-	"time"
-
-	"github.com/hpb-project/sphinx/blockchain/types"
-	"github.com/hpb-project/sphinx/common/log"
 	"github.com/hpb-project/sphinx/config"
 	"github.com/hpb-project/sphinx/consensus"
 )
@@ -64,11 +60,6 @@ func (c *Prometheus) verifyHeader(chain consensus.ChainReader, header *types.Hea
 	}
 	number := header.Number.Uint64()
 
-	// Don't waste time checking blocks from the future
-	if header.Time.Cmp(new(big.Int).Add(big.NewInt(time.Now().Unix()), new(big.Int).SetUint64(c.config.Period))) > 0 {
-		log.Error("errInvalidChain occur in (c *Prometheus) verifyHeader()", "header.Time", header.Time, "big.NewInt(time.Now().Unix())", big.NewInt(time.Now().Unix()))
-		return consensus.ErrFutureBlock
-	}
 	// Checkpoint blocks need to enforce zero beneficiary
 	checkpoint := (number % consensus.NodeCheckpointInterval) == 0
 
@@ -109,7 +100,7 @@ func (c *Prometheus) verifyCascadingFields(chain consensus.ChainReader, header *
 	if parent == nil || parent.Number.Uint64() != number-1 || parent.Hash() != header.ParentHash {
 		return consensus.ErrUnknownAncestor
 	}
-	if parent.Time.Uint64()+c.config.Period > header.Time.Uint64() {
+	if parent.Time.Uint64() > header.Time.Uint64() {
 		return consensus.ErrInvalidTimestamp
 	}
 
