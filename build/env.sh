@@ -10,7 +10,7 @@ fi
 # Create fake Go workspace if it doesn't exist yet.
 workspace="$PWD/build/workspace"
 root="$PWD"
-hpbdir="$workspace/src/github.com/hpb-project"
+hpbdir="$workspace/src/github.com/shx-project"
 if [ ! -L "$hpbdir/sphinx" ]; then
     mkdir -p "$hpbdir"
     cd "$hpbdir"
