@@ -488,7 +488,7 @@ func (self *worker) NewMineRound() error {
 		self.mux.Post(bc.NewWorkProofEvent{Proof:proof})
 		log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Signature.Hash())
 		// wait confirm.
-		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1)
+		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
 	}
 
 	return nil

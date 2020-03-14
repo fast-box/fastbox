@@ -376,7 +376,7 @@ func TxsPoolLoop() {
 
 	txCap := 2000
 	txs := make([]*types.Transaction, 0, txCap)
-	poolTxsCh = make(chan *types.Transaction, 20000)
+	poolTxsCh = make(chan *types.Transaction, 2000000)
 
 	for {
 		select {
@@ -426,9 +426,10 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 		if txpool.GetTxPool().DupTx(tx) != nil {
 			continue
 		} else {
-			types.ASynSender(signer, tx)
-			tx.SetForward(true) // not need route to other peers.
+
 			go func() {
+				types.Sender(signer, tx)
+				tx.SetForward(true) // not need route to other peers.
 				poolTxsCh <- tx
 			}()
 		}

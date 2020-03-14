@@ -169,7 +169,7 @@ func (pool *TxPool) loop() {
 			}
 		// Handle onChain tx over block count.
 		case <-evict.C:
-			pool.FitOnChain()
+			go pool.FitOnChain()
 
 		//stop signal
 		case <-pool.stopCh:
