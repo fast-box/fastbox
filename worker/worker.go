@@ -211,11 +211,14 @@ func (self *worker) stop() {
 }
 
 func (self *worker) updateTxConfirm() {
+	log.Debug("worker updateTxConfirm, wait txMux")
 	self.txMu.Lock()
 	defer self.txMu.Unlock()
+	log.Debug("worker updateTxConfirm, got txMux")
 	self.updating = true
 	cnt := 0
 	batch := self.chainDb.NewBatch()
+	log.Debug("worker updateTxConfirm, goto updatereceipt")
 	for hash,confirm := range self.txConfirmPool {
 		if cnt > 10000 {
 			break
@@ -231,9 +234,11 @@ func (self *worker) updateTxConfirm() {
 		}
 		cnt++
 	}
+	log.Debug("worker updateTxConfirm, before batch.write")
 	if cnt > 0 {
 		batch.Write()
 	}
+	log.Debug("worker updateTxConfirm, after batch.write", "cnt ",cnt)
 	self.updating = false
 }
 
@@ -294,7 +299,9 @@ func (self *worker) eventListener() {
 						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
 					}
 					// 3. update tx info (tx's signed count)
+					log.Debug("worker get proof, wait txMux to update confirm", "peer", ev.Peer.ID())
 					self.txMu.Lock()
+					log.Debug("worker get proof, got txMux to update confirm", "peer", ev.Peer.ID())
 					for _, tx := range ev.Proof.Txs {
 							// add to unconfirmed tx.
 							if v,ok := self.txConfirmPool[tx.Hash()]; ok {
@@ -307,6 +314,7 @@ func (self *worker) eventListener() {
 							}
 					}
 					self.txMu.Unlock()
+					log.Debug("worker get proof, after update confirm", "peer", ev.Peer.ID())
 				}()
 			}
 		}
