@@ -353,7 +353,7 @@ func (self *worker) CheckNeedStartMine() bool {
 	pending,_ := self.txpool.Pended()
 	delta := now - head.Time.Int64()
 	//log.Info("CheckNeedStartMine", "Head.tm", head.Time.Int64(), "Now", now, "delta", delta)
-	if delta >= int64(self.config.Prometheus.Period) || len(pending) >= minTxsToMine {
+	if (delta >= int64(self.config.Prometheus.Period) || len(pending) >= minTxsToMine) && delta > 0 {
 		return true
 	}
 	return false
