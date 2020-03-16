@@ -214,16 +214,25 @@ func (self *worker) updateTxConfirm() {
 	self.txMu.Lock()
 	defer self.txMu.Unlock()
 	self.updating = true
+	cnt := 0
+	batch := self.chainDb.NewBatch()
 	for hash,confirm := range self.txConfirmPool {
+		if cnt > 10000 {
+			break
+		}
 		if receipt, blockHash, blockNumber, index := bc.GetReceipt(self.chainDb, hash); receipt != nil {
 			// update receipt
 			receipt.ConfirmCount += confirm
-			if err := bc.UpdateTxReceiptWithBlock(self.chainDb, hash, blockHash, blockNumber, index, receipt); err != nil {
+			if err := bc.UpdateTxReceiptWithBlock(batch,self.chainDb, hash, blockHash, blockNumber, index, receipt); err != nil {
 				log.Debug("worker updateTx receipt", "failed", err)
 			} else {
 				delete(self.txConfirmPool,hash)
 			}
 		}
+		cnt++
+	}
+	if cnt > 0 {
+		batch.Write()
 	}
 	self.updating = false
 }
@@ -287,15 +296,6 @@ func (self *worker) eventListener() {
 					// 3. update tx info (tx's signed count)
 					self.txMu.Lock()
 					for _, tx := range ev.Proof.Txs {
-						if receipt, blockHash, blockNumber, index := bc.GetReceipt(self.chainDb, tx.Hash()); receipt != nil {
-							// update receipt
-							receipt.ConfirmCount += 1
-							if err := bc.UpdateTxReceiptWithBlock(self.chainDb, tx.Hash(), blockHash, blockNumber, index, receipt); err != nil {
-								log.Error("worker updateTx receipt", "failed", err)
-							} else {
-								//log.Debug("worker update tx receipt", "hash", tx.Hash(), "count", receipt.ConfirmCount)
-							}
-						} else {
 							// add to unconfirmed tx.
 							if v,ok := self.txConfirmPool[tx.Hash()]; ok {
 								v += 1
@@ -305,7 +305,6 @@ func (self *worker) eventListener() {
 								self.txConfirmPool[tx.Hash()] = 1
 								//log.Debug("worker update tx map", "new hash", tx.Hash(), "count", 1)
 							}
-						}
 					}
 					self.txMu.Unlock()
 				}()

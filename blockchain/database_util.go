@@ -333,9 +333,9 @@ func GetTransaction(db DatabaseReader, hash common.Hash) (*types.Transaction, co
 }
 
 
-func UpdateTxReceiptWithBlock(db shxdb.Database, hash common.Hash, blockHash common.Hash, blockNumber uint64, receiptIndex uint64, receipt *types.Receipt) error {
+func UpdateTxReceiptWithBlock(db shxdb.Putter, rdb DatabaseReader, hash common.Hash, blockHash common.Hash, blockNumber uint64, receiptIndex uint64, receipt *types.Receipt) error {
 	if blockHash != (common.Hash{}) {
-		receipts := GetBlockReceipts(db, blockHash, blockNumber)
+		receipts := GetBlockReceipts(rdb, blockHash, blockNumber)
 		if len(receipts) <= int(receiptIndex) {
 			log.Error("Receipt refereced missing", "number", blockNumber, "hash", blockHash, "index", receiptIndex)
 			return errors.New("receipt refereced missing")
