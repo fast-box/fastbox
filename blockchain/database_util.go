@@ -366,7 +366,7 @@ func UpdateTxReceiptWithBlock(db shxdb.Putter, rdb DatabaseReader, hash common.H
 	}
 }
 
-func UpdateTxReceipt(db shxdb.Database, hash common.Hash, receipt *types.Receipt) error {
+func GetBlockReceiptsByTx(db shxdb.Database, hash common.Hash)(types.Receipts, common.Hash,uint64,error) {
 	// Retrieve the lookup metadata and resolve the receipt from the receipts
 	blockHash, blockNumber, receiptIndex := GetTxLookupEntry(db, hash)
 
@@ -374,31 +374,11 @@ func UpdateTxReceipt(db shxdb.Database, hash common.Hash, receipt *types.Receipt
 		receipts := GetBlockReceipts(db, blockHash, blockNumber)
 		if len(receipts) <= int(receiptIndex) {
 			log.Error("Receipt refereced missing", "number", blockNumber, "hash", blockHash, "index", receiptIndex)
-			return errors.New("receipt refereced missing")
+			return nil, common.Hash{}, 0, errors.New("receipt refereced missing")
 		}
-		// update tx receipt
-		receipts[receiptIndex] = receipt
-
-		// update block receipts.
-
-		// Convert the receipts into their storage form and serialize them
-		storageReceipts := make([]*types.ReceiptForStorage, len(receipts))
-		for i, receipt := range receipts {
-			storageReceipts[i] = (*types.ReceiptForStorage)(receipt)
-		}
-		bytes, err := rlp.EncodeToBytes(storageReceipts)
-		if err != nil {
-			return err
-		}
-		// Store the flattened receipt slice
-		key := append(append(blockReceiptsPrefix, encodeBlockNumber(blockNumber)...), hash.Bytes()...)
-		if err := db.Put(key, bytes); err != nil {
-			log.Crit("Failed to update block receipts", "err", err)
-			return err
-		}
-		return nil
+		return receipts, blockHash, blockNumber, nil
 	} else {
-		return errors.New("not find origin receipt")
+		return nil, common.Hash{}, 0, errors.New("not find origin receipt")
 	}
 }
 

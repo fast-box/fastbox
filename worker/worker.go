@@ -216,23 +216,23 @@ func (self *worker) updateTxConfirm() {
 	defer self.txMu.Unlock()
 	log.Debug("worker updateTxConfirm, got txMux")
 	self.updating = true
-	cnt := 0
 	batch := self.chainDb.NewBatch()
+	cnt := 0
 	log.Debug("worker updateTxConfirm, goto updatereceipt")
-	for hash,confirm := range self.txConfirmPool {
+	for hash,_ := range self.txConfirmPool {
+		if receipts, blockHash, blockNumber, err := bc.GetBlockReceiptsByTx(self.chainDb, hash); err == nil {
+			for _, receipt := range receipts {
+				if confirm,ok := self.txConfirmPool[receipt.TxHash]; ok {
+					cnt++
+					receipt.ConfirmCount += confirm
+					delete(self.txConfirmPool, receipt.TxHash)
+				}
+			}
+			bc.WriteBlockReceipts(batch, blockHash, blockNumber, receipts)
+		}
 		if cnt > 10000 {
 			break
 		}
-		if receipt, blockHash, blockNumber, index := bc.GetReceipt(self.chainDb, hash); receipt != nil {
-			// update receipt
-			receipt.ConfirmCount += confirm
-			if err := bc.UpdateTxReceiptWithBlock(batch,self.chainDb, hash, blockHash, blockNumber, index, receipt); err != nil {
-				log.Debug("worker updateTx receipt", "failed", err)
-			} else {
-				delete(self.txConfirmPool,hash)
-			}
-		}
-		cnt++
 	}
 	log.Debug("worker updateTxConfirm, before batch.write")
 	if cnt > 0 {
