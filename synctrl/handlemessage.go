@@ -423,18 +423,18 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 		p.KnownTxsAdd(tx.Hash())
 
 		log.Debug("SHX profile", "Receive tx ", tx.Hash(), "at time ", time.Now().UnixNano()/1000/1000)
-		tx.SetForward(true)
-		txpool.GetTxPool().AddTx(tx)
-		//signer := txpool.GetTxPool().Signer()
-		//if txpool.GetTxPool().DupTx(tx) != nil {
-		//	continue
-		//} else {
-		//	go func() {
-		//		types.ASynSender(signer, tx)
-		//		tx.SetForward(true) // not need route to other peers.
-		//		poolTxsCh <- tx
-		//	}()
-		//}
+		//tx.SetForward(true)
+		//txpool.GetTxPool().AddTx(tx)
+		signer := txpool.GetTxPool().Signer()
+		if txpool.GetTxPool().DupTx(tx) != nil {
+			continue
+		} else {
+			go func() {
+				types.ASynSender(signer, tx)
+				tx.SetForward(true) // not need route to other peers.
+				poolTxsCh <- tx
+			}()
+		}
 	}
 
 	return nil

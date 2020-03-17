@@ -48,7 +48,7 @@ const (
 	// chainHeadChanSize is the size of channel listening to ChainHeadEvent.
 	chainHeadChanSize = 10
 
-	blockMaxTxs = 8000 * 10
+	blockMaxTxs = 5000 * 10
 	minTxsToMine = 2000
 
 	waitConfirmTimeout = 40 // a proof wait confirm timeout seconds

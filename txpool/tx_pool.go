@@ -298,20 +298,15 @@ func (pool *TxPool) AddTx(tx *types.Transaction) error {
 	}
 	pool.KnownTxAdd(tx.Hash())
 
-	go func(tx *types.Transaction)error{
-		if err := pool.validateTx(tx); err != nil {
-			return err
-		}
-		select {
-		case pool.fullCh <- tx:
-			log.Trace("AddTx", "tx.Hash", tx.Hash())
-		default:
-			return errors.New("tx pool is full")
-		}
-		return nil
-	}(tx)
-
-
+	if err := pool.validateTx(tx); err != nil {
+		return err
+	}
+	select {
+	case pool.fullCh <- tx:
+		log.Trace("AddTx", "tx.Hash", tx.Hash())
+	default:
+		return errors.New("tx pool is full")
+	}
 	return nil
 }
 
