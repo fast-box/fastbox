@@ -383,6 +383,7 @@ func (pool *TxPool) Pending(workid int64, maxtxs int) (pending types.Transaction
 		}
 		tx := v.(*types.Transaction)
 		pending = append(pending, tx)
+		pool.pending.Delete(tx.Hash())
 		i++
 		return true
 	})
