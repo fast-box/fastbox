@@ -421,18 +421,20 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 			return p2p.ErrResp(p2p.ErrDecode, "transaction %d is nil", i)
 		}
 		p.KnownTxsAdd(tx.Hash())
-		log.Debug("SHX profile", "Receive tx ", tx.Hash(), "at time ", time.Now().UnixNano()/1000/1000)
-		signer := txpool.GetTxPool().Signer()
-		if txpool.GetTxPool().DupTx(tx) != nil {
-			continue
-		} else {
 
-			go func() {
-				types.Sender(signer, tx)
-				tx.SetForward(true) // not need route to other peers.
-				poolTxsCh <- tx
-			}()
-		}
+		log.Debug("SHX profile", "Receive tx ", tx.Hash(), "at time ", time.Now().UnixNano()/1000/1000)
+		tx.SetForward(true)
+		txpool.GetTxPool().AddTx(tx)
+		//signer := txpool.GetTxPool().Signer()
+		//if txpool.GetTxPool().DupTx(tx) != nil {
+		//	continue
+		//} else {
+		//	go func() {
+		//		types.ASynSender(signer, tx)
+		//		tx.SetForward(true) // not need route to other peers.
+		//		poolTxsCh <- tx
+		//	}()
+		//}
 	}
 
 	return nil

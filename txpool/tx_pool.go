@@ -293,18 +293,22 @@ func (pool *TxPool) AddTx(tx *types.Transaction) error {
 	if dup := pool.DupTx(tx); dup != nil {
 		return dup
 	}
-	handleKnownTx.Add(tx.Hash())
+	pool.KnownTxAdd(tx.Hash())
 
-	if err := pool.validateTx(tx); err != nil {
-		return err
-	}
+	go func(tx *types.Transaction)error{
+		if err := pool.validateTx(tx); err != nil {
+			return err
+		}
+		select {
+		case pool.fullCh <- tx:
+			log.Trace("AddTx", "tx.Hash", tx.Hash())
+		default:
+			return errors.New("tx pool is full")
+		}
+		return nil
+	}(tx)
 
-	select {
-	case pool.fullCh <- tx:
-		log.Trace("AddTx", "tx.Hash", tx.Hash())
-	default:
-		return errors.New("tx pool is full")
-	}
+
 	return nil
 }
 
