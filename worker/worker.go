@@ -71,6 +71,7 @@ type Work struct {
 	proofs   []*types.ProofState
 	createdAt time.Time
 	id 			int64
+	genCh  	chan error
 	confirmed  bool
 }
 type RoundState byte
@@ -336,6 +337,7 @@ func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error
 		proofs:	   make([]*types.ProofState,0),
 		createdAt: time.Now(),
 		id:			time.Now().UnixNano(),
+		genCh: 		make(chan error,1),
 		confirmed: false,
 	}
 
@@ -485,7 +487,6 @@ func (self *worker) NewMineRound() error {
 	log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Signature.Hash())
 
 	if config.GetShxConfigInstance().Node.TestMode == 2 {
-		work.Block, _ = self.engine.Finalize(self.chain, header, work.state, work.txs, work.proofs, work.receipts)
 		// single test, direct pass confirm.
 		work.confirmed = true
 		go func() {self.confirmCh <- work}()
@@ -495,9 +496,22 @@ func (self *worker) NewMineRound() error {
 		log.Info("worker proof goto wait confirm")
 		// wait confirm.
 		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
-		work.Block, _ = self.engine.Finalize(self.chain, header, work.state, work.txs, work.proofs, work.receipts)
 	}
-	log.Info("worker after engine.Finalize")
+	go func() {
+		if block,err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.proofs, work.receipts); err != nil {
+			work.genCh <- err
+		} else {
+			log.Info("worker after engine.Finalize")
+			if result, err := self.engine.GenBlockWithSig(self.chain, block);err != nil {
+				work.genCh <- err
+			} else {
+				log.Info("worker after engine.GenBlockWithSig")
+				work.Block = result
+				work.genCh <- nil
+			}
+		}
+	}()
+
 
 	return nil
 }
@@ -508,17 +522,18 @@ func (self *worker) FinalMine(work *Work) error {
 		go txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), success)
 	}()
 	if work.confirmed {
+		err := <- work.genCh
+		if err != nil {
+			log.Error("Block sealing failed", "err", err)
+			return err
+		}
+		result := work.Block
 		// 1. gen block with proof and header.
-		if result, err := self.engine.GenBlockWithSig(self.chain, work.Block); result != nil {
+		if result != nil {
 			log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
 				"txs -> ", len(result.Transactions()))
 			log.Debug("SHX profile", "sealed new block number ", result.Number(), "txs", len(result.Transactions()), "at time", time.Now().UnixNano()/1000/1000)
 
-			newhist := append(self.history, result.ProofHash())
-			if len(newhist) > 10 {
-				self.history = make([]common.Hash,10)
-				copy(self.history,newhist[len(newhist)-10:])
-			}
 
 			_, err := self.chain.WriteBlockAndState(result, work.receipts, work.state)
 			if err != nil {
@@ -527,6 +542,12 @@ func (self *worker) FinalMine(work *Work) error {
 			}
 			log.Info("worker writeBlock and state finished")
 			success = true
+
+			newhist := append(self.history, result.ProofHash())
+			if len(newhist) > 10 {
+				self.history = make([]common.Hash,10)
+				copy(self.history,newhist[len(newhist)-10:])
+			}
 
 
 			// Broadcast the block and announce chain insertion event
@@ -543,10 +564,6 @@ func (self *worker) FinalMine(work *Work) error {
 			//
 			//self.chain.PostChainEvents(events, logs)
 
-		} else {
-			if err != nil {
-				log.Error("Block sealing failed", "err", err)
-			}
 		}
 	} else {
 		log.Error("block proof not confirmed")
