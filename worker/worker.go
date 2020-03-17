@@ -72,6 +72,7 @@ type Work struct {
 	createdAt time.Time
 	id 			int64
 	genCh  	chan error
+	writeFinish chan error
 	confirmed  bool
 }
 type RoundState byte
@@ -96,7 +97,7 @@ type worker struct {
 	chainHeadSub sub.Subscription
 
 	confirmCh    chan *Work
-	newRoundCh   chan struct {}
+	newRoundCh   chan *types.Header
 	exitCh 		 chan struct {}
 
 	chain   *bc.BlockChain
@@ -107,6 +108,7 @@ type worker struct {
 
 	currentMu sync.Mutex
 	current   *Work
+	last 	*Work
 	roundState 	RoundState
 
 	unconfirmed *unconfirmedProofs // set of locally mined blocks pending canonicalness confirmations
@@ -132,7 +134,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 		chain:       bc.InstanceBlockChain(),
 		coinbase:    coinbase,
 		exitCh:		 make(chan struct {}),
-		newRoundCh:  make(chan struct {}, 1),
+		newRoundCh:  make(chan *types.Header, 1),
 		roundState:		IDLE,
 		txConfirmPool: make(map[common.Hash]uint64),
 		updating:	false,
@@ -324,8 +326,8 @@ func (self *worker) eventListener() {
 }
 
 // makeCurrent creates a new environment for the current cycle.
-func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error {
-	state, err := self.chain.StateAt(parent.Root())
+func (self *worker) makeCurrent(parent *types.Header, header *types.Header) error {
+	state, err := self.chain.StateAt(parent.Root)
 	if err != nil {
 		return err
 	}
@@ -338,6 +340,7 @@ func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error
 		createdAt: time.Now(),
 		id:			time.Now().UnixNano(),
 		genCh: 		make(chan error,1),
+		writeFinish:make(chan error,1),
 		confirmed: false,
 	}
 
@@ -358,26 +361,32 @@ func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error
 	return nil
 }
 
-func (self *worker) CheckNeedStartMine() bool {
-	head := self.chain.CurrentHeader()
+func (self *worker) CheckNeedStartMine() *types.Header {
+	var head *types.Header
+	if self.last != nil {
+		head = self.last.header
+	} else {
+		head = self.chain.CurrentHeader()
+	}
+
 	now := time.Now().Unix()
 	pending,_ := self.txpool.Pended()
 	delta := now - head.Time.Int64()
 	//log.Info("CheckNeedStartMine", "Head.tm", head.Time.Int64(), "Now", now, "delta", delta)
 	if (delta >= int64(self.config.Prometheus.Period) || len(pending) >= minTxsToMine) && delta > 0 {
-		return true
+		return head
 	}
-	return false
+	return nil
 }
 
 func (self *worker) RoutineMine() {
 	events := self.mux.Subscribe(bc.ProofConfirmEvent{})
 	defer events.Unsubscribe()
-	evict := time.NewTicker(time.Second)
+	evict := time.NewTicker(time.Millisecond * 200)
 	defer evict.Stop()
 
 	self.confirmCh = make(chan *Work)
-	self.newRoundCh = make(chan struct {})
+	self.newRoundCh = make(chan *types.Header)
 	self.unconfirmed = newUnconfirmedProofs(self.confirmCh)
 	go self.unconfirmed.RoutineLoop()
 	for {
@@ -385,15 +394,15 @@ func (self *worker) RoutineMine() {
 		case <-evict.C:
 			log.Info("worker routine check new round")
 			if self.roundState == Failed {
-				go func(){self.newRoundCh <- struct{}{}} ()
+				go func(){self.newRoundCh <- nil} ()
 			} else if self.roundState == IDLE {
-				if self.CheckNeedStartMine() {
-					go func(){self.newRoundCh <- struct{}{}} ()
+				if h := self.CheckNeedStartMine(); h != nil {
+					go func(){self.newRoundCh <- h } ()
 				}
 			} else if self.roundState == Mining {
 				// working is mining.
 			}
-		case _, ok := <-self.newRoundCh:
+		case lastHeader, ok := <-self.newRoundCh:
 			if !ok {
 				return
 			}
@@ -402,7 +411,7 @@ func (self *worker) RoutineMine() {
 			self.wg.Add(1)
 			go func() {
 				defer self.wg.Done()
-				if err := self.NewMineRound(); err != nil {
+				if err := self.NewMineRound(lastHeader); err != nil {
 					self.roundState = Failed
 				} else {
 					self.roundState = Mining
@@ -437,7 +446,7 @@ func (self *worker) RoutineMine() {
 	}
 }
 
-func (self *worker) NewMineRound() error {
+func (self *worker) NewMineRound(parent *types.Header) error {
 	if p2p.PeerMgrInst().GetLocalType() == discover.BootNode {
 		return nil
 	}
@@ -447,10 +456,12 @@ func (self *worker) NewMineRound() error {
 	// 4. commit tx
 	// 5. generate and broad proof
 
-	parent := self.chain.CurrentBlock()
 
 	// make header
-	num := parent.Number()
+	if parent == nil {
+		parent = self.chain.CurrentHeader()
+	}
+	num := parent.Number
 	header := &types.Header{
 		ParentHash: parent.Hash(),
 		Coinbase:self.coinbase,
@@ -458,7 +469,7 @@ func (self *worker) NewMineRound() error {
 		Extra:      self.extra,
 	}
 	// prepare header
-	pstate, _ := self.chain.StateAt(parent.Root())
+	pstate, _ := self.chain.StateAt(parent.Root)
 	if err := self.engine.PrepareBlockHeader(self.chain, header, pstate); err != nil {
 		log.Error("Failed to prepare header for mining", "err", err)
 		return err
@@ -518,8 +529,11 @@ func (self *worker) NewMineRound() error {
 
 func (self *worker) FinalMine(work *Work) error {
 	success := false
+	workend := true
 	defer func() {
-		go txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), success)
+		if workend {
+			go txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), success)
+		}
 	}()
 	if work.confirmed {
 		err := <- work.genCh
@@ -528,43 +542,53 @@ func (self *worker) FinalMine(work *Work) error {
 			return err
 		}
 		result := work.Block
-		// 1. gen block with proof and header.
-		if result != nil {
-			log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
-				"txs -> ", len(result.Transactions()))
-			log.Debug("SHX profile", "sealed new block number ", result.Number(), "txs", len(result.Transactions()), "at time", time.Now().UnixNano()/1000/1000)
+		log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
+			"txs -> ", len(result.Transactions()))
+		log.Debug("SHX profile", "sealed new block number ", result.Number(), "txs", len(result.Transactions()), "at time", time.Now().UnixNano()/1000/1000)
 
-
-			_, err := self.chain.WriteBlockAndState(result, work.receipts, work.state)
+		// wait last block write finished.
+		if self.last != nil {
+			err := <- self.last.writeFinish
+			self.last = nil
 			if err != nil {
-				log.Error("Failed writing block to chain", "err", err)
-				return err
+				// Failed
+				return errors.New("last block write failed")
 			}
-			log.Info("worker writeBlock and state finished")
-			success = true
-
-			newhist := append(self.history, result.ProofHash())
-			if len(newhist) > 10 {
-				self.history = make([]common.Hash,10)
-				copy(self.history,newhist[len(newhist)-10:])
-			}
-
-
-			// Broadcast the block and announce chain insertion event
-			//self.mux.Post(bc.NewMinedBlockEvent{Block: result})
-			//var (
-			//	events []interface{}
-			//	logs   = work.state.Logs()
-			//)
-			//events = append(events, bc.ChainEvent{Block: result, Hash: result.Hash(), Logs: logs})
-			//if stat == bc.CanonStatTy {
-			//	// 2. send event and update txpool.
-			//	events = append(events, bc.ChainHeadEvent{Block: result})
-			//}
-			//
-			//self.chain.PostChainEvents(events, logs)
 
 		}
+		workend = false
+		go func(){
+			self.last = work
+			_, err := self.chain.WriteBlockAndState(result, work.receipts, work.state)
+			log.Info("worker writeBlock and state finished","block",result.NumberU64())
+			if err != nil {
+				go txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), false)
+			} else {
+				go txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), true)
+			}
+			self.last.writeFinish <- err
+		}()
+
+		newhist := append(self.history, result.ProofHash())
+		if len(newhist) > 10 {
+			self.history = make([]common.Hash,10)
+			copy(self.history,newhist[len(newhist)-10:])
+		}
+
+
+		// Broadcast the block and announce chain insertion event
+		//self.mux.Post(bc.NewMinedBlockEvent{Block: result})
+		//var (
+		//	events []interface{}
+		//	logs   = work.state.Logs()
+		//)
+		//events = append(events, bc.ChainEvent{Block: result, Hash: result.Hash(), Logs: logs})
+		//if stat == bc.CanonStatTy {
+		//	// 2. send event and update txpool.
+		//	events = append(events, bc.ChainHeadEvent{Block: result})
+		//}
+		//
+		//self.chain.PostChainEvents(events, logs)
 	} else {
 		log.Error("block proof not confirmed")
 		return errors.New("proof not confirmed")
