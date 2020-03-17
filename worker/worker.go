@@ -70,6 +70,7 @@ type Work struct {
 	receipts []*types.Receipt
 	proofs   []*types.ProofState
 	createdAt time.Time
+	id 			int64
 	confirmed  bool
 }
 type RoundState byte
@@ -334,6 +335,7 @@ func (self *worker) makeCurrent(parent *types.Block, header *types.Header) error
 		header:    header,
 		proofs:	   make([]*types.ProofState,0),
 		createdAt: time.Now(),
+		id:			time.Now().UnixNano(),
 		confirmed: false,
 	}
 
@@ -379,6 +381,7 @@ func (self *worker) RoutineMine() {
 	for {
 		select {
 		case <-evict.C:
+			log.Info("worker routine check new round")
 			if self.roundState == Failed {
 				go func(){self.newRoundCh <- struct{}{}} ()
 			} else if self.roundState == IDLE {
@@ -392,6 +395,7 @@ func (self *worker) RoutineMine() {
 			if !ok {
 				return
 			}
+			log.Info("worker routine start new round")
 			self.roundState = Mining
 			self.wg.Add(1)
 			go func() {
@@ -466,7 +470,7 @@ func (self *worker) NewMineRound() error {
 	}
 	// Create the current work task and check any fork transitions needed
 
-	pending := txpool.GetTxPool().Pending(blockMaxTxs)
+	pending := txpool.GetTxPool().Pending(self.current.id, blockMaxTxs)
 	txs := types.NewTransactionsByPayload(self.current.signer, pending)
 
 	work := self.current
@@ -492,6 +496,7 @@ func (self *worker) NewMineRound() error {
 		go func() {self.confirmCh <- work}()
 	} else {
 		// broadcast proof.
+		log.Info("worker proof goto wait confirm")
 		self.mux.Post(bc.NewWorkProofEvent{Proof:proof})
 		log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Signature.Hash())
 		// wait confirm.
@@ -502,6 +507,10 @@ func (self *worker) NewMineRound() error {
 }
 
 func (self *worker) FinalMine(work *Work) error {
+	success := false
+	defer func() {
+		txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), success)
+	}()
 	if work.confirmed {
 		// 1. gen block with proof and header.
 		if result, err := self.engine.GenBlockWithSig(self.chain, work.Block); result != nil {
@@ -515,26 +524,27 @@ func (self *worker) FinalMine(work *Work) error {
 				copy(self.history,newhist[len(newhist)-10:])
 			}
 
-			stat, err := self.chain.WriteBlockAndState(result, work.receipts, work.state)
+			_, err := self.chain.WriteBlockAndState(result, work.receipts, work.state)
 			if err != nil {
 				log.Error("Failed writing block to chain", "err", err)
 				return err
 			}
+			success = true
+
 
 			// Broadcast the block and announce chain insertion event
-			self.mux.Post(bc.NewMinedBlockEvent{Block: result})
-			var (
-				events []interface{}
-				logs   = work.state.Logs()
-			)
-			//log.Debug("WriteBlockAndState", "Stat", stat)
-			events = append(events, bc.ChainEvent{Block: result, Hash: result.Hash(), Logs: logs})
-			if stat == bc.CanonStatTy {
-				// 2. send event and update txpool.
-				events = append(events, bc.ChainHeadEvent{Block: result})
-			}
-
-			self.chain.PostChainEvents(events, logs)
+			//self.mux.Post(bc.NewMinedBlockEvent{Block: result})
+			//var (
+			//	events []interface{}
+			//	logs   = work.state.Logs()
+			//)
+			//events = append(events, bc.ChainEvent{Block: result, Hash: result.Hash(), Logs: logs})
+			//if stat == bc.CanonStatTy {
+			//	// 2. send event and update txpool.
+			//	events = append(events, bc.ChainHeadEvent{Block: result})
+			//}
+			//
+			//self.chain.PostChainEvents(events, logs)
 
 		} else {
 			if err != nil {

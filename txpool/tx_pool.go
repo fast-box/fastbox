@@ -78,6 +78,7 @@ type TxPool struct {
 	queue          sync.Map //map[txhash]*types.Transaction
 	pending        sync.Map //map[txhash]*types.Transaction
 	onChain        sync.Map //map[txhash]uint64				tx has been inserted to chain
+	working 		sync.Map //map[workid]types.transactions
 	poolBlockCount uint64   //block count pooled in onChain.
 
 	smu sync.RWMutex // mutex for below.
@@ -162,11 +163,13 @@ func (pool *TxPool) loop() {
 	for {
 		select {
 		// Handle ChainHeadEvent
-		case ev := <-pool.chainHeadCh:
-			log.Info("txpool loop, get new block.")
-			if ev.Block != nil {
-				pool.JustPending(ev.Block)
-			}
+		//case ev := <-pool.chainHeadCh:
+		//	log.Info("txpool loop, get new block.")
+		//	if ev.Block != nil {
+		//		pool.JustPending(ev.Block)
+		//	}
+
+
 		// Handle onChain tx over block count.
 		case <-evict.C:
 			go pool.FitOnChain()
@@ -371,8 +374,9 @@ func (pool *TxPool) GetTxByHash(hash common.Hash) *types.Transaction {
 // Pending retrieves all currently processable transactions, groupped by origin
 // account and sorted by nonce. The returned transaction set is a copy and can be
 // freely modified by calling code.
-func (pool *TxPool) Pending(maxtxs int) (pending types.Transactions) {
+func (pool *TxPool) Pending(workid int64, maxtxs int) (pending types.Transactions) {
 	var i = 0
+
 	pool.pending.Range(func(k, v interface{}) bool {
 		if i >= maxtxs {
 			return false
@@ -382,7 +386,28 @@ func (pool *TxPool) Pending(maxtxs int) (pending types.Transactions) {
 		i++
 		return true
 	})
+	if i > 0 {
+		pool.working.Store(workid,pending)
+	}
 	return
+}
+
+func (pool *TxPool)WorkEnded(workid int64, blocknumber uint64, succeed bool) {
+	mining,ok := pool.working.Load(workid)
+	if ok {
+		if txs,yes := mining.(types.Transactions); yes {
+			for _, tx := range txs {
+				if succeed {
+					// append to onChain
+					pool.onChain.Store(tx.Hash(),blocknumber)
+				} else {
+					// append to pending
+					pool.pending.Store(tx.Hash(),tx)
+				}
+			}
+			pool.working.Delete(workid)
+		}
+	}
 }
 
 func (pool *TxPool) Pended() (pending types.Transactions, err error) {
