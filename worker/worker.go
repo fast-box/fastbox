@@ -261,10 +261,10 @@ func (self *worker) eventListener() {
 			//return
 
 		case <-timer.C:
-			timer.Reset(time.Second)
 			if !self.updating {
 				go self.updateTxConfirm()
 			}
+			timer.Reset(time.Second)
 
 		case obj := <-events.Chan():
 			switch ev:= obj.Data.(type) {
@@ -482,26 +482,22 @@ func (self *worker) NewMineRound() error {
 		log.Error("Premine","GenerateProof failed, err", err, "headerNumber", header.Number)
 		return err
 	}
-
-	// Create the new block to seal with the consensus engine
-	if work.Block, err = self.engine.Finalize(self.chain, header, work.state, work.txs, work.proofs, work.receipts); err != nil {
-		log.Error("Failed to finalize block for sealing", "err", err)
-		return err
-	}
-	//log.Info("NewRoundMine", "Finalized",true)
+	log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Signature.Hash())
 
 	if config.GetShxConfigInstance().Node.TestMode == 2 {
+		work.Block, _ = self.engine.Finalize(self.chain, header, work.state, work.txs, work.proofs, work.receipts)
 		// single test, direct pass confirm.
 		work.confirmed = true
 		go func() {self.confirmCh <- work}()
 	} else {
 		// broadcast proof.
-		log.Info("worker proof goto wait confirm")
 		self.mux.Post(bc.NewWorkProofEvent{Proof:proof})
-		log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Signature.Hash())
+		log.Info("worker proof goto wait confirm")
 		// wait confirm.
 		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
+		work.Block, _ = self.engine.Finalize(self.chain, header, work.state, work.txs, work.proofs, work.receipts)
 	}
+	log.Info("worker after engine.Finalize")
 
 	return nil
 }
@@ -509,7 +505,7 @@ func (self *worker) NewMineRound() error {
 func (self *worker) FinalMine(work *Work) error {
 	success := false
 	defer func() {
-		txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), success)
+		go txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), success)
 	}()
 	if work.confirmed {
 		// 1. gen block with proof and header.
@@ -529,6 +525,7 @@ func (self *worker) FinalMine(work *Work) error {
 				log.Error("Failed writing block to chain", "err", err)
 				return err
 			}
+			log.Info("worker writeBlock and state finished")
 			success = true
 
 

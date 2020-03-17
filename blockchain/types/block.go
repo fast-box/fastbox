@@ -190,7 +190,7 @@ func NewBlock(header *Header, txs []*Transaction, proofs []*ProofState, receipts
 		b.header.ReceiptHash = EmptyRootHash
 	} else {
 		b.header.ReceiptHash = DeriveSha(Receipts(receipts))
-		b.header.Bloom = CreateBloom(receipts)
+		//b.header.Bloom =  CreateBloom(receipts)
 	}
 
 	return b
