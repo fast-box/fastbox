@@ -28,12 +28,6 @@ func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *typ
 
 	header.Extra = append(header.Extra, make([]byte, consensus.ExtraSeal)...)
 
-	number := header.Number.Uint64()
-	parent := chain.GetHeader(header.ParentHash, number-1)
-	if parent == nil {
-		return consensus.ErrUnknownAncestor
-	}
-
 	header.Time = big.NewInt(time.Now().Unix())
 	header.Difficulty = big.NewInt(1)
 
