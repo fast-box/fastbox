@@ -61,7 +61,7 @@ type Engine interface {
 	GetNodeProof(addr common.Address) (root common.Hash, err error)
 
 	// GerateProof return a workproof
-	GenerateProof(chain ChainReader, header *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof,error)
+	GenerateProof(chain ChainReader, header *types.Header, parent *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof,error)
 
 	// VerifyProof check the proof from peer is correct, and return new hash.
 	VerifyProof(addr common.Address, initHash common.Hash, proof *types.WorkProof, update bool) error

@@ -43,11 +43,13 @@ func (c *Prometheus)MixHash(first, second common.Hash) common.Hash {
 }
 
 // GenerateProof
-func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof, error) {
+func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.Header,parent *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof, error) {
 	number := header.Number.Uint64()
-	parent := chain.GetHeaderByNumber(number - 1)
+
 	if parent == nil {
-		return nil, errors.New("unknown parent")
+		if parent = chain.GetHeaderByNumber(number - 1); parent == nil {
+			return nil, errors.New("unknown parent")
+		}
 	}
 	lastHash := parent.ProofHash
 

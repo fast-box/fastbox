@@ -490,7 +490,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	work.commitTransactions(self.mux, txs, self.coinbase)
 
 	// generate workproof
-	proof, err := self.engine.GenerateProof(self.chain, self.current.header, work.txs, work.proofs)
+	proof, err := self.engine.GenerateProof(self.chain, self.current.header, parent, work.txs, work.proofs)
 	if err != nil {
 		log.Error("Premine","GenerateProof failed, err", err, "headerNumber", header.Number)
 		return err
