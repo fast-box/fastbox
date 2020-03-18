@@ -348,7 +348,7 @@ func (self *worker) makeCurrent(parent *types.Header, header *types.Header) erro
 	for _, peer := range peers {
 		if peer.RemoteType() == discover.MineNode {
 			proofState := types.ProofState{Addr:peer.Address(), Root:peer.ProofHash()}
-			if root,err := self.engine.GetNodeProof(peer.Address()); err != nil {
+			if root,err := self.engine.GetNodeProof(peer.Address()); err == nil {
 				proofState.Root = root
 			}
 			work.proofs = append(work.proofs, &proofState)

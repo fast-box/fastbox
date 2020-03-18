@@ -481,6 +481,12 @@ func (s *PublicBlockChainAPI) rpcOutputBlock(b *types.Block, inclTx bool, fullTx
 		"transactionsRoot": head.TxHash,
 		"receiptsRoot":     head.ReceiptHash,
 	}
+	states := make(map[string]string)
+	proofs := b.Proofs()
+	for _, s := range proofs {
+		states[s.Addr.String()] = s.Root.String()
+	}
+	fields["proofs"] = states
 
 	if inclTx {
 		formatTx := func(tx *types.Transaction) (interface{}, error) {

@@ -54,9 +54,9 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 	lastHash := parent.ProofHash
 
 	txroot := types.DeriveSha(txs)
-	//proofRoot := types.DeriveSha(proofs)
-	//proofHash := c.MixHash(txroot, proofRoot)
-	proofHash := c.MixHash(lastHash, txroot)
+	proofRoot := types.DeriveSha(proofs)
+	proofHash := c.MixHash(txroot, proofRoot)
+	proofHash = c.MixHash(lastHash, txroot)
 
 	signer, signFn := c.signer, c.signFn
 	sighash, err := signFn(accounts.Account{Address: signer}, proofHash.Bytes())
