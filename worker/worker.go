@@ -340,7 +340,7 @@ func (self *worker) makeCurrent(parent *types.Header, header *types.Header) erro
 		createdAt: time.Now(),
 		id:			time.Now().UnixNano(),
 		genCh: 		make(chan error,1),
-		writeFinish:make(chan error,1),
+		writeFinish:make(chan error),
 		confirmed: false,
 	}
 
@@ -364,7 +364,7 @@ func (self *worker) makeCurrent(parent *types.Header, header *types.Header) erro
 func (self *worker) CheckNeedStartMine() *types.Header {
 	var head *types.Header
 	if self.last != nil {
-		head = self.last.header
+		head = self.last.Block.Header()
 	} else {
 		head = self.chain.CurrentHeader()
 	}
@@ -394,6 +394,7 @@ func (self *worker) RoutineMine() {
 		case <-evict.C:
 			log.Info("worker routine check new round")
 			if self.roundState == Failed {
+				log.Info("round state = failed")
 				go func(){self.newRoundCh <- nil} ()
 			} else if self.roundState == IDLE {
 				if h := self.CheckNeedStartMine(); h != nil {
@@ -413,6 +414,7 @@ func (self *worker) RoutineMine() {
 				defer self.wg.Done()
 				if err := self.NewMineRound(lastHeader); err != nil {
 					self.roundState = Failed
+					log.Info("new mine failed, round state = failed")
 				} else {
 					self.roundState = Mining
 				}
@@ -552,22 +554,23 @@ func (self *worker) FinalMine(work *Work) error {
 			self.last = nil
 			if err != nil {
 				// Failed
+				log.Error("worker got error from last writeFinish","err",err)
 				return errors.New("last block write failed")
 			}
 
 		}
 		workend = false
-		go func(){
+		go func(work *Work){
 			self.last = work
-			_, err := self.chain.WriteBlockAndState(result, work.receipts, work.state)
-			log.Info("worker writeBlock and state finished","block",result.NumberU64())
+			_, err := self.chain.WriteBlockAndState(work.Block, work.receipts, work.state)
+			log.Info("worker writeBlock and state finished","block",work.Block.NumberU64(), "err",err)
 			if err != nil {
 				go txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), false)
 			} else {
 				go txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), true)
 			}
 			self.last.writeFinish <- err
-		}()
+		}(work)
 
 		newhist := append(self.history, result.ProofHash())
 		if len(newhist) > 10 {
