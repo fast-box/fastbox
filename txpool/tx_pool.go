@@ -28,6 +28,7 @@ import (
 	"github.com/shx-project/sphinx/event"
 	"github.com/shx-project/sphinx/event/sub"
 	"gopkg.in/fatih/set.v0"
+	"math/rand"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -40,6 +41,7 @@ var (
 	maxTransactionSize   = common.StorageSize(32 * 1024)
 	tmpQEvictionInterval = 3 * time.Minute // Time interval to check for evictable tmpQueue transactions
 	maxHandleKnownTxs	 = 2000000
+	maxThreadNumber = 4
 )
 
 var INSTANCE = atomic.Value{}
@@ -64,8 +66,9 @@ type TxPool struct {
 	chainHeadSub sub.Subscription
 	chainHeadCh  chan bc.ChainHeadEvent
 
-	fullCh      chan *types.Transaction
-	verifyCh    chan *types.Transaction
+	threadsNum  int
+	fullCh      []chan *types.Transaction
+	verifyCh    []chan *types.Transaction
 	invalidTxCh chan *types.Transaction
 
 	txFeed sub.Feed
@@ -99,11 +102,17 @@ func NewTxPool(config config.TxPoolConfiguration, chainConfig *config.ChainConfi
 		signer:         types.NewQSSigner(chainConfig.ChainId),
 		chainHeadCh:    make(chan bc.ChainHeadEvent, chanHeadBuffer),
 		stopCh:         make(chan struct{}),
-		fullCh:         make(chan *types.Transaction, 1000000),
-		verifyCh:       make(chan *types.Transaction, 100000),
+		threadsNum: 	maxThreadNumber ,
+		fullCh:         make([]chan *types.Transaction, maxThreadNumber ),
+		verifyCh:       make([]chan *types.Transaction, maxThreadNumber ),
 		invalidTxCh:    make(chan *types.Transaction, 100000),
 		poolBlockCount: 100,
 	}
+	for i:=0;i<pool.threadsNum;i++{
+		pool.fullCh[i] = make(chan *types.Transaction, 2000000)
+		pool.verifyCh[i] = make(chan *types.Transaction, 2000000)
+	}
+
 	INSTANCE.Store(pool)
 	return pool
 }
@@ -127,9 +136,12 @@ func (pool *TxPool) Start() {
 	pool.txPreTrigger = event.RegisterTrigger("tx_pool_tx_pre_publisher")
 
 	// start main process loop
-	pool.wg.Add(1)
 	go pool.loop()
-	go pool.DealTxRoutine()
+	for i := 0; i < pool.threadsNum; i++ {
+		go pool.DealTxRoutine(pool.fullCh[i],pool.verifyCh[i])
+	}
+	go pool.dealInvalid()
+
 }
 
 func GetTxPool() *TxPool {
@@ -153,6 +165,7 @@ func (pool *TxPool) Stop() {
 
 //Main process loop.
 func (pool *TxPool) loop() {
+	pool.wg.Add(1)
 	defer pool.wg.Done()
 
 	// Start the stats reporting and transaction eviction tickers
@@ -176,10 +189,27 @@ func (pool *TxPool) loop() {
 
 		//stop signal
 		case <-pool.stopCh:
-			close(pool.fullCh)
-			close(pool.verifyCh)
+			for i:=0; i < pool.threadsNum; i++ {
+				close(pool.fullCh[i])
+				close(pool.verifyCh[i])
+			}
 			pool.dealwg.Wait()
 			return
+		}
+	}
+}
+
+func (pool *TxPool)dealInvalid() {
+	pool.wg.Add(1)
+	defer pool.wg.Done()
+	for {
+		select {
+		case tx, ok := <-pool.invalidTxCh:
+			//go pool.FitOnChain()
+			if !ok {
+				return
+			}
+			log.Trace("txpool got invalid tx", "hash", tx.Hash())
 		}
 	}
 }
@@ -239,9 +269,9 @@ func (pool *TxPool) verifyTx(tx *types.Transaction) bool {
 	return true
 }
 
-func (pool *TxPool) sendToVerify(tx *types.Transaction) error {
+func (pool *TxPool) sendToVerify(tx *types.Transaction,verifyCh chan *types.Transaction) error {
 	select {
-	case pool.verifyCh <- tx:
+	case verifyCh <- tx:
 		log.Trace("tx pool send to verify", "tx.Hash", tx.Hash())
 	default:
 		return errors.New("tx pool verifyCh is full")
@@ -249,19 +279,19 @@ func (pool *TxPool) sendToVerify(tx *types.Transaction) error {
 	return nil
 }
 
-func (pool *TxPool) DealTxRoutine() {
+func (pool *TxPool) DealTxRoutine(fullCh,verifyCh chan *types.Transaction) {
 	pool.dealwg.Add(1)
 	go func() {
 		defer pool.dealwg.Done()
 		for {
 			select {
-			case tx, ok := <-pool.fullCh:
+			case tx, ok := <-fullCh:
 				if !ok {
 					//channel closed.
 					return
 				}
 				pool.queue.Store(tx.Hash(), tx)
-				pool.sendToVerify(tx)
+				pool.sendToVerify(tx,verifyCh)
 			}
 		}
 	}()
@@ -272,7 +302,7 @@ func (pool *TxPool) DealTxRoutine() {
 		defer pool.dealwg.Done()
 		for {
 			select {
-			case tx, ok := <-pool.verifyCh:
+			case tx, ok := <-verifyCh:
 				if !ok {
 					//channel closed.
 					return
@@ -292,22 +322,36 @@ func (pool *TxPool) DealTxRoutine() {
 	}()
 }
 
-func (pool *TxPool) AddTx(tx *types.Transaction) error {
-	if dup := pool.DupTx(tx); dup != nil {
-		return dup
-	}
-	pool.KnownTxAdd(tx.Hash())
-
-	if err := pool.validateTx(tx); err != nil {
-		return err
-	}
+func (pool *TxPool) sendToFull(tx *types.Transaction, fullCh chan *types.Transaction) bool {
 	select {
-	case pool.fullCh <- tx:
-		log.Trace("AddTx", "tx.Hash", tx.Hash())
+	case fullCh <- tx:
+		return false
 	default:
-		return errors.New("tx pool is full")
+		return true
 	}
-	return nil
+	return false
+}
+
+func (pool *TxPool) AddTx(tx *types.Transaction) error {
+	//if dup := pool.DupTx(tx); dup != nil {
+	//	return dup
+	//}
+	//pool.KnownTxAdd(tx.Hash())
+
+	//if err := pool.validateTx(tx); err != nil {
+	//	return err
+	//}
+	start:=rand.Intn(pool.threadsNum)
+	for try:=0; try < pool.threadsNum; try++{
+		index := (start+try)%pool.threadsNum
+		full := pool.sendToFull(tx,pool.fullCh[index])
+		if !full {
+			log.Trace("AddTx", "tx.Hash", tx.Hash())
+			return nil
+		}
+	}
+	log.Trace("AddTx failed", "fullch is full,tx.Hash", tx.Hash())
+	return errors.New("fullch is full")
 }
 
 func (pool *TxPool) AddTxs(txs []*types.Transaction) error {

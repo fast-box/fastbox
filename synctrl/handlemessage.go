@@ -426,7 +426,7 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 		//tx.SetForward(true)
 		//txpool.GetTxPool().AddTx(tx)
 		signer := txpool.GetTxPool().Signer()
-		if txpool.GetTxPool().DupTx(tx) != nil {
+		if false {//txpool.GetTxPool().DupTx(tx) != nil {
 			continue
 		} else {
 			go func() {

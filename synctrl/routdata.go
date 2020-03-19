@@ -208,6 +208,7 @@ func routNativeTx(hash common.Hash, tx *types.Transaction) {
 
 func sendTransactions(peer *p2p.Peer, txs types.Transactions) error {
 	for _, tx := range txs {
+		log.Trace("route ","tx",tx.Hash(),"to peer",peer.String())
 		peer.KnownTxsAdd(tx.Hash())
 	}
 	return p2p.SendData(peer, p2p.TxMsg, txs)

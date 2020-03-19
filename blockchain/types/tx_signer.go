@@ -69,16 +69,21 @@ func Sender(signer Signer, tx *Transaction) (common.Address, error) {
 		// call is not the same as used current, invalidate
 		// the cache.
 		if sigCache.signer.Equal(signer) {
+			log.Debug("types.Sender get from cache.")
 			return sigCache.from, nil
 		}
+		log.Debug("types.Sender have cache but signer not equal.")
+
 	}
 	txhash := tx.Hash()
 	address, err := Sendercache.Get(txhash)
 	if err == nil {
+		log.Debug("types.Sender get from sendercache.")
 		tx.from.Store(sigCache{signer: signer, from: address})
 		return address, nil
 	}
 	addr, err := signer.Sender(tx)
+	log.Debug("types.Sender get from calc.")
 	if err != nil {
 		return common.Address{}, err
 	}

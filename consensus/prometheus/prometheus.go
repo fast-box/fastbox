@@ -7,6 +7,7 @@ import (
 	"github.com/shx-project/sphinx/blockchain/state"
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto/sha3"
 	"github.com/shx-project/sphinx/consensus"
 	"gopkg.in/fatih/set.v0"
 
@@ -34,12 +35,14 @@ func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *typ
 	return nil
 }
 
-func (c *Prometheus)MixHash(first, second common.Hash) common.Hash {
-	var result common.Hash
-	for i := 0; i < common.HashLength; i++ {
-		result[i] = first[i] ^ second[i]
-	}
-	return result
+func (c *Prometheus)MixHash(first, second common.Hash) (h common.Hash) {
+	hw := sha3.NewKeccak256()
+	data := make([]byte,len(first) +len(second))
+	copy(data,first[:])
+	copy(data[len(first):],second[:])
+	hw.Write(data)
+	hw.Sum(h[:0])
+	return
 }
 
 // GenerateProof
@@ -54,9 +57,9 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 	lastHash := parent.ProofHash
 
 	txroot := types.DeriveSha(txs)
-	proofRoot := types.DeriveSha(proofs)
-	proofHash := c.MixHash(txroot, proofRoot)
-	proofHash = c.MixHash(lastHash, txroot)
+	//proofRoot := types.DeriveSha(proofs)
+	//proofHash := c.MixHash(txroot, proofRoot)
+	proofHash := c.MixHash(lastHash, txroot)
 
 	signer, signFn := c.signer, c.signFn
 	sighash, err := signFn(accounts.Account{Address: signer}, proofHash.Bytes())
