@@ -33,7 +33,7 @@ var (
 )
 
 func init() {
-	go Sendercache.KeepFit()
+	//go Sendercache.KeepFit()
 }
 
 func (this *SenderCache) Set(txhash common.Hash, addr common.Address) error {

@@ -35,7 +35,6 @@ var (
 // sigCache is used to cache the derived sender and contains
 // the signer used to derive it.
 type sigCache struct {
-	signer Signer
 	from   common.Address
 }
 
@@ -68,27 +67,15 @@ func Sender(signer Signer, tx *Transaction) (common.Address, error) {
 		// If the signer used to derive from in a previous
 		// call is not the same as used current, invalidate
 		// the cache.
-		if sigCache.signer.Equal(signer) {
-			log.Debug("types.Sender get from cache.")
-			return sigCache.from, nil
-		}
-		log.Debug("types.Sender have cache but signer not equal.")
-
-	}
-	txhash := tx.Hash()
-	address, err := Sendercache.Get(txhash)
-	if err == nil {
-		log.Debug("types.Sender get from sendercache.")
-		tx.from.Store(sigCache{signer: signer, from: address})
-		return address, nil
+		log.Debug("types.Sender get from cache.")
+		return sigCache.from, nil
 	}
 	addr, err := signer.Sender(tx)
 	log.Debug("types.Sender get from calc.")
 	if err != nil {
 		return common.Address{}, err
 	}
-	Sendercache.GetOrSet(txhash, addr)
-	tx.from.Store(sigCache{signer: signer, from: addr})
+	tx.from.Store(sigCache{from: addr})
 
 	return addr, nil
 }
@@ -97,16 +84,9 @@ func ASynSender(signer Signer, tx *Transaction) (common.Address, error) {
 
 	if sc := tx.from.Load(); sc != nil {
 		sigCache := sc.(sigCache)
-		if sigCache.signer.Equal(signer) {
-			return sigCache.from, nil
-		}
+		return sigCache.from, nil
 	}
 
-	asynAddress, err := Sendercache.Get(tx.Hash())
-	if err == nil {
-		tx.from.Store(sigCache{signer: signer, from: asynAddress})
-		return asynAddress, nil
-	}
 	return signer.ASynSender(tx)
 }
 
@@ -134,7 +114,6 @@ func NewQSSigner(chainId *big.Int) QSSigner {
 	if chainId == nil {
 		chainId = new(big.Int)
 	}
-	QSGetInstance().RegisterRecoverPubCallback(qscallback)
 
 	return QSSigner{
 		chainId:    chainId,
@@ -166,7 +145,7 @@ func (s QSSigner) ASynSender(tx *Transaction) (common.Address, error) {
 	}
 	V := new(big.Int).Sub(tx.data.V, s.chainIdMul)
 	V.Sub(V, big8)
-	return ASynrecoverPlain(tx.Hash(), s.Hash(tx), tx.data.R, tx.data.S, V)
+	return ASynrecoverPlain(tx, s.Hash(tx), tx.data.R, tx.data.S, V)
 }
 
 // WithSignature returns a new transaction with the given signature. This signature
@@ -220,7 +199,7 @@ func recoverPlain(sighash common.Hash, R, S, Vb *big.Int) (common.Address, error
 	return addr, nil
 }
 
-func ASynrecoverPlain(txhash common.Hash, sighash common.Hash, R, S, Vb *big.Int) (common.Address, error) {
+func ASynrecoverPlain(tx *Transaction, sighash common.Hash, R, S, Vb *big.Int) (common.Address, error) {
 
 	if Vb.BitLen() > 8 {
 		log.Error("ASynrecoverPlain Vb.BitLen() > 8")
@@ -233,7 +212,7 @@ func ASynrecoverPlain(txhash common.Hash, sighash common.Hash, R, S, Vb *big.Int
 	}
 	r, s := R.Bytes(), S.Bytes()
 
-	err := QSGetInstance().ASyncValidateSign(txhash.Bytes(), sighash.Bytes(), r, s, V)
+	err := QSGetInstance().ASyncValidateSign(tx, sighash.Bytes(), r, s, V)
 	if err != nil {
 		log.Trace("qs validatesign error")
 		return common.Address{}, err
@@ -252,21 +231,4 @@ func deriveChainId(v *big.Int) *big.Int {
 	}
 	v = new(big.Int).Sub(v, big.NewInt(35))
 	return v.Div(v, big.NewInt(2))
-}
-
-func qscallback(rs RecoverPubkey, err error) {
-	if err != nil {
-		log.Error("qscallback validatesign error")
-	}
-	if len(rs.Pub) == 0 || rs.Pub[0] != 4 {
-		log.Error("qscallback invalid public key")
-	}
-
-	var addr = common.Address{}
-	copy(addr[:], crypto.Keccak256(rs.Pub[1:])[12:])
-
-	var comhash common.Hash
-	copy(comhash[0:], rs.TxHash[0:])
-
-	Sendercache.GetOrSet(comhash, addr)
 }
