@@ -113,6 +113,10 @@ func (self *Miner) Stop() {
 	atomic.StoreInt32(&self.shouldStart, 0)
 }
 
+func (self *Miner)SetOpt(maxtxs, peorid int) {
+	self.worker.Setopt(maxtxs,peorid)
+}
+
 func (self *Miner) Mining() bool {
 	return atomic.LoadInt32(&self.mining) > 0
 }

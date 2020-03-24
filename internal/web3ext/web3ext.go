@@ -448,6 +448,11 @@ web3._extend({
 	property: 'miner',
 	methods: [
 		new web3._extend.Method({
+			name: 'setopt',
+			call: 'miner_setOpt',
+			params: 2,
+		}),
+		new web3._extend.Method({
 			name: 'start',
 			call: 'miner_start',
 			params: 1,

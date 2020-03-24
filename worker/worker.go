@@ -48,10 +48,14 @@ const (
 	// chainHeadChanSize is the size of channel listening to ChainHeadEvent.
 	chainHeadChanSize = 10
 
-	blockMaxTxs = 5000 * 10
-	minTxsToMine = 2000
+
 
 	waitConfirmTimeout = 40 // a proof wait confirm timeout seconds
+)
+var (
+	blockMaxTxs = 5000 * 10
+	minTxsToMine = 10000
+	blockPeorid = 2
 )
 
 // Work is the workers current environment and holds
@@ -144,6 +148,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 	worker.txpool = txpool.GetTxPool()
 	worker.chainHeadSub = bc.InstanceBlockChain().SubscribeChainHeadEvent(worker.chainHeadCh)
 	worker.history = append(worker.history, worker.chain.CurrentHeader().ProofHash)
+	blockPeorid = int(config.Prometheus.Period)
 
 	// goto listen the event
 	go worker.eventListener()
@@ -161,6 +166,11 @@ func (self *worker) setExtra(extra []byte) {
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	self.extra = extra
+}
+
+func (self *worker) Setopt(maxtxs,peorid int) {
+	blockPeorid = peorid
+	blockMaxTxs = maxtxs
 }
 
 func (self *worker) pending() (*types.Block, *state.StateDB) {
@@ -373,7 +383,7 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 	pending,_ := self.txpool.Pended()
 	delta := now - head.Time.Int64()
 	//log.Info("CheckNeedStartMine", "Head.tm", head.Time.Int64(), "Now", now, "delta", delta)
-	if (delta >= int64(self.config.Prometheus.Period) || len(pending) >= minTxsToMine) && delta > 0 {
+	if (delta >= int64(blockPeorid) || len(pending) >= minTxsToMine) && delta > 0 {
 		return head
 	}
 	return nil

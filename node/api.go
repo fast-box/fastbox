@@ -106,6 +106,12 @@ func (api *PrivateMinerAPI) Start(threads *int) error {
 	return nil
 }
 
+func (api *PrivateMinerAPI) SetOpt(maxtxs int, peorid int) error {
+	// Set the number of threads if the seal engine supports it
+	api.e.SetOpt(maxtxs,peorid)
+	return nil
+}
+
 // Stop the miner
 func (api *PrivateMinerAPI) Stop() bool {
 	type threaded interface {

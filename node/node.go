@@ -565,6 +565,10 @@ func (s *Node) StartMining(local bool) error {
 	return nil
 }
 
+func (s *Node)SetOpt(maxtxs,peorid int) {
+	s.miner.SetOpt(maxtxs,peorid)
+}
+
 // get all rpc api from modules
 func (n *Node) GetAPI() error {
 	return nil
