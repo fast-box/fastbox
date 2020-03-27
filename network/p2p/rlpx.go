@@ -22,7 +22,6 @@ import (
 	"crypto/cipher"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/hmac"
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
@@ -38,9 +37,9 @@ import (
 	"github.com/shx-project/sphinx/common/crypto/ecies"
 	"github.com/shx-project/sphinx/common/crypto/secp256k1"
 	"github.com/shx-project/sphinx/common/crypto/sha3"
-	"github.com/shx-project/sphinx/network/p2p/discover"
-	"github.com/shx-project/sphinx/common/rlp"
 	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/common/rlp"
+	"github.com/shx-project/sphinx/network/p2p/discover"
 )
 
 const (
@@ -640,7 +639,7 @@ func (rw *rlpxFrameRW) WriteMsg(msg Msg) error {
 		return err
 	}
 	if _, err := io.Copy(rw.conn, msg.Payload); err != nil {
-		log.Debug("rlpx frame write payload","err",err)
+		log.Error("rlpx frame write payload","err",err)
 		return err
 	}
 
@@ -649,50 +648,34 @@ func (rw *rlpxFrameRW) WriteMsg(msg Msg) error {
 
 func (rw *rlpxFrameRW) ReadMsg() (msg Msg, err error) {
 	// read the header
-	headbuf := make([]byte, 32)
+	headbuf := make([]byte, 4)
 	if _, err := io.ReadFull(rw.conn, headbuf); err != nil {
-		log.Debug("rlpx frame read mac","err",err)
+		log.Error("rlpx frame read code head","err",err)
 		return msg, err
 	}
-	// verify header mac
-	shouldMAC := updateMAC(rw.ingressMAC, rw.macCipher, headbuf[:16])
-	if !hmac.Equal(shouldMAC, headbuf[16:]) {
-		return msg, errors.New("bad header MAC")
-	}
-	rw.dec.XORKeyStream(headbuf[:16], headbuf[:16]) // first half is now decrypted
 	fsize := readInt32(headbuf)
-	// ignore protocol type for now
 
-	// read the frame content
-	var rsize = fsize // frame size rounded up to 16 byte boundary
-	if padding := fsize % 16; padding > 0 {
-		rsize += 16 - padding
-	}
-	framebuf := make([]byte, rsize)
+	framebuf := make([]byte, fsize)
 	if _, err := io.ReadFull(rw.conn, framebuf); err != nil {
-		log.Debug("rlpx frame read frame","err",err)
+		log.Error("rlpx frame read code","err",err)
 		return msg, err
 	}
-
-	// read and validate frame MAC. we can re-use headbuf for that.
-	rw.ingressMAC.Write(framebuf)
-	fmacseed := rw.ingressMAC.Sum(nil)
-	if _, err := io.ReadFull(rw.conn, headbuf[:16]); err != nil {
-		return msg, err
-	}
-	shouldMAC = updateMAC(rw.ingressMAC, rw.macCipher, fmacseed)
-	if !hmac.Equal(shouldMAC, headbuf[:16]) {
-		return msg, errors.New("bad frame MAC")
-	}
-
-	// decrypt frame content
-	rw.dec.XORKeyStream(framebuf, framebuf)
-
-	// decode message code
-	content := bytes.NewReader(framebuf[:fsize])
+	content := bytes.NewReader(framebuf)
 	if err := rlp.Decode(content, &msg.Code); err != nil {
 		return msg, err
 	}
+
+	if _, err := io.ReadFull(rw.conn, headbuf); err != nil {
+		log.Error("rlpx frame read payload head","err",err)
+		return msg, err
+	}
+	fsize = readInt32(headbuf)
+	framebuf = make([]byte, fsize)
+	if _, err := io.ReadFull(rw.conn, framebuf); err != nil {
+		log.Error("rlpx frame read payload","err",err)
+		return msg, err
+	}
+	content = bytes.NewReader(framebuf)
 	msg.Size = uint32(content.Len())
 	msg.Payload = content
 
