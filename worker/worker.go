@@ -496,7 +496,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	// Create the current work task and check any fork transitions needed
 
 	pending := txpool.GetTxPool().Pending(self.current.id, blockMaxTxs)
-	txs := types.NewTransactionsByPayload(self.current.signer, pending)
+	txs := types.NewTransactionsByPayload(pending)
 
 	work := self.current
 	work.commitTransactions(self.mux, txs, self.coinbase)

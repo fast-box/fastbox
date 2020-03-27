@@ -67,7 +67,6 @@ func (qs *QSHandle) asyncSoftRecoverPubTask(queue chan *RecoverPubkey) {
 			pub, _ := crypto.Ecrecover(rs.Hash, rs.Sig)
 			var addr = common.Address{}
 			copy(addr[:], crypto.Keccak256(pub[1:])[12:])
-			rs.Tx.from.Store(sigCache{from: addr})
 		}
 	}
 }

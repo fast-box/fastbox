@@ -182,13 +182,13 @@ func (f *Filter) unindexedLogs(ctx context.Context, end uint64) ([]*types.Log, e
 		if header == nil || err != nil {
 			return logs, err
 		}
-		if bloomFilter(header.Bloom, f.addresses, f.topics) {
-			found, err := f.checkMatches(ctx, header)
-			if err != nil {
-				return logs, err
-			}
-			logs = append(logs, found...)
-		}
+		//if bloomFilter(header.Bloom, f.addresses, f.topics) {
+		//	found, err := f.checkMatches(ctx, header)
+		//	if err != nil {
+		//		return logs, err
+		//	}
+		//	logs = append(logs, found...)
+		//}
 	}
 	return logs, nil
 }
@@ -196,19 +196,7 @@ func (f *Filter) unindexedLogs(ctx context.Context, end uint64) ([]*types.Log, e
 // checkMatches checks if the receipts belonging to the given header contain any log events that
 // match the filter criteria. This function is called when the bloom filter signals a potential match.
 func (f *Filter) checkMatches(ctx context.Context, header *types.Header) (logs []*types.Log, err error) {
-	// Get the logs of the block
-	receipts, err := f.backend.GetReceipts(ctx, header.Hash())
-	if err != nil {
-		return nil, err
-	}
-	var unfiltered []*types.Log
-	for _, receipt := range receipts {
-		unfiltered = append(unfiltered, ([]*types.Log)(receipt.Logs)...)
-	}
-	logs = filterLogs(unfiltered, nil, nil, f.addresses, f.topics)
-	if len(logs) > 0 {
-		return logs, nil
-	}
+
 	return nil, nil
 }
 

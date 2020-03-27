@@ -122,7 +122,7 @@ func (b *BloomIndexer) Reset(section uint64) {
 // Process implements bc.ChainIndexerBackend, adding a new header's bloom into
 // the index.
 func (b *BloomIndexer) Process(header *types.Header) {
-	b.gen.AddBloom(uint(header.Number.Uint64()-b.section*b.size), header.Bloom)
+	b.gen.AddBloom(uint(header.Number.Uint64()-b.section*b.size), types.Bloom{})
 	b.head = header.Hash()
 }
 

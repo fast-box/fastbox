@@ -232,11 +232,6 @@ func (pool *TxPool) validateTx(tx *types.Transaction) error {
 		log.Trace("ErrOversizedData maxTransactionSize", "ErrOversizedData", ErrOversizedData)
 		return ErrOversizedData
 	}
-	_, err := types.Sender(pool.signer, tx) // first time get sender.
-	if err != nil {
-		log.Error("validateTx Sender ErrInvalidSender", "ErrInvalidSender", ErrInvalidSender, "tx.hash", tx.Hash())
-		return ErrInvalidSender
-	}
 	return nil
 }
 
@@ -262,10 +257,6 @@ func (pool *TxPool) DupTx(tx *types.Transaction) error {
 }
 
 func (pool *TxPool) verifyTx(tx *types.Transaction) bool {
-	if _, err := types.Sender(pool.signer, tx); err != nil {
-		log.Error("verifyTx Sender ErrInvalidSender", "tx.hash", tx.Hash())
-		return false
-	}
 	return true
 }
 
@@ -467,34 +458,18 @@ func (pool *TxPool) State() *state.ManagedState {
 	return pool.pendingState
 }
 
-func (pool *TxPool) Content() (map[common.Address]types.Transactions, map[common.Address]types.Transactions) {
-	pending := make(map[common.Address]types.Transactions)
-	queued := make(map[common.Address]types.Transactions)
+func (pool *TxPool) Content() (pending,queue types.Transactions) {
 	pool.pending.Range(func(k, v interface{}) bool {
 		tx := v.(*types.Transaction)
-		from,_ := types.Sender(pool.signer,tx)
-		if txs,ok := pending[from]; ok {
-			txs = append(txs, tx)
-		} else {
-			var txs types.Transactions
-			txs = append(txs, tx)
-			pending[from] = txs
-		}
+		pending = append(pending,tx)
 		return true
 	})
 	pool.queue.Range(func(k, v interface{}) bool {
 		tx := v.(*types.Transaction)
-		from,_ := types.Sender(pool.signer,tx)
-		if txs,ok := queued[from]; ok {
-			txs = append(txs, tx)
-		} else {
-			var txs types.Transactions
-			txs = append(txs, tx)
-			queued[from] = txs
-		}
+		queue = append(queue, tx)
 		return true
 	})
-	return pending, queued
+	return
 }
 
 func (pool *TxPool) SubscribeTxPreEvent(ch chan<- bc.TxPreEvent) sub.Subscription {

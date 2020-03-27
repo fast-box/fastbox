@@ -19,19 +19,17 @@
 package filters
 
 import (
-
-	"sync"
-	"fmt"
-	"context"
 	"errors"
+	"fmt"
+	"sync"
 	"time"
 
-	"github.com/shx-project/sphinx/network/rpc"
+	"github.com/shx-project/sphinx/blockchain"
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
-	"github.com/shx-project/sphinx/blockchain"
 	"github.com/shx-project/sphinx/event"
 	"github.com/shx-project/sphinx/event/sub"
+	"github.com/shx-project/sphinx/network/rpc"
 )
 
 // Type determines the kind of filter and is used to put the filter in to
@@ -373,25 +371,25 @@ func (es *EventSystem) lightFilterNewHead(newHeader *types.Header, callBack func
 
 // filter logs of a single header in light client mode
 func (es *EventSystem) lightFilterLogs(header *types.Header, addresses []common.Address, topics [][]common.Hash, remove bool) []*types.Log {
-	if bloomFilter(header.Bloom, addresses, topics) {
-		// Get the logs of the block
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		receipts, err := es.backend.GetReceipts(ctx, header.Hash())
-		if err != nil {
-			return nil
-		}
-		var unfiltered []*types.Log
-		for _, receipt := range receipts {
-			for _, log := range receipt.Logs {
-				logcopy := *log
-				logcopy.Removed = remove
-				unfiltered = append(unfiltered, &logcopy)
-			}
-		}
-		logs := filterLogs(unfiltered, nil, nil, addresses, topics)
-		return logs
-	}
+	//if bloomFilter(header.Bloom, addresses, topics) {
+	//	// Get the logs of the block
+	//	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	//	defer cancel()
+	//	receipts, err := es.backend.GetReceipts(ctx, header.Hash())
+	//	if err != nil {
+	//		return nil
+	//	}
+	//	var unfiltered []*types.Log
+	//	for _, receipt := range receipts {
+	//		for _, log := range receipt.Logs {
+	//			logcopy := *log
+	//			logcopy.Removed = remove
+	//			unfiltered = append(unfiltered, &logcopy)
+	//		}
+	//	}
+	//	logs := filterLogs(unfiltered, nil, nil, addresses, topics)
+	//	return logs
+	//}
 	return nil
 }
 

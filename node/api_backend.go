@@ -148,7 +148,7 @@ func (b *ShxApiBackend) Stats() (pending int, queued int) {
 	return b.hpb.TxPool().Stats()
 }
 
-func (b *ShxApiBackend) TxPoolContent() (map[common.Address]types.Transactions, map[common.Address]types.Transactions) {
+func (b *ShxApiBackend) TxPoolContent() (types.Transactions, types.Transactions) {
 	return b.hpb.TxPool().Content()
 }
 
