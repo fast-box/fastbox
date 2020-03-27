@@ -617,24 +617,24 @@ func newRLPXFrameRW(conn io.ReadWriter, s secrets) *rlpxFrameRW {
 }
 
 func (rw *rlpxFrameRW) WriteMsg(msg Msg) error {
-	headbuf := make([]byte, 4)
+	sizebuf := make([]byte, 4)
 
 	// write header
-	ptype, _ := rlp.EncodeToBytes(msg.Code)
-	fsize := uint32(len(ptype))
-	putInt32(fsize, headbuf)
-	if _, err := rw.conn.Write(headbuf); err != nil {
-		log.Error("rlpx frame write head","err",err)
+	code, _ := rlp.EncodeToBytes(msg.Code)
+	size := uint32(len(code))
+	putInt32(size, sizebuf)
+	if _, err := rw.conn.Write(sizebuf); err != nil {
+		log.Error("rlpx frame write code head","err",err)
 		return err
 	}
-	if _, err := rw.conn.Write(ptype); err != nil {
-		log.Error("rlpx frame write ptype","err",err)
+	if _, err := rw.conn.Write(code); err != nil {
+		log.Error("rlpx frame write code","err",err)
 		return err
 	}
 
-	fsize   =  msg.Size
-	putInt32(fsize, headbuf)
-	if _, err := rw.conn.Write(headbuf); err != nil {
+	size   =  msg.Size
+	putInt32(size, sizebuf)
+	if _, err := rw.conn.Write(sizebuf); err != nil {
 		log.Error("rlpx frame write payload head","err",err)
 		return err
 	}
@@ -648,36 +648,35 @@ func (rw *rlpxFrameRW) WriteMsg(msg Msg) error {
 
 func (rw *rlpxFrameRW) ReadMsg() (msg Msg, err error) {
 	// read the header
-	headbuf := make([]byte, 4)
-	if _, err := io.ReadFull(rw.conn, headbuf); err != nil {
+	sizebuf := make([]byte, 4)
+	if _, err := io.ReadFull(rw.conn, sizebuf); err != nil {
 		log.Error("rlpx frame read code head","err",err)
 		return msg, err
 	}
-	fsize := readInt32(headbuf)
-
-	framebuf := make([]byte, fsize)
-	if _, err := io.ReadFull(rw.conn, framebuf); err != nil {
+	size := readInt32(sizebuf)
+	codebuf := make([]byte, size)
+	if _, err := io.ReadFull(rw.conn, codebuf); err != nil {
 		log.Error("rlpx frame read code","err",err)
 		return msg, err
 	}
-	content := bytes.NewReader(framebuf)
-	if err := rlp.Decode(content, &msg.Code); err != nil {
+	rcode := bytes.NewReader(codebuf)
+	if err := rlp.Decode(rcode, &msg.Code); err != nil {
 		return msg, err
 	}
 
-	if _, err := io.ReadFull(rw.conn, headbuf); err != nil {
+	if _, err := io.ReadFull(rw.conn, sizebuf); err != nil {
 		log.Error("rlpx frame read payload head","err",err)
 		return msg, err
 	}
-	fsize = readInt32(headbuf)
-	framebuf = make([]byte, fsize)
-	if _, err := io.ReadFull(rw.conn, framebuf); err != nil {
+	size = readInt32(sizebuf)
+	payloadbuf := make([]byte, size)
+	if _, err := io.ReadFull(rw.conn, payloadbuf); err != nil {
 		log.Error("rlpx frame read payload","err",err)
 		return msg, err
 	}
-	content = bytes.NewReader(framebuf)
-	msg.Size = uint32(content.Len())
-	msg.Payload = content
+	payload := bytes.NewReader(payloadbuf)
+	msg.Size = uint32(payload.Len())
+	msg.Payload = payload
 
 	return msg, nil
 }
