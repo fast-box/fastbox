@@ -621,51 +621,31 @@ func (rw *rlpxFrameRW) WriteMsg(msg Msg) error {
 	ptype, _ := rlp.EncodeToBytes(msg.Code)
 
 	// write header
-	headbuf := make([]byte, 32)
+	headbuf := make([]byte, 4)
 	fsize := uint32(len(ptype)) + msg.Size
 
 	if fsize > MaxMsgSize {
 		log.Error("Write message size overflows uint24.")
 		return errors.New("message size overflows uint24")
 	}
-	putInt32(fsize, headbuf) // check overflow
-	copy(headbuf[4:], zeroHeader)
-	rw.enc.XORKeyStream(headbuf[:16], headbuf[:16]) // first half is now encrypted
 
-	// write header MAC
-	copy(headbuf[16:], updateMAC(rw.egressMAC, rw.macCipher, headbuf[:16]))
+	putInt32(fsize, headbuf) // check overflow
 	if _, err := rw.conn.Write(headbuf); err != nil {
 		log.Debug("rlpx frame write head","err",err)
 		return err
 	}
 
-	// write encrypted frame, updating the egress MAC hash with
-	// the data written to conn.
-	tee := cipher.StreamWriter{S: rw.enc, W: io.MultiWriter(rw.conn, rw.egressMAC)}
-	if _, err := tee.Write(ptype); err != nil {
-		log.Debug("rlpx frame write tee","err",err)
+	if _, err := rw.conn.Write(ptype); err != nil {
+		log.Debug("rlpx frame write ptype","err",err)
 		return err
 	}
-	if _, err := io.Copy(tee, msg.Payload); err != nil {
+
+	if _, err := io.Copy(rw.conn, msg.Payload); err != nil {
+		log.Debug("rlpx frame write Payload","err",err)
 		return err
 	}
-	if padding := fsize % 16; padding > 0 {
-		if _, err := tee.Write(zero16[:16-padding]); err != nil {
-			log.Debug("rlpx frame write padding","err",err)
-			return err
-		}
-	}
 
-	// write frame MAC. egress MAC hash is up to date because
-	// frame content was written to it as well.
-	fmacseed := rw.egressMAC.Sum(nil)
-	mac := updateMAC(rw.egressMAC, rw.macCipher, fmacseed)
-	_, err := rw.conn.Write(mac)
-	if err != nil{
-		log.Debug("rlpx frame write mac","err",err)
-	}
-
-	return err
+	return nil
 }
 
 func (rw *rlpxFrameRW) ReadMsg() (msg Msg, err error) {
