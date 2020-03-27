@@ -100,24 +100,6 @@ func (s *PublicTxPoolAPI) Content() map[string]map[string]map[string]*RPCTransac
 		"pending": make(map[string]map[string]*RPCTransaction),
 		"queued":  make(map[string]map[string]*RPCTransaction),
 	}
-	pending, queue := s.b.TxPoolContent()
-
-	// Flatten the pending transactions
-	for account, txs := range pending {
-		dump := make(map[string]*RPCTransaction)
-		for _, tx := range txs {
-			dump[fmt.Sprintf("%d", tx.Hash())] = newRPCPendingTransaction(tx)
-		}
-		content["pending"][account.Hex()] = dump
-	}
-	// Flatten the queued transactions
-	for account, txs := range queue {
-		dump := make(map[string]*RPCTransaction)
-		for _, tx := range txs {
-			dump[fmt.Sprintf("%d", tx.Hash())] = newRPCPendingTransaction(tx)
-		}
-		content["queued"][account.Hex()] = dump
-	}
 	return content
 }
 
@@ -277,30 +259,10 @@ func (s *PrivateAccountAPI) LockAccount(addr common.Address) bool {
 // tries to sign it with the key associated with args.To. If the given passwd isn't
 // able to decrypt the key it fails.
 func (s *PrivateAccountAPI) SendTransaction(ctx context.Context, args SendTxArgs, passwd string) (common.Hash, error) {
-	// Look up the wallet containing the requested signer
-	account := accounts.Account{Address: args.From}
-
-	wallet, err := s.am.Find(account)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	// Set some sanity defaults and terminate on failure
-	if err := args.setDefaults(ctx, s.b); err != nil {
-		return common.Hash{}, err
-	}
 	// Assemble the transaction and sign with the wallet
 	tx := args.toTransaction()
 
-	var chainID *big.Int
-	if config := s.b.ChainConfig(); true {
-		chainID = config.ChainId
-	}
-	signed, err := wallet.SignTxWithPassphrase(account, passwd, tx, chainID)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	return submitTransaction(ctx, s.b, signed)
+	return submitTransaction(ctx, s.b, tx)
 }
 
 // signHash is a helper function that calculates a hash for the given message that can be
@@ -470,7 +432,6 @@ func (s *PublicBlockChainAPI) rpcOutputBlock(b *types.Block, inclTx bool, fullTx
 		"number":           (*hexutil.Big)(head.Number),
 		"hash":             b.Hash(),
 		"parentHash":       head.ParentHash,
-		"logsBloom":        head.Bloom,
 		"stateRoot":        head.Root,
 		"miner":            head.Coinbase,
 		"difficulty":       (*hexutil.Big)(head.Difficulty),
@@ -529,20 +490,9 @@ type RPCTransaction struct {
 // newRPCTransaction returns a transaction that will serialize to the RPC
 // representation, with the given location metadata set (if available).
 func newRPCTransaction(tx *types.Transaction, blockHash common.Hash, blockNumber uint64, index uint64) *RPCTransaction {
-	var signer types.Signer = types.QSSigner{}
-	if tx.Protected() {
-		signer = types.NewQSSigner(tx.ChainId())
-	}
-	from, _ := types.Sender(signer, tx)
-	v, r, s := tx.RawSignatureValues()
-
 	result := &RPCTransaction{
-		From:  from,
 		Hash:  tx.Hash(),
 		Input: hexutil.Bytes(tx.Data()),
-		V:     (*hexutil.Big)(v),
-		R:     (*hexutil.Big)(r),
-		S:     (*hexutil.Big)(s),
 	}
 	if blockHash != (common.Hash{}) {
 		result.BlockHash = blockHash
@@ -694,20 +644,11 @@ func (s *PublicTransactionPoolAPI) GetTransactionReceipt(hash common.Hash) (map[
 	}
 	receipt, _, _, _ := bc.GetReceipt(s.b.ChainDb(), hash) // Old receipts don't have the lookup data available
 
-	var signer types.Signer = types.QSSigner{}
-	if tx.Protected() {
-		signer = types.NewQSSigner(tx.ChainId())
-	}
-	from, _ := types.Sender(signer, tx)
-
 	fields := map[string]interface{}{
 		"blockHash":        blockHash,
 		"blockNumber":      hexutil.Uint64(blockNumber),
 		"transactionHash":  hash,
 		"transactionIndex": hexutil.Uint64(index),
-		"from":             from,
-		"logs":             receipt.Logs,
-		"logsBloom":        receipt.Bloom,
 		"confirmCount":		receipt.ConfirmCount,
 	}
 
@@ -716,9 +657,6 @@ func (s *PublicTransactionPoolAPI) GetTransactionReceipt(hash common.Hash) (map[
 		fields["root"] = hexutil.Bytes(receipt.PostState)
 	} else {
 		fields["status"] = hexutil.Uint(receipt.Status)
-	}
-	if receipt.Logs == nil {
-		fields["logs"] = [][]*types.Log{}
 	}
 	return fields, nil
 }
@@ -742,7 +680,6 @@ func (s *PublicTransactionPoolAPI) sign(addr common.Address, tx *types.Transacti
 
 // SendTxArgs represents the arguments to sumbit a new transaction into the transaction pool.
 type SendTxArgs struct {
-	From common.Address `json:"from"`
 	Data hexutil.Bytes  `json:"data"`
 }
 
@@ -766,31 +703,9 @@ func submitTransaction(ctx context.Context, b Backend, tx *types.Transaction) (c
 // SendTransaction creates a transaction for the given argument, sign it and submit it to the
 // transaction pool.
 func (s *PublicTransactionPoolAPI) SendTransaction(ctx context.Context, args SendTxArgs) (common.Hash, error) {
-
-	// Look up the wallet containing the requested signer
-	account := accounts.Account{Address: args.From}
-
-	wallet, err := s.b.AccountManager().Find(account)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	// Set some sanity defaults and terminate on failure
-	if err := args.setDefaults(ctx, s.b); err != nil {
-		return common.Hash{}, err
-	}
 	// Assemble the transaction and sign with the wallet
 	tx := args.toTransaction()
-
-	var chainID *big.Int
-	if config := s.b.ChainConfig(); true {
-		chainID = config.ChainId
-	}
-	signed, err := wallet.SignTx(account, tx, chainID)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	return submitTransaction(ctx, s.b, signed)
+	return submitTransaction(ctx, s.b, tx)
 }
 
 // SendRawTransaction will add the signed transaction to the transaction pool.
@@ -836,13 +751,8 @@ type SignTransactionResult struct {
 // The node needs to have the private key of the account corresponding with
 // the given from address and it needs to be unlocked.
 func (s *PublicTransactionPoolAPI) SignTransaction(ctx context.Context, args SendTxArgs) (*SignTransactionResult, error) {
-	if err := args.setDefaults(ctx, s.b); err != nil {
-		return nil, err
-	}
-	tx, err := s.sign(args.From, args.toTransaction())
-	if err != nil {
-		return nil, err
-	}
+
+	tx := args.toTransaction()
 	data, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		return nil, err
@@ -859,52 +769,14 @@ func (s *PublicTransactionPoolAPI) PendingTransactions() ([]*RPCTransaction, err
 	}
 
 	transactions := make([]*RPCTransaction, 0, len(pending))
-	for _, tx := range pending {
-		var signer types.Signer = types.QSSigner{}
-		if tx.Protected() {
-			signer = types.NewQSSigner(tx.ChainId())
-		}
-		from, _ := types.Sender(signer, tx)
-		if _, err := s.b.AccountManager().Find(accounts.Account{Address: from}); err == nil {
-			transactions = append(transactions, newRPCPendingTransaction(tx))
-		}
-	}
 	return transactions, nil
 }
 
 // Resend accepts an existing transaction and a new gas price and limit. It will remove
 // the given transaction from the pool and reinsert it with the new gas price and limit.
 func (s *PublicTransactionPoolAPI) Resend(ctx context.Context, sendArgs SendTxArgs, gasPrice, gasLimit *hexutil.Big) (common.Hash, error) {
-	if err := sendArgs.setDefaults(ctx, s.b); err != nil {
-		return common.Hash{}, err
-	}
-	matchTx := sendArgs.toTransaction()
-	pending, err := s.b.GetPoolTransactions()
-	if err != nil {
-		return common.Hash{}, err
-	}
 
-	for _, p := range pending {
-		var signer types.Signer = types.QSSigner{}
-		if p.Protected() {
-			signer = types.NewQSSigner(p.ChainId())
-		}
-		wantSigHash := signer.Hash(matchTx)
-
-		if pFrom, err := types.Sender(signer, p); err == nil && pFrom == sendArgs.From && signer.Hash(p) == wantSigHash {
-			// Match. Re-sign and send the transaction.
-			signedTx, err := s.sign(sendArgs.From, sendArgs.toTransaction())
-			if err != nil {
-				return common.Hash{}, err
-			}
-			if err = s.b.SendTx(ctx, signedTx); err != nil {
-				return common.Hash{}, err
-			}
-			return signedTx.Hash(), nil
-		}
-	}
-
-	return common.Hash{}, fmt.Errorf("Transaction %#x not found", matchTx.Hash())
+	return common.Hash{}, fmt.Errorf("Not support")
 }
 
 // PublicDebugAPI is the collection of Shx APIs exposed over the public

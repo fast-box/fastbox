@@ -45,9 +45,6 @@ type Receipt struct {
 	// Consensus fields
 	PostState         []byte   `json:"root"`
 	Status            uint     `json:"status"`
-	Bloom             Bloom    `json:"logsBloom"         gencodec:"required"`
-	Logs              []*Log   `json:"logs"              gencodec:"required"`
-
 	// Not consensus fields
 	//Confirm count by miner node.
 	ConfirmCount 	uint64 `json:"confirmed" gencodec:"required"`
@@ -64,16 +61,12 @@ type receiptMarshaling struct {
 // receiptRLP is the consensus encoding of a receipt.
 type receiptRLP struct {
 	PostStateOrStatus []byte
-	Bloom             Bloom
-	Logs              []*Log
 }
 
 type receiptStorageRLP struct {
 	PostStateOrStatus []byte
-	Bloom             Bloom
 	ConfirmCount 	  uint64
 	TxHash            common.Hash
-	Logs              []*LogForStorage
 }
 
 // NewReceipt creates a barebone transaction receipt, copying the init fields.
@@ -90,7 +83,7 @@ func NewReceipt(root []byte, failed bool) *Receipt {
 // EncodeRLP implements rlp.Encoder, and flattens the consensus fields of a receipt
 // into an RLP stream. If no post state is present, byzantium fork is assumed.
 func (r *Receipt) EncodeRLP(w io.Writer) error {
-	return rlp.Encode(w, &receiptRLP{r.statusEncoding(), r.Bloom, r.Logs})
+	return rlp.Encode(w, &receiptRLP{r.statusEncoding()})
 }
 
 // DecodeRLP implements rlp.Decoder, and loads the consensus fields of a receipt
@@ -103,7 +96,6 @@ func (r *Receipt) DecodeRLP(s *rlp.Stream) error {
 	if err := r.setStatus(dec.PostStateOrStatus); err != nil {
 		return err
 	}
-	r.Bloom, r.Logs = dec.Bloom, dec.Logs
 	return nil
 }
 
@@ -134,9 +126,9 @@ func (r *Receipt) statusEncoding() []byte {
 // String implements the Stringer interface.
 func (r *Receipt) String() string {
 	if len(r.PostState) == 0 {
-		return fmt.Sprintf("receipt{status=%d bloom=%x confirm=%d logs=%v}", r.Status, r.Bloom, r.ConfirmCount, r.Logs)
+		return fmt.Sprintf("receipt{status=%d confirm=%d }", r.Status, r.ConfirmCount)
 	}
-	return fmt.Sprintf("receipt{med=%x bloom=%x confirm=%d logs=%v}", r.PostState, r.Bloom, r.ConfirmCount, r.Logs)
+	return fmt.Sprintf("receipt{med=%x confirm=%d}", r.PostState, r.ConfirmCount)
 }
 
 // ReceiptForStorage is a wrapper around a Receipt that flattens and parses the
@@ -148,13 +140,8 @@ type ReceiptForStorage Receipt
 func (r *ReceiptForStorage) EncodeRLP(w io.Writer) error {
 	enc := &receiptStorageRLP{
 		PostStateOrStatus: (*Receipt)(r).statusEncoding(),
-		Bloom:             r.Bloom,
 		TxHash:            r.TxHash,
 		ConfirmCount:	   r.ConfirmCount,
-		Logs:              make([]*LogForStorage, len(r.Logs)),
-	}
-	for i, log := range r.Logs {
-		enc.Logs[i] = (*LogForStorage)(log)
 	}
 	return rlp.Encode(w, enc)
 }
@@ -168,12 +155,6 @@ func (r *ReceiptForStorage) DecodeRLP(s *rlp.Stream) error {
 	}
 	if err := (*Receipt)(r).setStatus(dec.PostStateOrStatus); err != nil {
 		return err
-	}
-	// Assign the consensus fields
-	r.Bloom = dec.Bloom
-	r.Logs = make([]*Log, len(dec.Logs))
-	for i, log := range dec.Logs {
-		r.Logs[i] = (*Log)(log)
 	}
 	// Assign the implementation fields
 	r.TxHash = dec.TxHash

@@ -53,15 +53,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 		receipt  *types.Receipt
 		errs     error
 		header   = block.Header()
-		allLogs  []*types.Log
 	)
-	synsigner := types.MakeSigner(p.config)
-	go func(txs types.Transactions) {
-		for _, tx := range txs {
-			types.ASynSender(synsigner, tx)
-		}
-	}(block.Transactions())
-
 	// Iterate over and process the individual transactions
 	author, _ := p.engine.Author(block.Header())
 	for i, tx := range block.Transactions() {
@@ -72,7 +64,6 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 			return nil, nil, errs
 		}
 		receipts = append(receipts, receipt)
-		allLogs = append(allLogs, receipt.Logs...)
 	}
 
 	// Finalize the block, applying any consensus engine specific extras.
@@ -80,7 +71,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB) (ty
 		return nil, nil, errfinalize
 	}
 
-	return receipts, allLogs, nil
+	return receipts, nil, nil
 }
 
 // ApplyTransaction attempts to apply a transaction to the given state database

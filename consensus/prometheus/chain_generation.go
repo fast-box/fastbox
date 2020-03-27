@@ -80,7 +80,6 @@ func (c *Prometheus) Author(header *types.Header) (common.Address, error) {
 }
 
 func (c *Prometheus) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, proofs []*types.ProofState, receipts []*types.Receipt) (*types.Block, error) {
-	header.Root = state.IntermediateRoot(true)
 	return types.NewBlock(header, txs, proofs, receipts), nil
 }
 

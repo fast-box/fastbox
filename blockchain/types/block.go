@@ -73,7 +73,6 @@ type Header struct {
 	TxHash      common.Hash    `json:"transactionsRoot" gencodec:"required"`
 	ReceiptHash common.Hash    `json:"receiptsRoot"     gencodec:"required"`
 	ProofRoot   common.Hash	   `json:"proofRoot"		gencodec:"required"`
-	Bloom       Bloom          `json:"logsBloom"        gencodec:"required"`
 	Difficulty  *big.Int       `json:"difficulty"       gencodec:"required"`
 	Number      *big.Int       `json:"number"           gencodec:"required"`
 	Time        *big.Int       `json:"timestamp"        gencodec:"required"`
@@ -96,7 +95,6 @@ func (h *Header) HashNoNonce() common.Hash {
 		h.TxHash,
 		h.ReceiptHash,
 		h.ProofRoot,
-		h.Bloom,
 		h.Difficulty,
 		h.Number,
 		h.Time,
@@ -190,7 +188,6 @@ func NewBlock(header *Header, txs []*Transaction, proofs []*ProofState, receipts
 		b.header.ReceiptHash = EmptyRootHash
 	} else {
 		b.header.ReceiptHash = DeriveSha(Receipts(receipts))
-		//b.header.Bloom =  CreateBloom(receipts)
 	}
 
 	return b
@@ -279,7 +276,6 @@ func (b *Block) Difficulty() *big.Int { return new(big.Int).Set(b.header.Difficu
 func (b *Block) Time() *big.Int       { return new(big.Int).Set(b.header.Time) }
 
 func (b *Block) NumberU64() uint64        { return b.header.Number.Uint64() }
-func (b *Block) Bloom() Bloom             { return b.header.Bloom }
 func (b *Block) Coinbase() common.Address { return b.header.Coinbase }
 func (b *Block) ProofHash() common.Hash { return b.header.ProofHash }
 func (b *Block) ProofRoot() common.Hash { return b.header.ProofRoot }
@@ -366,12 +362,11 @@ func (h *Header) String() string {
 	TxSha		    %x
 	ReceiptSha:	    %x
 	ProofRoot:		%x
-	Bloom:		    %x
 	Difficulty:	    %v
 	Number:		    %v
 	Time:		    %v
 	Extra:		    %s
-]`, h.Hash(), h.ParentHash, h.Coinbase, h.ProofHash, h.Root, h.TxHash, h.ReceiptHash, h.ProofRoot, h.Bloom, h.Difficulty, h.Number, h.Time, h.Extra)
+]`, h.Hash(), h.ParentHash, h.Coinbase, h.ProofHash, h.Root, h.TxHash, h.ReceiptHash, h.ProofRoot, h.Difficulty, h.Number, h.Time, h.Extra)
 }
 
 type Blocks []*Block

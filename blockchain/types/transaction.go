@@ -21,12 +21,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/big"
 	"sync/atomic"
 
 	"encoding/json"
 	"github.com/shx-project/sphinx/common"
-	"github.com/shx-project/sphinx/common/crypto"
 	"github.com/shx-project/sphinx/common/crypto/sha3"
 	"github.com/shx-project/sphinx/common/hexutil"
 	"github.com/shx-project/sphinx/common/rlp"
@@ -39,37 +37,22 @@ var (
 	errNoSigner   = errors.New("missing signing methods")
 )
 
-// deriveSigner makes a *best* guess about which signer to use.
-func deriveSigner(V *big.Int) Signer {
-	return NewQSSigner(deriveChainId(V))
-}
-
 type Transaction struct {
 	data txdata
 	// caches
+	Forward bool
 	hash atomic.Value
 	size atomic.Value
-	from atomic.Value
 }
 
 type txdata struct {
 	Payload []byte `json:"input"    gencodec:"required"`
-
-	// Signature values
-	V *big.Int `json:"v" gencodec:"required"`
-	R *big.Int `json:"r" gencodec:"required"`
-	S *big.Int `json:"s" gencodec:"required"`
-
-	Forward bool `json:"forward" rlp:"-"`
 	// This is only used when marshaling to JSON.
 	Hash *common.Hash `json:"hash" rlp:"-"`
 }
 
 type txdataMarshaling struct {
 	Payload hexutil.Bytes
-	V       *hexutil.Big
-	R       *hexutil.Big
-	S       *hexutil.Big
 }
 
 func NewTransaction(data []byte) *Transaction {
@@ -82,31 +65,9 @@ func newTransaction(data []byte) *Transaction {
 	}
 	d := txdata{
 		Payload: data,
-		V:       new(big.Int),
-		R:       new(big.Int),
-		S:       new(big.Int),
 	}
 
 	return &Transaction{data: d}
-}
-
-// ChainId returns which chain id this transaction was signed for (if at all)
-func (tx *Transaction) ChainId() *big.Int {
-	return deriveChainId(tx.data.V)
-}
-
-// Protected returns whether the transaction is protected from replay protection.
-func (tx *Transaction) Protected() bool {
-	return isProtectedV(tx.data.V)
-}
-
-func isProtectedV(V *big.Int) bool {
-	if V.BitLen() <= 8 {
-		v := V.Uint64()
-		return v != 27 && v != 28
-	}
-	// anything not 27 or 28 are considered unprotected
-	return true
 }
 
 // DecodeRLP implements rlp.Encoder
@@ -128,16 +89,10 @@ func (tx *Transaction) DecodeRLP(s *rlp.Stream) error {
 func (t txdata) MarshalJSON() ([]byte, error) {
 	type txdata struct {
 		Payload hexutil.Bytes `json:"input"    gencodec:"required"`
-		V       *hexutil.Big  `json:"v" gencodec:"required"`
-		R       *hexutil.Big  `json:"r" gencodec:"required"`
-		S       *hexutil.Big  `json:"s" gencodec:"required"`
 		Hash    *common.Hash  `json:"hash" rlp:"-"`
 	}
 	var enc txdata
 	enc.Payload = t.Payload
-	enc.V = (*hexutil.Big)(t.V)
-	enc.R = (*hexutil.Big)(t.R)
-	enc.S = (*hexutil.Big)(t.S)
 	enc.Hash = t.Hash
 	return json.Marshal(&enc)
 }
@@ -145,9 +100,6 @@ func (t txdata) MarshalJSON() ([]byte, error) {
 func (t *txdata) UnmarshalJSON(input []byte) error {
 	type txdata struct {
 		Payload hexutil.Bytes `json:"input"    gencodec:"required"`
-		V       *hexutil.Big  `json:"v" gencodec:"required"`
-		R       *hexutil.Big  `json:"r" gencodec:"required"`
-		S       *hexutil.Big  `json:"s" gencodec:"required"`
 		Hash    *common.Hash  `json:"hash" rlp:"-"`
 	}
 	var dec txdata
@@ -155,18 +107,6 @@ func (t *txdata) UnmarshalJSON(input []byte) error {
 		return err
 	}
 	t.Payload = dec.Payload
-	if dec.V == nil {
-		return errors.New("missing required field 'v' for txdata")
-	}
-	t.V = (*big.Int)(dec.V)
-	if dec.R == nil {
-		return errors.New("missing required field 'r' for txdata")
-	}
-	t.R = (*big.Int)(dec.R)
-	if dec.S == nil {
-		return errors.New("missing required field 's' for txdata")
-	}
-	t.S = (*big.Int)(dec.S)
 	if dec.Hash != nil {
 		t.Hash = dec.Hash
 	}
@@ -186,16 +126,6 @@ func (tx *Transaction) UnmarshalJSON(input []byte) error {
 	if err := dec.UnmarshalJSON(input); err != nil {
 		return err
 	}
-	var V byte
-	if isProtectedV(dec.V) {
-		chainId := deriveChainId(dec.V).Uint64()
-		V = byte(dec.V.Uint64() - 35 - 2*chainId)
-	} else {
-		V = byte(dec.V.Uint64() - 27)
-	}
-	if !crypto.ValidateSignatureValues(V, dec.R, dec.S, false) {
-		return ErrInvalidSig
-	}
 	*tx = Transaction{data: dec}
 	return nil
 }
@@ -203,9 +133,8 @@ func (tx *Transaction) UnmarshalJSON(input []byte) error {
 func (tx *Transaction) Data() []byte     { return common.CopyBytes(tx.data.Payload) }
 func (tx *Transaction) CheckNonce() bool { return true }
 
-func (tx *Transaction) SetFrom(from common.Address) { tx.from.Store(from) }
-func (tx *Transaction) SetForward(forward bool)     { tx.data.Forward = forward }
-func (tx *Transaction) IsForward() bool             { return tx.data.Forward }
+func (tx *Transaction) SetForward(forward bool)     { tx.Forward = forward }
+func (tx *Transaction) IsForward() bool             { return tx.Forward }
 
 func rlpHash(x interface{}) (h common.Hash) {
 	hw := sha3.NewKeccak256()
@@ -245,53 +174,15 @@ func (tx *Transaction) Size() common.StorageSize {
 	return common.StorageSize(c)
 }
 
-// WithSignature returns a new transaction with the given signature.
-// This signature needs to be formatted as described in the yellow paper (v+27).
-func (tx *Transaction) WithSignature(signer Signer, sig []byte) (*Transaction, error) {
-	r, s, v, err := signer.SignatureValues(tx, sig)
-	if err != nil {
-		return nil, err
-	}
-
-	cpy := &Transaction{data: tx.data}
-	cpy.data.R, cpy.data.S, cpy.data.V = r, s, v
-	return cpy, nil
-}
-
-func (tx *Transaction) RawSignatureValues() (*big.Int, *big.Int, *big.Int) {
-	return tx.data.V, tx.data.R, tx.data.S
-}
-
 func (tx *Transaction) String() string {
-	var from string
-	if tx.data.V != nil {
-		// make a best guess about the signer and use that to derive
-		// the sender.
-		signer := deriveSigner(tx.data.V)
-		if f, err := Sender(signer, tx); err != nil { // derive but don't cache
-			from = "[invalid sender: invalid sig]"
-		} else {
-			from = fmt.Sprintf("%x", f[:])
-		}
-	} else {
-		from = "[invalid sender: nil V field]"
-	}
 	enc, _ := rlp.EncodeToBytes(&tx.data)
 	return fmt.Sprintf(`
 	TX(%x)
-	From:     %s
 	Data:     0x%x
-	V:        %#x
-	R:        %#x
-	S:        %#x
 	Hex:      %x
 `,
 		tx.Hash(),
-		from,
 		tx.data.Payload,
-		tx.data.V,
-		tx.data.R,
-		tx.data.S,
 		enc,
 	)
 }
@@ -355,7 +246,7 @@ type TransactionsByPayload struct {
 //
 // Note, the input map is reowned so the caller should not interact any more with
 // if after providing it to the constructor.
-func NewTransactionsByPayload(signer Signer, txs Transactions) *TransactionsByPayload {
+func NewTransactionsByPayload(txs Transactions) *TransactionsByPayload {
 	// Initialize a price based heap with the head transactions
 	heads := make(TxByPayload, 0, len(txs))
 	for _, tx := range txs {

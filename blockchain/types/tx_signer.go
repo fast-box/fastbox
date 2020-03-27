@@ -45,57 +45,12 @@ func MakeSigner(config *config.ChainConfig) Signer {
 
 // SignTx signs the transaction using the given signer and private key
 func SignTx(tx *Transaction, s Signer, prv *ecdsa.PrivateKey) (*Transaction, error) {
-	h := s.Hash(tx)
-	sig, err := crypto.Sign(h[:], prv)
-	if err != nil {
-		return nil, err
-	}
-	return tx.WithSignature(s, sig)
-}
-
-// Sender returns the address derived from the signature (V, R, S) using secp256k1
-// elliptic curve and an error if it failed deriving or upon an incorrect
-// signature.
-//
-// Sender may cache the address, allowing it to be used regardless of
-// signing method. The cache is invalidated if the cached signer does
-// not match the signer used in the current call.
-func Sender(signer Signer, tx *Transaction) (common.Address, error) {
-
-	if sc := tx.from.Load(); sc != nil {
-		sigCache := sc.(sigCache)
-		// If the signer used to derive from in a previous
-		// call is not the same as used current, invalidate
-		// the cache.
-		log.Debug("types.Sender get from cache.")
-		return sigCache.from, nil
-	}
-	addr, err := signer.Sender(tx)
-	log.Debug("types.Sender get from calc.")
-	if err != nil {
-		return common.Address{}, err
-	}
-	tx.from.Store(sigCache{from: addr})
-
-	return addr, nil
-}
-
-func ASynSender(signer Signer, tx *Transaction) (common.Address, error) {
-
-	if sc := tx.from.Load(); sc != nil {
-		sigCache := sc.(sigCache)
-		return sigCache.from, nil
-	}
-
-	return signer.ASynSender(tx)
+	return tx, nil
 }
 
 // Signer encapsulates transaction signature handling. Note that this interface is not a
 // stable API and may change at any time to accommodate new protocol rules.
 type Signer interface {
-	// Sender returns the sender address of the transaction.
-	Sender(tx *Transaction) (common.Address, error)
-	ASynSender(tx *Transaction) (common.Address, error)
 	// SignatureValues returns the raw R, S, V values corresponding to the
 	// given signature.
 	SignatureValues(tx *Transaction, sig []byte) (r, s, v *big.Int, err error)
@@ -129,24 +84,6 @@ func (s QSSigner) Equal(s2 Signer) bool {
 
 var big8 = big.NewInt(8)
 
-func (s QSSigner) Sender(tx *Transaction) (common.Address, error) {
-	if tx.ChainId().Cmp(s.chainId) != 0 {
-		return common.Address{}, ErrInvalidChainId
-	}
-	V := new(big.Int).Sub(tx.data.V, s.chainIdMul)
-	V.Sub(V, big8)
-	return recoverPlain(s.Hash(tx), tx.data.R, tx.data.S, V)
-}
-
-func (s QSSigner) ASynSender(tx *Transaction) (common.Address, error) {
-	if tx.ChainId().Cmp(s.chainId) != 0 {
-		log.Warn("ASynSender tx.Protected()")
-		return common.Address{}, ErrInvalidChainId
-	}
-	V := new(big.Int).Sub(tx.data.V, s.chainIdMul)
-	V.Sub(V, big8)
-	return ASynrecoverPlain(tx, s.Hash(tx), tx.data.R, tx.data.S, V)
-}
 
 // WithSignature returns a new transaction with the given signature. This signature
 // needs to be in the [R || S || V] format where V is 0 or 1.

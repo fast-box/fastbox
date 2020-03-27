@@ -689,20 +689,11 @@ func (bc *BlockChain) Rollback(chain []common.Hash) {
 
 // SetReceiptsData computes all the non-consensus fields of the receipts
 func SetReceiptsData(config *config.ChainConfig, block *types.Block, receipts types.Receipts) {
-	transactions, logIndex := block.Transactions(), uint(0)
+	transactions := block.Transactions()
 
 	for j := 0; j < len(receipts); j++ {
 		// The transaction hash can be retrieved from the transaction itself
 		receipts[j].TxHash = transactions[j].Hash()
-		// The derived log fields can simply be set from the block and transaction
-		for k := 0; k < len(receipts[j].Logs); k++ {
-			receipts[j].Logs[k].BlockNumber = block.NumberU64()
-			receipts[j].Logs[k].BlockHash = block.Hash()
-			receipts[j].Logs[k].TxHash = receipts[j].TxHash
-			receipts[j].Logs[k].TxIndex = uint(j)
-			receipts[j].Logs[k].Index = logIndex
-			logIndex++
-		}
 	}
 }
 
@@ -827,47 +818,15 @@ func (bc *BlockChain) WriteBlockAndState(block *types.Block, receipts []*types.R
 	if err := WriteBlockReceipts(batch, block.Hash(), block.NumberU64(), receipts); err != nil {
 		return NonStatTy, err
 	}
-
-	var breorg bool
-	breorg = false
-	if block.Number().Uint64()%consensus.NodeCheckpointInterval == 199 {
-		breorg = true
-		log.Warn("WriteBlockAndState breorg is true", "block number", block.Number())
-	}
 	// If the total difficulty is higher than our known, add it to the canonical chain
 	// Second clause in the if statement reduces the vulnerability to selfish mining.
 	// Please refer to http://www.cs.cornell.edu/~ie53/publications/btcProcFC.pdf
 	if externTd.Cmp(localTd) > 0 || (externTd.Cmp(localTd) == 0 &&
-		block.Header().Coinbase.Big().Cmp(bc.currentBlock.Header().Coinbase.Big()) > 0) || breorg {
+		block.Header().Coinbase.Big().Cmp(bc.currentBlock.Header().Coinbase.Big()) > 0){
 
-		if false || breorg {
-			var newBlock = block
-			if block.Number().Uint64() <= bc.currentBlock.Number().Uint64() {
-				var localblock = bc.GetBlockByNumber(block.NumberU64())
-				//find the ancestor; if the block that is the middle block of the input chain is a local CanonStatTy block, some bad thing maybe happen
-				for newBlock != nil && localblock != nil && newBlock.Hash() != localblock.Hash() {
-					newBlock = bc.GetBlock(newBlock.ParentHash(), newBlock.NumberU64()-1)
-					localblock = bc.GetBlockByNumber(newBlock.NumberU64())
-				}
-			} else {
-				var localblock = bc.currentBlock
-				//find the ancestor; if the block that is the middle block of the input chain is a local CanonStatTy block, some bad thing maybe happen
-				for newBlock != nil && localblock != nil && newBlock.Hash() != localblock.Hash() {
-					newBlock = bc.GetBlock(newBlock.ParentHash(), newBlock.NumberU64()-1)
-					if newBlock.NumberU64() <= localblock.NumberU64() {
-						localblock = bc.GetBlockByNumber(newBlock.NumberU64())
-					}
-				}
-			}
-			bc.currentBlock = newBlock
-
-		}
 		// Reorganise the chain if the parent is not the head block
 		if block.ParentHash() != bc.currentBlock.Hash() {
-			log.Warn("execute reorg", "current block number", bc.currentBlock.Number(), "input block number", block.Number())
-			if err := bc.reorg(bc.currentBlock, block); err != nil {
-				return NonStatTy, err
-			}
+			return NonStatTy, err
 		}
 		// Write the positional metadata for transaction and receipt lookups
 		if err := WriteTxLookupEntries(batch, block); err != nil {
@@ -1109,111 +1068,6 @@ func countTransactions(chain []*types.Block) (c int) {
 		c += len(b.Transactions())
 	}
 	return c
-}
-
-// reorgs takes two blocks, an old chain and a new chain and will reconstruct the blocks and inserts them
-// to be part of the new canonical chain and accumulates potential missing transactions and post an
-// event about them
-func (bc *BlockChain) reorg(oldBlock, newBlock *types.Block) error {
-	var (
-		newChain    types.Blocks
-		oldChain    types.Blocks
-		commonBlock *types.Block
-		deletedTxs  types.Transactions
-		deletedLogs []*types.Log
-		// collectLogs collects the logs that were generated during the
-		// processing of the block that corresponds with the given hash.
-		// These logs are later announced as deleted.
-		collectLogs = func(h common.Hash) {
-			// Coalesce logs and set 'Removed'.
-			receipts := GetBlockReceipts(bc.chainDb, h, bc.hc.GetBlockNumber(h))
-			for _, receipt := range receipts {
-				for _, log := range receipt.Logs {
-					del := *log
-					del.Removed = true
-					deletedLogs = append(deletedLogs, &del)
-				}
-			}
-		}
-	)
-
-	// first reduce whoever is higher bound
-	if oldBlock.NumberU64() > newBlock.NumberU64() {
-		// reduce old chain
-		for ; oldBlock != nil && oldBlock.NumberU64() != newBlock.NumberU64(); oldBlock = bc.GetBlock(oldBlock.ParentHash(), oldBlock.NumberU64()-1) {
-			oldChain = append(oldChain, oldBlock)
-			deletedTxs = append(deletedTxs, oldBlock.Transactions()...)
-
-			collectLogs(oldBlock.Hash())
-		}
-	} else {
-		// reduce new chain and append new chain blocks for inserting later on
-		for ; newBlock != nil && newBlock.NumberU64() != oldBlock.NumberU64(); newBlock = bc.GetBlock(newBlock.ParentHash(), newBlock.NumberU64()-1) {
-			newChain = append(newChain, newBlock)
-		}
-	}
-	if oldBlock == nil {
-		return fmt.Errorf("Invalid old chain")
-	}
-	if newBlock == nil {
-		return fmt.Errorf("Invalid new chain")
-	}
-
-	for {
-		if oldBlock.Hash() == newBlock.Hash() {
-			commonBlock = oldBlock
-			break
-		}
-
-		oldChain = append(oldChain, oldBlock)
-		newChain = append(newChain, newBlock)
-		deletedTxs = append(deletedTxs, oldBlock.Transactions()...)
-		collectLogs(oldBlock.Hash())
-
-		oldBlock, newBlock = bc.GetBlock(oldBlock.ParentHash(), oldBlock.NumberU64()-1), bc.GetBlock(newBlock.ParentHash(), newBlock.NumberU64()-1)
-		if oldBlock == nil {
-			return fmt.Errorf("Invalid old chain")
-		}
-		if newBlock == nil {
-			return fmt.Errorf("Invalid new chain")
-		}
-	}
-	// Ensure the user sees large reorgs
-	if len(oldChain) > 0 && len(newChain) > 0 {
-		logFn := log.Debug
-		if len(oldChain) > 63 {
-			logFn = log.Warn
-		}
-		logFn("Chain split detected", "number", commonBlock.Number(), "hash", commonBlock.Hash(),
-			"drop", len(oldChain), "dropfrom", oldChain[0].Hash(), "add", len(newChain), "addfrom", newChain[0].Hash())
-	} else {
-		log.Error("old and new Chain length", "len(oldChain)", len(oldChain), "len(newChain)", len(newChain))
-		log.Error("Impossible reorg, please file an issue", "oldnum", oldBlock.Number(), "oldhash", oldBlock.Hash(), "newnum", newBlock.Number(), "newhash", newBlock.Hash())
-	}
-	var addedTxs types.Transactions
-	// insert blocks. Order does not matter. Last block will be written in ImportChain itself which creates the new head properly
-	for _, block := range newChain {
-		// insert the block in the canonical way, re-writing history
-		bc.insert(block)
-		// write lookup entries for hash based transaction/receipt searches
-		if err := WriteTxLookupEntries(bc.chainDb, block); err != nil {
-			return err
-		}
-		addedTxs = append(addedTxs, block.Transactions()...)
-	}
-
-	// calculate the difference between deleted and added transactions
-	diff := types.TxDifference(deletedTxs, addedTxs)
-	// When transactions get deleted from the database that means the
-	// receipts that were created in the fork must also be deleted
-	for _, tx := range diff {
-		DeleteTxLookupEntry(bc.chainDb, tx.Hash())
-	}
-	if len(deletedLogs) > 0 {
-		go bc.rmLogsFeed.Send(RemovedLogsEvent{deletedLogs})
-	}
-
-	return nil
 }
 
 // PostChainEvents iterates over the events generated by a chain insertion and
