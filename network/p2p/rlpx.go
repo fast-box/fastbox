@@ -618,30 +618,29 @@ func newRLPXFrameRW(conn io.ReadWriter, s secrets) *rlpxFrameRW {
 }
 
 func (rw *rlpxFrameRW) WriteMsg(msg Msg) error {
-	ptype, _ := rlp.EncodeToBytes(msg.Code)
+	headbuf := make([]byte, 4)
 
 	// write header
-	headbuf := make([]byte, 4)
-	fsize := uint32(len(ptype)) + msg.Size
-
-	if fsize > MaxMsgSize {
-		log.Error("Write message size overflows uint24.")
-		return errors.New("message size overflows uint24")
-	}
-
-	putInt32(fsize, headbuf) // check overflow
+	ptype, _ := rlp.EncodeToBytes(msg.Code)
+	fsize := uint32(len(ptype))
+	putInt32(fsize, headbuf)
 	if _, err := rw.conn.Write(headbuf); err != nil {
-		log.Debug("rlpx frame write head","err",err)
+		log.Error("rlpx frame write head","err",err)
 		return err
 	}
-
 	if _, err := rw.conn.Write(ptype); err != nil {
-		log.Debug("rlpx frame write ptype","err",err)
+		log.Error("rlpx frame write ptype","err",err)
 		return err
 	}
 
+	fsize   =  msg.Size
+	putInt32(fsize, headbuf)
+	if _, err := rw.conn.Write(headbuf); err != nil {
+		log.Error("rlpx frame write payload head","err",err)
+		return err
+	}
 	if _, err := io.Copy(rw.conn, msg.Payload); err != nil {
-		log.Debug("rlpx frame write Payload","err",err)
+		log.Debug("rlpx frame write payload","err",err)
 		return err
 	}
 
