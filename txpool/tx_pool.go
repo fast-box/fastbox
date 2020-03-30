@@ -302,6 +302,7 @@ func (pool *TxPool) DealTxRoutine(fullCh,verifyCh chan *types.Transaction) {
 					pool.pending.Store(tx.Hash(), tx)
 					pool.queue.Delete(tx.Hash())
 					if !tx.IsForward() {
+						log.Trace("txpool", "send tx to broadcast txhash", tx.Hash())
 						go pool.txFeed.Send(bc.TxPreEvent{tx}) // send to route tx.
 					}
 

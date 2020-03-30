@@ -168,10 +168,14 @@ type storageblock struct {
 func NewBlock(header *Header, txs []*Transaction, proofs []*ProofState, receipts []*Receipt) *Block {
 	b := &Block{header: CopyHeader(header), td: new(big.Int)}
 
-	if len(txs) == 0 {
-		b.header.TxHash = EmptyRootHash
-	} else {
+	var nilHash = common.Hash{}
+	if header.TxHash == nilHash {
 		b.header.TxHash = DeriveSha(Transactions(txs))
+	} else {
+		b.header.TxHash = header.TxHash
+	}
+
+	if len(txs) != 0 {
 		b.transactions = make(Transactions, len(txs))
 		copy(b.transactions, txs)
 	}

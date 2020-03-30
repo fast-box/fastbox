@@ -66,6 +66,7 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 	if err != nil {
 		return nil, err
 	}
+	header.TxHash = txroot
 	header.ProofHash = proofHash
 	return &types.WorkProof{sighash, txs,proofs}, nil
 }

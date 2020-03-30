@@ -520,21 +520,34 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		// wait confirm.
 		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
 	}
-	go func() {
+	if false {
+		go func() {
+			if block,err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.proofs, work.receipts); err != nil {
+				work.genCh <- err
+			} else {
+				log.Info("worker after engine.Finalize")
+				if result, err := self.engine.GenBlockWithSig(self.chain, block);err != nil {
+					work.genCh <- err
+				} else {
+					log.Info("worker after engine.GenBlockWithSig")
+					work.Block = result
+					work.genCh <- nil
+				}
+			}
+		}()
+	} else {
 		if block,err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.proofs, work.receipts); err != nil {
-			work.genCh <- err
+			return err
 		} else {
 			log.Info("worker after engine.Finalize")
 			if result, err := self.engine.GenBlockWithSig(self.chain, block);err != nil {
-				work.genCh <- err
+				return err
 			} else {
 				log.Info("worker after engine.GenBlockWithSig")
 				work.Block = result
-				work.genCh <- nil
 			}
 		}
-	}()
-
+	}
 
 	return nil
 }
