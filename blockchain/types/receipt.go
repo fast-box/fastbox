@@ -43,7 +43,6 @@ const (
 // Receipt represents the results of a transaction.
 type Receipt struct {
 	// Consensus fields
-	PostState         []byte   `json:"root"`
 	Status            uint     `json:"status"`
 	// Not consensus fields
 	//Confirm count by miner node.
@@ -54,7 +53,6 @@ type Receipt struct {
 }
 
 type receiptMarshaling struct {
-	PostState hexutil.Bytes
 	Status    hexutil.Uint
 }
 
@@ -71,7 +69,7 @@ type receiptStorageRLP struct {
 
 // NewReceipt creates a barebone transaction receipt, copying the init fields.
 func NewReceipt(root []byte, failed bool) *Receipt {
-	r := &Receipt{PostState: common.CopyBytes(root)}
+	r := &Receipt{}
 	if failed {
 		r.Status = ReceiptStatusFailed
 	} else {
@@ -105,8 +103,6 @@ func (r *Receipt) setStatus(postStateOrStatus []byte) error {
 		r.Status = ReceiptStatusSuccessful
 	case bytes.Equal(postStateOrStatus, receiptStatusFailedRLP):
 		r.Status = ReceiptStatusFailed
-	case len(postStateOrStatus) == len(common.Hash{}):
-		r.PostState = postStateOrStatus
 	default:
 		return fmt.Errorf("invalid receipt status %x", postStateOrStatus)
 	}
@@ -114,21 +110,15 @@ func (r *Receipt) setStatus(postStateOrStatus []byte) error {
 }
 
 func (r *Receipt) statusEncoding() []byte {
-	if len(r.PostState) == 0 {
-		if r.Status == ReceiptStatusFailed {
-			return receiptStatusFailedRLP
-		}
-		return receiptStatusSuccessfulRLP
+	if r.Status == ReceiptStatusFailed {
+		return receiptStatusFailedRLP
 	}
-	return r.PostState
+	return receiptStatusSuccessfulRLP
 }
 
 // String implements the Stringer interface.
 func (r *Receipt) String() string {
-	if len(r.PostState) == 0 {
-		return fmt.Sprintf("receipt{status=%d confirm=%d }", r.Status, r.ConfirmCount)
-	}
-	return fmt.Sprintf("receipt{med=%x confirm=%d}", r.PostState, r.ConfirmCount)
+	return fmt.Sprintf("receipt{confirm=%d}", r.ConfirmCount)
 }
 
 // ReceiptForStorage is a wrapper around a Receipt that flattens and parses the

@@ -11,13 +11,11 @@ import (
 
 func (r Receipt) MarshalJSON() ([]byte, error) {
 	type Receipt struct {
-		PostState hexutil.Bytes `json:"root"`
 		Status    hexutil.Uint  `json:"status"`
 		TxHash    common.Hash   `json:"transactionHash" gencodec:"required"`
 		ConfirmCount 	hexutil.Uint64 `json:"confirmed" gencodec:"required"`
 	}
 	var enc Receipt
-	enc.PostState = r.PostState
 	enc.Status = hexutil.Uint(r.Status)
 	enc.TxHash = r.TxHash
 	enc.ConfirmCount = hexutil.Uint64(r.ConfirmCount)
@@ -26,7 +24,6 @@ func (r Receipt) MarshalJSON() ([]byte, error) {
 
 func (r *Receipt) UnmarshalJSON(input []byte) error {
 	type Receipt struct {
-		PostState hexutil.Bytes `json:"root"`
 		Status    *hexutil.Uint `json:"status"`
 		TxHash    *common.Hash  `json:"transactionHash" gencodec:"required"`
 		ConfirmCount 	*hexutil.Uint64 `json:"confirmed" gencodec:"required"`
@@ -34,9 +31,6 @@ func (r *Receipt) UnmarshalJSON(input []byte) error {
 	var dec Receipt
 	if err := json.Unmarshal(input, &dec); err != nil {
 		return err
-	}
-	if dec.PostState != nil {
-		r.PostState = dec.PostState
 	}
 	if dec.Status != nil {
 		r.Status = uint(*dec.Status)
