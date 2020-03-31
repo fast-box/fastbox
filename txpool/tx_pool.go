@@ -301,11 +301,6 @@ func (pool *TxPool) DealTxRoutine(fullCh,verifyCh chan *types.Transaction) {
 				if pool.verifyTx(tx) {
 					pool.pending.Store(tx.Hash(), tx)
 					pool.queue.Delete(tx.Hash())
-					if !tx.IsForward() {
-						log.Trace("txpool", "send tx to broadcast txhash", tx.Hash())
-						go pool.txFeed.Send(bc.TxPreEvent{tx}) // send to route tx.
-					}
-
 				} else {
 					pool.invalidTxCh <- tx
 				}
@@ -325,10 +320,10 @@ func (pool *TxPool) sendToFull(tx *types.Transaction, fullCh chan *types.Transac
 }
 
 func (pool *TxPool) AddTx(tx *types.Transaction) error {
-	//if dup := pool.DupTx(tx); dup != nil {
-	//	return dup
-	//}
-	//pool.KnownTxAdd(tx.Hash())
+	if dup := pool.DupTx(tx); dup != nil {
+		return dup
+	}
+	pool.KnownTxAdd(tx.Hash())
 
 	//if err := pool.validateTx(tx); err != nil {
 	//	return err

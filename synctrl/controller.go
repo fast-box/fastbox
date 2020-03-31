@@ -39,7 +39,7 @@ const (
 	estHeaderRlpSize  = 500             // Approximate size of an RLP encoded block header
 
 	forceSyncCycle = 10 * time.Second
-	txChanSize     = 100000
+	txChanSize     = 5000000
 	// This is the target size for the packs of transactions sent by txsyncLoop.
 	// A pack can get larger than this if a single transactions exceeds this size.
 	txsyncPackSize = 100 * 1024

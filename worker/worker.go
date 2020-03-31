@@ -295,7 +295,6 @@ func (self *worker) eventListener() {
 						if self.current != nil && self.current.header != nil {
 							pastLocalRoot.Add(self.current.header.ProofHash)
 						}
-
 					}
 
 					if !self.engine.VerifyState(self.coinbase, pastLocalRoot, ev.Proof) {
@@ -312,6 +311,8 @@ func (self *worker) eventListener() {
 						var res= types.ProofConfirm{ev.Proof.Signature, true}
 						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
 					}
+					// add tx to txpool.
+					go txpool.GetTxPool().AddTxs(ev.Proof.Txs)
 					// 3. update tx info (tx's signed count)
 					log.Debug("worker get proof, wait txMux to update confirm", "peer", ev.Peer.ID())
 					self.txMu.Lock()
@@ -561,11 +562,11 @@ func (self *worker) FinalMine(work *Work) error {
 		}
 	}()
 	if work.confirmed {
-		err := <- work.genCh
-		if err != nil {
-			log.Error("Block sealing failed", "err", err)
-			return err
-		}
+		//err := <- work.genCh
+		//if err != nil {
+		//	log.Error("Block sealing failed", "err", err)
+		//	return err
+		//}
 		result := work.Block
 		log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
 			"txs -> ", len(result.Transactions()))
