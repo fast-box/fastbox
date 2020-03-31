@@ -521,34 +521,20 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		// wait confirm.
 		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
 	}
-	if false {
-		go func() {
-			if block,err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.proofs, work.receipts); err != nil {
-				work.genCh <- err
-			} else {
-				log.Info("worker after engine.Finalize")
-				if result, err := self.engine.GenBlockWithSig(self.chain, block);err != nil {
-					work.genCh <- err
-				} else {
-					log.Info("worker after engine.GenBlockWithSig")
-					work.Block = result
-					work.genCh <- nil
-				}
-			}
-		}()
-	} else {
+	go func() {
 		if block,err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.proofs, work.receipts); err != nil {
-			return err
+			work.genCh <- err
 		} else {
 			log.Info("worker after engine.Finalize")
 			if result, err := self.engine.GenBlockWithSig(self.chain, block);err != nil {
-				return err
+				work.genCh <- err
 			} else {
 				log.Info("worker after engine.GenBlockWithSig")
 				work.Block = result
+				work.genCh <- nil
 			}
 		}
-	}
+	}()
 
 	return nil
 }
@@ -562,11 +548,11 @@ func (self *worker) FinalMine(work *Work) error {
 		}
 	}()
 	if work.confirmed {
-		//err := <- work.genCh
-		//if err != nil {
-		//	log.Error("Block sealing failed", "err", err)
-		//	return err
-		//}
+		err := <- work.genCh
+		if err != nil {
+			log.Error("Block sealing failed", "err", err)
+			return err
+		}
 		result := work.Block
 		log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
 			"txs -> ", len(result.Transactions()))
