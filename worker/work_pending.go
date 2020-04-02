@@ -6,20 +6,14 @@ import (
 	"time"
 )
 
-type ReportResult struct {
-	work 	*Work
-	succeed	bool
-}
-
 type WorkPending struct {
 	errored	int32
 	Pending 	[]*Work
 	InputCh		chan *Work
-	ReportCh	chan *ReportResult
 }
 
 func NewWorkPending() *WorkPending{
-	return &WorkPending{Pending:make([]*Work, 10), ReportCh:make(chan *ReportResult, 1)}
+	return &WorkPending{Pending:make([]*Work, 0), InputCh:make(chan *Work, 10)}
 }
 
 func (p *WorkPending)HaveErr() bool {
@@ -61,7 +55,7 @@ func (p *WorkPending)pop() *Work {
 func (p *WorkPending) Run() {
 	chain := bc.InstanceBlockChain()
 	for true {
-		timer := time.NewTimer(time.Second)
+		timer := time.NewTimer(time.Millisecond * 500)
 		select {
 		case work,ok := <-p.InputCh:
 			if !ok {

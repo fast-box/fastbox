@@ -140,6 +140,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 
 	// goto listen the event
 	go worker.eventListener()
+	go worker.workPending.Run()
 
 	return worker
 }
@@ -353,9 +354,11 @@ func (self *worker) makeCurrent(parent *types.Header, header *types.Header) erro
 
 func (self *worker) CheckNeedStartMine() *types.Header {
 	var head *types.Header
-	if self.workPending.HaveErr() && self.workPending.Empty(){
-		// reset to no error, and continue to mine.
-		self.workPending.SetNoError()
+	if self.workPending.HaveErr() {
+		if self.workPending.Empty() {
+			// reset to no error, and continue to mine.
+			self.workPending.SetNoError()
+		}
 	} else {
 		// wait deal all failed work.
 		return nil
