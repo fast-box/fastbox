@@ -39,17 +39,8 @@ import (
 )
 
 const (
-	resultQueueSize  = 10
-	miningLogAtDepth = 5
-
-	// txChanSize is the size of channel listening to TxPreEvent.
-	// The number is referenced from the size of tx pool.
-	txChanSize = 100000
 	// chainHeadChanSize is the size of channel listening to ChainHeadEvent.
 	chainHeadChanSize = 10
-
-
-
 	waitConfirmTimeout = 40 // a proof wait confirm timeout seconds
 )
 var (
@@ -62,12 +53,10 @@ var (
 // all of the current state information
 type Work struct {
 	config *config.ChainConfig
-	signer types.Signer
+	state     *state.StateDB 	// apply state changes here
+	tcount    int            	// tx count in cycle
 
-	state     *state.StateDB // apply state changes here
-	tcount    int            // tx count in cycle
-
-	Block *types.Block // the new block
+	Block *types.Block 			// the new block
 
 	header   *types.Header
 	txs      []*types.Transaction
@@ -76,16 +65,14 @@ type Work struct {
 	createdAt time.Time
 	id 			int64
 	genCh  	chan error
-	writeFinish chan error
 	confirmed  bool
 }
+
 type RoundState byte
 
 const (
 	IDLE 		RoundState = iota
 	Mining
-	Finished
-	Failed
 )
 
 // worker is the main object which takes care of applying messages to the new state
@@ -112,13 +99,13 @@ type worker struct {
 
 	currentMu sync.Mutex
 	current   *Work
-	last 	*Work
 	roundState 	RoundState
 
 	unconfirmed *unconfirmedProofs // set of locally mined blocks pending canonicalness confirmations
+	workPending	*WorkPending
 
 	txMu			sync.Mutex
-	txConfirmPool map[common.Hash]uint64
+	txConfirmPool 	map[common.Hash]uint64
 	updating 		bool
 	history 		[]common.Hash
 
@@ -143,6 +130,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 		txConfirmPool: make(map[common.Hash]uint64),
 		updating:	false,
 		history: 	make([]common.Hash,0),
+		workPending:NewWorkPending(),
 	}
 
 	worker.txpool = txpool.GetTxPool()
@@ -225,14 +213,11 @@ func (self *worker) stop() {
 }
 
 func (self *worker) updateTxConfirm() {
-	log.Debug("worker updateTxConfirm, wait txMux")
 	self.txMu.Lock()
 	defer self.txMu.Unlock()
-	log.Debug("worker updateTxConfirm, got txMux")
 	self.updating = true
 	batch := self.chainDb.NewBatch()
 	cnt := 0
-	log.Debug("worker updateTxConfirm, goto updatereceipt")
 	for hash,_ := range self.txConfirmPool {
 		if receipts, blockHash, blockNumber, err := bc.GetBlockReceiptsByTx(self.chainDb, hash); err == nil {
 			for _, receipt := range receipts {
@@ -290,7 +275,6 @@ func (self *worker) eventListener() {
 						pastLocalRoot.Add(h)
 					}
 
-
 					if atomic.LoadInt32(&self.mining) == 1 {
 						if self.current != nil && self.current.header != nil {
 							pastLocalRoot.Add(self.current.header.ProofHash)
@@ -314,9 +298,7 @@ func (self *worker) eventListener() {
 					// add tx to txpool.
 					go txpool.GetTxPool().AddTxs(ev.Proof.Txs)
 					// 3. update tx info (tx's signed count)
-					log.Debug("worker get proof, wait txMux to update confirm", "peer", ev.Peer.ID())
 					self.txMu.Lock()
-					log.Debug("worker get proof, got txMux to update confirm", "peer", ev.Peer.ID())
 					for _, tx := range ev.Proof.Txs {
 							// add to unconfirmed tx.
 							if v,ok := self.txConfirmPool[tx.Hash()]; ok {
@@ -329,7 +311,6 @@ func (self *worker) eventListener() {
 							}
 					}
 					self.txMu.Unlock()
-					log.Debug("worker get proof, after update confirm", "peer", ev.Peer.ID())
 				}()
 			}
 		}
@@ -344,14 +325,12 @@ func (self *worker) makeCurrent(parent *types.Header, header *types.Header) erro
 	}
 	work := &Work{
 		config:    self.config,
-		signer:    types.NewQSSigner(self.config.ChainId),
 		state:     state,
 		header:    header,
 		proofs:	   make([]*types.ProofState,0),
 		createdAt: time.Now(),
 		id:			time.Now().UnixNano(),
 		genCh: 		make(chan error,1),
-		writeFinish:make(chan error),
 		confirmed: false,
 	}
 
@@ -374,8 +353,16 @@ func (self *worker) makeCurrent(parent *types.Header, header *types.Header) erro
 
 func (self *worker) CheckNeedStartMine() *types.Header {
 	var head *types.Header
-	if self.last != nil {
-		head = self.last.Block.Header()
+	if self.workPending.HaveErr() && self.workPending.Empty(){
+		// reset to no error, and continue to mine.
+		self.workPending.SetNoError()
+	} else {
+		// wait deal all failed work.
+		return nil
+	}
+
+	if h := self.workPending.Top(); h != nil {
+		head = h.Block.Header()
 	} else {
 		head = self.chain.CurrentHeader()
 	}
@@ -383,7 +370,6 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 	now := time.Now().Unix()
 	pending,_ := self.txpool.Pended()
 	delta := now - head.Time.Int64()
-	//log.Info("CheckNeedStartMine", "Head.tm", head.Time.Int64(), "Now", now, "delta", delta)
 	if (delta >= int64(blockPeorid) || len(pending) >= minTxsToMine) && delta > 0 {
 		return head
 	}
@@ -403,11 +389,8 @@ func (self *worker) RoutineMine() {
 	for {
 		select {
 		case <-evict.C:
-			log.Info("worker routine check new round")
-			if self.roundState == Failed {
-				log.Info("round state = failed")
-				go func(){self.newRoundCh <- nil} ()
-			} else if self.roundState == IDLE {
+			log.Trace("worker routine check new round")
+			if self.roundState == IDLE {
 				if h := self.CheckNeedStartMine(); h != nil {
 					go func(){self.newRoundCh <- h } ()
 				}
@@ -424,8 +407,7 @@ func (self *worker) RoutineMine() {
 			go func() {
 				defer self.wg.Done()
 				if err := self.NewMineRound(lastHeader); err != nil {
-					self.roundState = Failed
-					log.Info("new mine failed, round state = failed")
+					self.roundState = IDLE
 				} else {
 					self.roundState = Mining
 				}
@@ -443,12 +425,13 @@ func (self *worker) RoutineMine() {
 			self.wg.Add(1)
 			go func() {
 				defer self.wg.Done()
-				if err := self.FinalMine(work); err != nil {
-					self.roundState = Failed
-				} else {
-					self.roundState = IDLE
+				err := self.FinalMine(work)
+				if err != nil {
+					log.Debug("worker finalmine failed","err ", err)
 				}
+				self.roundState = IDLE
 			}()
+
 		case <-self.exitCh:
 			self.unconfirmed.Stop()
 			close(self.confirmCh)
@@ -463,12 +446,6 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	if p2p.PeerMgrInst().GetLocalType() == discover.BootNode {
 		return nil
 	}
-	// 1. make header
-	// 2. prepare header
-	// 3. get tx from txpool
-	// 4. commit tx
-	// 5. generate and broad proof
-
 
 	// make header
 	if parent == nil {
@@ -477,7 +454,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	num := parent.Number
 	header := &types.Header{
 		ParentHash: parent.Hash(),
-		Coinbase:self.coinbase,
+		Coinbase:	self.coinbase,
 		Number:     num.Add(num, common.Big1),
 		Extra:      self.extra,
 	}
@@ -494,13 +471,13 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		log.Error("Failed to create mining context", "err", err)
 		return err
 	}
-	// Create the current work task and check any fork transitions needed
 
 	pending := txpool.GetTxPool().Pending(self.current.id, blockMaxTxs)
 	txs := types.NewTransactionsByPayload(pending)
 
+	// Create the current work task and check any fork transitions needed
 	work := self.current
-	work.commitTransactions(self.mux, txs, self.coinbase)
+	work.commitTransactions(txs, self.coinbase)
 
 	// generate workproof
 	proof, err := self.engine.GenerateProof(self.chain, self.current.header, parent, work.txs, work.proofs)
@@ -517,7 +494,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	} else {
 		// broadcast proof.
 		self.mux.Post(bc.NewWorkProofEvent{Proof:proof})
-		log.Info("worker proof goto wait confirm")
+		log.Debug("worker proof goto wait confirm")
 		// wait confirm.
 		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
 	}
@@ -525,11 +502,11 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		if block,err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.proofs, work.receipts); err != nil {
 			work.genCh <- err
 		} else {
-			log.Info("worker after engine.Finalize")
+			log.Trace("worker after engine.Finalize")
 			if result, err := self.engine.GenBlockWithSig(self.chain, block);err != nil {
 				work.genCh <- err
 			} else {
-				log.Info("worker after engine.GenBlockWithSig")
+				log.Trace("worker after engine.GenBlockWithSig")
 				work.Block = result
 				work.genCh <- nil
 			}
@@ -539,118 +516,38 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	return nil
 }
 
+func (w *Work) WorkEnded(succeed bool) {
+	txpool.GetTxPool().WorkEnded(w.id, w.header.Number.Uint64(), succeed)
+}
+
 func (self *worker) FinalMine(work *Work) error {
-	success := false
-	workend := true
+	// check work confirmed.
+	var err error
 	defer func() {
-		if workend {
-			go txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), success)
+		if err != nil {
+			go work.WorkEnded(false)
 		}
 	}()
 	if work.confirmed {
-		err := <- work.genCh
-		if err != nil {
-			log.Error("Block sealing failed", "err", err)
-			return err
-		}
-		result := work.Block
-		log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
-			"txs -> ", len(result.Transactions()))
-		log.Debug("SHX profile", "sealed new block number ", result.Number(), "txs", len(result.Transactions()), "at time", time.Now().UnixNano()/1000/1000)
-
-		// wait last block write finished.
-		if self.last != nil {
-			err := <- self.last.writeFinish
-			self.last = nil
-			if err != nil {
-				// Failed
-				log.Error("worker got error from last writeFinish","err",err)
-				return errors.New("last block write failed")
+		err = <- work.genCh
+		if err == nil {
+			result := work.Block
+			newhist := append(self.history, result.ProofHash())
+			if len(newhist) > 10 {
+				self.history = make([]common.Hash,10)
+				copy(self.history,newhist[len(newhist)-10:])
 			}
-
-		}
-		workend = false
-		go func(work *Work){
-			self.last = work
-			_, err := self.chain.WriteBlockAndState(work.Block, work.receipts, work.state)
-			log.Info("worker writeBlock and state finished","block",work.Block.NumberU64(), "err",err)
-			if err != nil {
-				go txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), false)
+			if self.workPending.Add(work) {
+				log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
+					"txs -> ", len(result.Transactions()))
+				log.Debug("SHX profile", "sealed new block number ", result.Number(), "txs", len(result.Transactions()), "at time", time.Now().UnixNano()/1000/1000)
+				return nil
 			} else {
-				go txpool.GetTxPool().WorkEnded(work.id, work.header.Number.Uint64(), true)
+				err = errors.New("pending is rollback")
 			}
-			self.last.writeFinish <- err
-		}(work)
-
-		newhist := append(self.history, result.ProofHash())
-		if len(newhist) > 10 {
-			self.history = make([]common.Hash,10)
-			copy(self.history,newhist[len(newhist)-10:])
 		}
-
-
-		// Broadcast the block and announce chain insertion event
-		//self.mux.Post(bc.NewMinedBlockEvent{Block: result})
-		//var (
-		//	events []interface{}
-		//	logs   = work.state.Logs()
-		//)
-		//events = append(events, bc.ChainEvent{Block: result, Hash: result.Hash(), Logs: logs})
-		//if stat == bc.CanonStatTy {
-		//	// 2. send event and update txpool.
-		//	events = append(events, bc.ChainHeadEvent{Block: result})
-		//}
-		//
-		//self.chain.PostChainEvents(events, logs)
 	} else {
-		log.Error("block proof not confirmed")
-		return errors.New("proof not confirmed")
+		err = errors.New("block proof not confirmed")
 	}
-	return nil
-}
-
-func (env *Work) commitTransactions(mux *sub.TypeMux, txs *types.TransactionsByPayload, coinbase common.Address) {
-	for {
-		// Retrieve the next transaction and abort if all done
-		tx := txs.Peek()
-		if tx == nil {
-			break
-		}
-
-		// Start executing the transaction
-		env.state.Prepare(tx.Hash(), common.Hash{}, env.tcount)
-
-		err := env.commitTransaction(tx, coinbase)
-		switch err {
-		case nil:
-			// Everything ok, collect the logs and shift in the next transaction from the same account
-			env.tcount++
-			txs.Shift()
-
-		default:
-			// Strange error, discard the transaction and get the next in line (note, the
-			// nonce-too-high clause will prevent us from executing in vain).
-			log.Debug("Transaction failed, account skipped", "hash", tx.Hash(), "err", err)
-			txs.Shift()
-		}
-	}
-
-}
-
-func (env *Work) commitTransaction(tx *types.Transaction, coinbase common.Address) (error) {
-	var receipt *types.Receipt
-	var err error
-	snap := env.state.Snapshot()
-	blockchain := bc.InstanceBlockChain()
-
-	receipt, err = bc.ApplyTransaction(env.config, blockchain, &coinbase, env.state, env.header, tx)
-	if err != nil {
-		env.state.RevertToSnapshot(snap)
-		return err
-	}
-
-	env.txs = append(env.txs, tx)
-	env.receipts = append(env.receipts, receipt)
-
-	return nil
+	return err
 }
