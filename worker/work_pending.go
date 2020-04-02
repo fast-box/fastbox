@@ -13,7 +13,7 @@ type WorkPending struct {
 }
 
 func NewWorkPending() *WorkPending{
-	return &WorkPending{Pending:make([]*Work, 0), InputCh:make(chan *Work, 10)}
+	return &WorkPending{errored: 0, Pending:make([]*Work, 0), InputCh:make(chan *Work, 10)}
 }
 
 func (p *WorkPending)HaveErr() bool {

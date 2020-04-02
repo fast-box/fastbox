@@ -358,12 +358,10 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 		if self.workPending.Empty() {
 			// reset to no error, and continue to mine.
 			self.workPending.SetNoError()
+		} else {
+			return nil
 		}
-	} else {
-		// wait deal all failed work.
-		return nil
-	}
-
+	} 
 	if h := self.workPending.Top(); h != nil {
 		head = h.Block.Header()
 	} else {
