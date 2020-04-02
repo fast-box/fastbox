@@ -29,7 +29,7 @@ func (c *Prometheus) PrepareBlockHeader(chain consensus.ChainReader, header *typ
 
 	header.Extra = append(header.Extra, make([]byte, consensus.ExtraSeal)...)
 
-	header.Time = big.NewInt(time.Now().Unix())
+	header.Time = big.NewInt(time.Now().UnixNano()/1000/1000)
 	header.Difficulty = big.NewInt(1)
 
 	return nil

@@ -50,7 +50,7 @@ func (c *Prometheus) GenBlockWithSig(chain consensus.ChainReader, block *types.B
 
 	c.lock.RUnlock()
 	header.Coinbase = signer
-	header.Time = big.NewInt(time.Now().Unix())
+	header.Time = big.NewInt(time.Now().UnixNano()/1000/1000)
 
 	// signing to get the signature
 	sighash, err := signFn(accounts.Account{Address: signer}, consensus.SigHash(header).Bytes())

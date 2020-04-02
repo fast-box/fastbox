@@ -371,7 +371,7 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 	now := time.Now().Unix()
 	pending,_ := self.txpool.Pended()
 	delta := now - head.Time.Int64()
-	if (delta >= int64(blockPeorid) || len(pending) >= minTxsToMine) && delta > 0 {
+	if (delta >= int64(blockPeorid*1000) || len(pending) >= minTxsToMine) && delta > 0 {
 		return head
 	}
 	return nil
@@ -380,7 +380,7 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 func (self *worker) RoutineMine() {
 	events := self.mux.Subscribe(bc.ProofConfirmEvent{})
 	defer events.Unsubscribe()
-	evict := time.NewTicker(time.Millisecond * 200)
+	evict := time.NewTicker(time.Millisecond * 50)
 	defer evict.Stop()
 
 	self.confirmCh = make(chan *Work)

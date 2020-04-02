@@ -34,7 +34,7 @@ import (
 func (p *prometh) makeGenesis() {
 	
 	genesis := &bc.Genesis{
-		Timestamp:  uint64(time.Now().Unix()),
+		Timestamp:  uint64(time.Now().Unix()/1000/1000),
 		Difficulty: big.NewInt(1048576),
 		Config: &config.ChainConfig{
 		},
