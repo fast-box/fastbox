@@ -7,13 +7,11 @@ import (
 	"github.com/shx-project/sphinx/common/log"
 )
 
-func (env *Work) commitTransactions(txs *types.TransactionsByPayload, coinbase common.Address) {
-	for {
+func (env *Work) commitTransactions(txs types.Transactions, coinbase common.Address) {
+
+	for i:=0; i < len(txs); i++ {
 		// Retrieve the next transaction and abort if all done
-		tx := txs.Peek()
-		if tx == nil {
-			break
-		}
+		tx := txs[i]
 
 		// Start executing the transaction
 		env.state.Prepare(tx.Hash(), common.Hash{}, env.tcount)
@@ -23,13 +21,11 @@ func (env *Work) commitTransactions(txs *types.TransactionsByPayload, coinbase c
 		case nil:
 			// Everything ok, collect the logs and shift in the next transaction from the same account
 			env.tcount++
-			txs.Shift()
 
 		default:
 			// Strange error, discard the transaction and get the next in line (note, the
 			// nonce-too-high clause will prevent us from executing in vain).
 			log.Debug("Transaction failed, account skipped", "hash", tx.Hash(), "err", err)
-			txs.Shift()
 		}
 	}
 

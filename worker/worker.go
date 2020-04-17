@@ -72,6 +72,7 @@ type RoundState byte
 
 const (
 	IDLE 		RoundState = iota
+	PostMining
 	Mining
 )
 
@@ -368,10 +369,10 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 		head = self.chain.CurrentHeader()
 	}
 
-	now := time.Now().Unix()
+	now := time.Now().UnixNano()/1000/1000
 	pending,_ := self.txpool.Pended()
 	delta := now - head.Time.Int64()
-	if (delta >= int64(blockPeorid*1000) || len(pending) >= minTxsToMine) && delta > 0 {
+	if (delta >= int64(blockPeorid*1000) || (len(pending) >= minTxsToMine) && delta > 50) {
 		return head
 	}
 	return nil
@@ -393,6 +394,7 @@ func (self *worker) RoutineMine() {
 			log.Trace("worker routine check new round")
 			if self.roundState == IDLE {
 				if h := self.CheckNeedStartMine(); h != nil {
+					self.roundState = PostMining
 					go func(){self.newRoundCh <- h } ()
 				}
 			} else if self.roundState == Mining {
@@ -473,12 +475,21 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		return err
 	}
 
-	pending := txpool.GetTxPool().Pending(self.current.id, blockMaxTxs)
-	txs := types.NewTransactionsByPayload(pending)
+	txs := txpool.GetTxPool().Pending(self.current.id, blockMaxTxs)
 
 	// Create the current work task and check any fork transitions needed
 	work := self.current
 	work.commitTransactions(txs, self.coinbase)
+
+	log.Info("luxqdebug","total work.txs ", len(work.txs), "total pending txs", len(txs))
+	//for s := int(0); s < len(work.txs); s++ {
+	//	tx := work.txs[s]
+	//	if tx != nil {
+	//		fmt.Printf("luxqdebug txs[%d] : info = %s, receipt = %s\n", s, tx.String(), work.receipts[s].String())
+	//	} else {
+	//		fmt.Printf("luxqdebug txs[%d] is nil\n", s)
+	//	}
+	//}
 
 	// generate workproof
 	proof, err := self.engine.GenerateProof(self.chain, self.current.header, parent, work.txs, work.proofs)

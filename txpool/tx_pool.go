@@ -402,7 +402,7 @@ func (pool *TxPool) GetTxByHash(hash common.Hash) *types.Transaction {
 // freely modified by calling code.
 func (pool *TxPool) Pending(workid int64, maxtxs int) (pending types.Transactions) {
 	var i = 0
-
+	pending = make(types.Transactions, 0, maxtxs)
 	pool.pending.Range(func(k, v interface{}) bool {
 		if i >= maxtxs {
 			return false
