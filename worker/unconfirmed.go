@@ -63,8 +63,8 @@ func (u *unconfirmedProofs) Confirm(addr common.Address, confirm *types.ProofCon
 	if v, ok := u.proofs.Load(sigHash); ok {
 		info := v.(*proofInfo)
 		if confirm.Confirm == true {
-			info.confirmed.Add(addr)
 			log.Debug("worker confirm , add confirm");
+			info.confirmed.Add(addr)
 		}
 		if info.confirmed.Size() >= info.threshold {
 			// send to worker.
@@ -74,6 +74,7 @@ func (u *unconfirmedProofs) Confirm(addr common.Address, confirm *types.ProofCon
 			u.proofs.Delete(sigHash)
 		}
 	}
+	log.Debug("exit confirm function")
 	return nil
 }
 
