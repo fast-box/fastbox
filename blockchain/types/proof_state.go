@@ -2,12 +2,26 @@ package types
 
 import (
 	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/merkletree"
 	"github.com/shx-project/sphinx/common/rlp"
 )
 
 type ProofState struct {
 	Addr 	common.Address
 	Root 	common.Hash
+}
+
+func (p ProofState)CalculateHash()([]byte, error){
+	ret := p.Root.Bytes()
+	return ret,nil
+}
+
+func (p ProofState)Equals(other merkletree.Content)(bool, error){
+	op := other.(ProofState)
+	if p.Root == op.Root && p.Addr == op.Addr {
+		return true,nil
+	}
+	return false, nil
 }
 
 type ProofStates []*ProofState
@@ -24,6 +38,10 @@ func (s ProofStates) GetRlp(i int) []byte {
 	return enc
 }
 
+
+func (s ProofStates)GetMerkleContent(i int) merkletree.Content{
+	return s[i]
+}
 
 type ProofSignature []byte
 

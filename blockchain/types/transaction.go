@@ -17,6 +17,7 @@
 package types
 
 import (
+	"bytes"
 	"container/heap"
 	"errors"
 	"fmt"
@@ -27,6 +28,7 @@ import (
 	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/common/crypto/sha3"
 	"github.com/shx-project/sphinx/common/hexutil"
+	"github.com/shx-project/sphinx/common/merkletree"
 	"github.com/shx-project/sphinx/common/rlp"
 )
 
@@ -187,6 +189,19 @@ func (tx *Transaction) String() string {
 	)
 }
 
+func (tx *Transaction)CalculateHash()([]byte, error){
+	hash := tx.Hash()
+	return hash[:],nil
+}
+
+func (tx *Transaction)Equals(other merkletree.Content)(bool,error) {
+	ohash := other.(*Transaction).Hash()
+	if bytes.Compare(ohash.Bytes(), tx.Hash().Bytes()) == 0 {
+		return true,nil
+	}
+	return false, nil
+}
+
 // Transaction slice type for basic sorting.
 type Transactions []*Transaction
 
@@ -201,6 +216,11 @@ func (s Transactions) GetRlp(i int) []byte {
 	enc, _ := rlp.EncodeToBytes(s[i])
 	return enc
 }
+
+func (s Transactions)GetMerkleContent(i int) merkletree.Content{
+	return s[i]
+}
+
 
 // Returns a new set t which is the difference between a to b
 func TxDifference(a, b Transactions) (keep Transactions) {

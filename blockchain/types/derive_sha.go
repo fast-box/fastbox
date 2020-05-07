@@ -18,6 +18,8 @@ package types
 
 import (
 	"bytes"
+	"fmt"
+	"github.com/shx-project/sphinx/common/merkletree"
 
 	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/common/rlp"
@@ -27,9 +29,10 @@ import (
 type DerivableList interface {
 	Len() int
 	GetRlp(i int) []byte
+	GetMerkleContent(i int) merkletree.Content
 }
 
-func DeriveSha(list DerivableList) common.Hash {
+func DeriveShaWithTree(list DerivableList) common.Hash {
 	keybuf := new(bytes.Buffer)
 	trie := new(trie.Trie)
 	for i := 0; i < list.Len(); i++ {
@@ -38,4 +41,24 @@ func DeriveSha(list DerivableList) common.Hash {
 		trie.Update(keybuf.Bytes(), list.GetRlp(i))
 	}
 	return trie.Hash()
+}
+
+func DeriveSha(list DerivableList) common.Hash {
+	if list.Len() == 0 {
+		return EmptyRootHash
+	}
+
+	rootHash := common.Hash{}
+	clist := make([]merkletree.Content,list.Len())
+	for i:=0; i < list.Len(); i++ {
+		clist[i] = list.GetMerkleContent(i)
+	}
+
+	t,err := merkletree.NewTree(clist)
+	if err != nil {
+		panic(fmt.Sprintf("merkletree.New tree panic:%s\n", err.Error()))
+	}
+	root := t.MerkleRoot()
+	rootHash.SetBytes(root)
+	return rootHash
 }

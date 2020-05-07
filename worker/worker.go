@@ -372,7 +372,7 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 	now := time.Now().UnixNano()/1000/1000
 	pending,_ := self.txpool.Pended()
 	delta := now - head.Time.Int64()
-	if (delta >= int64(blockPeorid*1000) || (len(pending) >= minTxsToMine) && delta > 50) {
+	if (delta >= int64(blockPeorid*1000) || (len(pending) >= minTxsToMine) && delta > 20) {
 		return head
 	}
 	return nil
@@ -381,40 +381,49 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 func (self *worker) RoutineMine() {
 	events := self.mux.Subscribe(bc.ProofConfirmEvent{})
 	defer events.Unsubscribe()
-	evict := time.NewTicker(time.Millisecond * 50)
-	defer evict.Stop()
 
 	self.confirmCh = make(chan *Work)
 	self.newRoundCh = make(chan *types.Header)
 	self.unconfirmed = newUnconfirmedProofs(self.confirmCh)
 	go self.unconfirmed.RoutineLoop()
+
+	go func() {
+		// routine to check new mine round and start new mine round
+		evict := time.NewTicker(time.Millisecond * 10)
+		defer evict.Stop()
+		for {
+			select {
+			case <-evict.C:
+				log.Trace("worker routine check new round")
+				if self.roundState == IDLE {
+					if h := self.CheckNeedStartMine(); h != nil {
+						self.roundState = PostMining
+						go func() { self.newRoundCh <- h }()
+					}
+				} else if self.roundState == Mining {
+					// working is mining.
+				}
+			case lastHeader, ok := <-self.newRoundCh:
+				if !ok {
+					return
+				}
+				log.Info("worker routine start new round ", "time ", time.Now().UnixNano()/1000/1000)
+				self.roundState = Mining
+				self.wg.Add(1)
+				go func() {
+					defer self.wg.Done()
+					if err := self.NewMineRound(lastHeader); err != nil {
+						self.roundState = IDLE
+					} else {
+						self.roundState = Mining
+					}
+				}()
+			}
+		}
+	}()
+
 	for {
 		select {
-		case <-evict.C:
-			log.Trace("worker routine check new round")
-			if self.roundState == IDLE {
-				if h := self.CheckNeedStartMine(); h != nil {
-					self.roundState = PostMining
-					go func(){self.newRoundCh <- h } ()
-				}
-			} else if self.roundState == Mining {
-				// working is mining.
-			}
-		case lastHeader, ok := <-self.newRoundCh:
-			if !ok {
-				return
-			}
-			log.Info("worker routine start new round")
-			self.roundState = Mining
-			self.wg.Add(1)
-			go func() {
-				defer self.wg.Done()
-				if err := self.NewMineRound(lastHeader); err != nil {
-					self.roundState = IDLE
-				} else {
-					self.roundState = Mining
-				}
-			}()
 		case obj := <-events.Chan():
 			switch ev:= obj.Data.(type) {
 			case bc.ProofConfirmEvent:
@@ -428,6 +437,7 @@ func (self *worker) RoutineMine() {
 			self.wg.Add(1)
 			go func() {
 				defer self.wg.Done()
+				log.Debug("worker start to exec finalMine", "time ", time.Now().UnixNano()/1000/1000)
 				err := self.FinalMine(work)
 				if err != nil {
 					log.Debug("worker finalmine failed","err ", err)
@@ -467,6 +477,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		log.Error("Failed to prepare header for mining", "err", err)
 		return err
 	}
+	log.Debug("worker after prepareblock header", "time ", time.Now().UnixNano()/1000/1000)
 
 	// make work
 	err := self.makeCurrent(parent, header)
@@ -481,7 +492,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	work := self.current
 	work.commitTransactions(txs, self.coinbase)
 
-	log.Info("luxqdebug","total work.txs ", len(work.txs), "total pending txs", len(txs))
+	log.Info("luxqdebug","total work.txs ", len(work.txs), "total pending txs", len(txs),"time ", time.Now().UnixNano()/1000/1000)
 	//for s := int(0); s < len(work.txs); s++ {
 	//	tx := work.txs[s]
 	//	if tx != nil {
@@ -497,7 +508,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		log.Error("Premine","GenerateProof failed, err", err, "headerNumber", header.Number)
 		return err
 	}
-	log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Signature.Hash())
+	log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Signature.Hash(), "time ", time.Now().UnixNano()/1000/1000)
 
 	if config.GetShxConfigInstance().Node.TestMode == 2 {
 		// single test, direct pass confirm.
@@ -506,7 +517,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	} else {
 		// broadcast proof.
 		self.mux.Post(bc.NewWorkProofEvent{Proof:proof})
-		log.Debug("worker proof goto wait confirm")
+		log.Debug("worker proof goto wait confirm","time ", time.Now().UnixNano()/1000/1000)
 		// wait confirm.
 		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
 	}
@@ -514,11 +525,11 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		if block,err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.proofs, work.receipts); err != nil {
 			work.genCh <- err
 		} else {
-			log.Trace("worker after engine.Finalize")
+			log.Debug("worker after engine.Finalize", "time ", time.Now().UnixNano()/1000/1000)
 			if result, err := self.engine.GenBlockWithSig(self.chain, block);err != nil {
 				work.genCh <- err
 			} else {
-				log.Trace("worker after engine.GenBlockWithSig")
+				log.Debug("worker after engine.GenBlockWithSig", "time ", time.Now().UnixNano()/1000/1000)
 				work.Block = result
 				work.genCh <- nil
 			}
@@ -552,7 +563,7 @@ func (self *worker) FinalMine(work *Work) error {
 			if self.workPending.Add(work) {
 				log.Info("Successfully sealed new block", "number -> ", result.Number(), "hash -> ", result.Hash(),
 					"txs -> ", len(result.Transactions()))
-				log.Debug("SHX profile", "sealed new block number ", result.Number(), "txs", len(result.Transactions()), "at time", time.Now().UnixNano()/1000/1000)
+				log.Debug("SHX profile worker", "sealed new block number ", result.Number(), "txs", len(result.Transactions()), "at time", time.Now().UnixNano()/1000/1000)
 				return nil
 			} else {
 				err = errors.New("pending is rollback")

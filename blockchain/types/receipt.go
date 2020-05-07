@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/common/hexutil"
+	"github.com/shx-project/sphinx/common/merkletree"
 	"github.com/shx-project/sphinx/common/rlp"
 	"io"
 )
@@ -121,6 +122,19 @@ func (r *Receipt) String() string {
 	return fmt.Sprintf("receipt{confirm=%d}", r.ConfirmCount)
 }
 
+func (r *Receipt)CalculateHash()([]byte, error){
+	hash := r.TxHash
+	return hash.Bytes(),nil
+}
+
+func (r *Receipt)Equals(other merkletree.Content)(bool, error){
+	or := other.(*Receipt)
+	if r.TxHash == or.TxHash && r.Status == or.Status{
+		return true,nil
+	}
+	return false, nil
+}
+
 // ReceiptForStorage is a wrapper around a Receipt that flattens and parses the
 // entire content of a receipt, as opposed to only the consensus fields originally.
 type ReceiptForStorage Receipt
@@ -165,4 +179,8 @@ func (r Receipts) GetRlp(i int) []byte {
 		panic(err)
 	}
 	return bytes
+}
+
+func (r Receipts)GetMerkleContent(i int) merkletree.Content{
+	return r[i]
 }
