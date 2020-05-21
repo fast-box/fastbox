@@ -45,7 +45,7 @@ const (
 )
 var (
 	blockMaxTxs = 5000 * 10
-	minTxsToMine = 10000
+	minTxsToMine = 100000
 	blockPeorid = 2
 )
 
