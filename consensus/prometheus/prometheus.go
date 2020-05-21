@@ -8,6 +8,7 @@ import (
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/common/crypto/sha3"
+	"github.com/shx-project/sphinx/common/log"
 	"github.com/shx-project/sphinx/consensus"
 	"gopkg.in/fatih/set.v0"
 
@@ -68,6 +69,8 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 	}
 	header.TxHash = txroot
 	header.ProofHash = proofHash
+
+	log.Debug("prometheus generate proof","proofhash",sighash, "txroot", txroot, "localhash", lastHash)
 	return &types.WorkProof{sighash, txs,proofs}, nil
 }
 

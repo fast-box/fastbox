@@ -235,11 +235,11 @@ func (self *worker) updateTxConfirm() {
 			break
 		}
 	}
-	log.Debug("worker updateTxConfirm, before batch.write")
+	//log.Debug("worker updateTxConfirm, before batch.write")
 	if cnt > 0 {
 		batch.Write()
 	}
-	log.Debug("worker updateTxConfirm, after batch.write", "cnt ",cnt)
+	//log.Debug("worker updateTxConfirm, after batch.write", "cnt ",cnt)
 	self.updating = false
 }
 
@@ -284,12 +284,14 @@ func (self *worker) eventListener() {
 					}
 
 					if !self.engine.VerifyState(self.coinbase, pastLocalRoot, ev.Proof) {
+						log.Debug("worker verify proof state failed")
 						var res= types.ProofConfirm{ev.Proof.Signature, false}
 						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
 						return
 					}
 
 					if err := self.engine.VerifyProof(ev.Peer.Address(), ev.Peer.ProofHash(), ev.Proof, true); err != nil {
+						log.Debug("worker verify proof proofhash failed")
 						var res= types.ProofConfirm{ev.Proof.Signature, false}
 						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
 						return

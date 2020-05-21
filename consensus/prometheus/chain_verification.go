@@ -22,6 +22,7 @@ import (
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/common/crypto"
+	"github.com/shx-project/sphinx/common/log"
 	"github.com/shx-project/sphinx/config"
 	"github.com/shx-project/sphinx/consensus"
 )
@@ -130,16 +131,19 @@ func (c *Prometheus) verifyProof(lHash common.Hash, address common.Address, proo
 	//proofRoot := types.DeriveSha(proof.States)
 	//proofHash := c.MixHash(txroot,proofRoot)
 	proofHash := c.MixHash(lHash,txroot)
+	log.Debug("prometheus verify proof","proofhash", proof.Signature.Hash(),"txroot",txroot,"localhash",lHash)
 
 	if pub, err := crypto.Ecrecover(proofHash.Bytes(), proof.Signature); err == nil {
 		var addr common.Address
 		copy(addr[:], crypto.Keccak256(pub[1:])[12:])
 		if bytes.Compare(addr.Bytes(), address.Bytes()) != 0 {
+			log.Debug("prometheus verify proof","addr compare failed, recover addr", addr)
 			return common.Hash{},errors.New("invalid proof")
 		} else {
 			return proofHash, nil
 		}
 	} else {
+		log.Debug("prometheus verify proof","recover failed, err", err.Error())
 		return common.Hash{}, errors.New("invalid proof")
 	}
 }

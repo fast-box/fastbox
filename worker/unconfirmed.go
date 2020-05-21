@@ -29,6 +29,7 @@ type proofInfo struct {
 	threshold int
 	work  *Work
 	confirmed *set.Set
+	confirmedUnpass *set.Set
 	time  int64
 }
 
@@ -51,7 +52,7 @@ func newUnconfirmedProofs(confirmedCh chan *Work) *unconfirmedProofs{
 func (u *unconfirmedProofs) Insert(proof *types.WorkProof, work *Work, threshold int) error {
 	sigHash := proof.Signature.Hash()
 	if _, ok := u.proofs.Load(sigHash); !ok {
-		info := &proofInfo{threshold:threshold, work:work, confirmed:set.New(), time:time.Now().Unix()}
+		info := &proofInfo{threshold:threshold, work:work, confirmed:set.New(), confirmedUnpass:set.New(), time:time.Now().Unix()}
 		u.proofs.Store(sigHash, info)
 		return nil
 	}
@@ -65,11 +66,19 @@ func (u *unconfirmedProofs) Confirm(addr common.Address, confirm *types.ProofCon
 		if confirm.Confirm == true {
 			log.Debug("worker confirm , add confirm");
 			info.confirmed.Add(addr)
+		} else {
+			log.Debug("worker confirm unpass, add confirm");
+			info.confirmedUnpass.Add(addr)
 		}
-		if info.confirmed.Size() >= info.threshold {
+		if info.confirmed.Size() >= info.threshold || info.confirmedUnpass.Size() >= info.threshold {
+			if info.confirmedUnpass.Size() >= info.threshold {
+				log.Debug("workconfirm, confirmunpass enough")
+				info.work.confirmed = false
+			} else {
+				log.Debug("worker confirm , confirm enough")
+				info.work.confirmed = true
+			}
 			// send to worker.
-			log.Debug("worker confirm , confirm enough");
-			info.work.confirmed = true
 			go func(){u.confirmedCh <- info.work}()
 			u.proofs.Delete(sigHash)
 		}
