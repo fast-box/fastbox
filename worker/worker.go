@@ -100,7 +100,7 @@ type worker struct {
 
 	currentMu sync.Mutex
 	current   *Work
-	roundState 	RoundState
+	roundState 	atomic.Value
 
 	unconfirmed *unconfirmedProofs // set of locally mined blocks pending canonicalness confirmations
 	workPending	*WorkPending
@@ -127,12 +127,12 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 		coinbase:    coinbase,
 		exitCh:		 make(chan struct {}),
 		newRoundCh:  make(chan *types.Header, 1),
-		roundState:		IDLE,
 		txConfirmPool: make(map[common.Hash]uint64),
 		updating:	false,
 		history: 	make([]common.Hash,0),
 		workPending:NewWorkPending(),
 	}
+	worker.roundState.Store(IDLE)
 
 	worker.txpool = txpool.GetTxPool()
 	worker.chainHeadSub = bc.InstanceBlockChain().SubscribeChainHeadEvent(worker.chainHeadCh)
@@ -374,10 +374,19 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 	now := time.Now().UnixNano()/1000/1000
 	pending,_ := self.txpool.Pended()
 	delta := now - head.Time.Int64()
-	if (delta >= int64(blockPeorid*1000) || (len(pending) >= minTxsToMine) && delta > 20) {
+	if delta >= int64(blockPeorid*1000) || (len(pending) >= minTxsToMine) && delta > 20 {
 		return head
 	}
 	return nil
+}
+
+func (self *worker) GetRoundState() RoundState{
+	v:=self.roundState.Load().(RoundState)
+	return v
+}
+
+func (self *worker) SetRoundState(s RoundState) {
+	self.roundState.Store(s)
 }
 
 func (self *worker) RoutineMine() {
@@ -397,12 +406,12 @@ func (self *worker) RoutineMine() {
 			select {
 			case <-evict.C:
 				log.Trace("worker routine check new round")
-				if self.roundState == IDLE {
+				if self.GetRoundState() == IDLE {
 					if h := self.CheckNeedStartMine(); h != nil {
-						self.roundState = PostMining
+						self.SetRoundState(PostMining)
 						go func() { self.newRoundCh <- h }()
 					}
-				} else if self.roundState == Mining {
+				} else if self.GetRoundState() == Mining {
 					// working is mining.
 				}
 			case lastHeader, ok := <-self.newRoundCh:
@@ -410,14 +419,14 @@ func (self *worker) RoutineMine() {
 					return
 				}
 				log.Info("worker routine start new round ", "time ", time.Now().UnixNano()/1000/1000)
-				self.roundState = Mining
+				self.SetRoundState(Mining)
 				self.wg.Add(1)
 				go func() {
 					defer self.wg.Done()
 					if err := self.NewMineRound(lastHeader); err != nil {
-						self.roundState = IDLE
+						self.SetRoundState(IDLE)
 					} else {
-						self.roundState = Mining
+						self.SetRoundState(Mining)
 					}
 				}()
 			}
@@ -444,14 +453,14 @@ func (self *worker) RoutineMine() {
 				if err != nil {
 					log.Debug("worker finalmine failed","err ", err)
 				}
-				self.roundState = IDLE
+				self.SetRoundState(IDLE)
 			}()
 
 		case <-self.exitCh:
 			self.unconfirmed.Stop()
 			close(self.confirmCh)
 			close(self.newRoundCh)
-			self.roundState = IDLE
+			self.SetRoundState(IDLE)
 			return
 		}
 	}
