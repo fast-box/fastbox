@@ -80,8 +80,9 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proof *types.WorkProof, update bool) error {
 	if val, ok := c.proofs.Load(addr); ok {
 		pf := val.(*PeerProof)
-		log.Debug("prometheus verify proof","peer addr",addr, "proof", proof.Signature.Hash(), "root",pf.Root)
+		log.Debug("prometheus verify proof","peer addr",addr, "proof", proof.Signature.Hash(), "with root",pf.Root)
 		if hash, err := c.verifyProof(pf.Root, addr, proof); err == nil && update {
+			log.Debug("prometheus verify proof","after verify proof",proof.Signature.Hash(),"update peer",addr,"with root",hash)
 			c.UpdateProof(addr, hash)
 		} else {
 			return err

@@ -137,7 +137,7 @@ func (c *Prometheus) verifyProof(lHash common.Hash, address common.Address, proo
 		var addr common.Address
 		copy(addr[:], crypto.Keccak256(pub[1:])[12:])
 		if bytes.Compare(addr.Bytes(), address.Bytes()) != 0 {
-			log.Debug("prometheus verify proof","addr compare failed, recover addr", addr)
+			log.Debug("prometheus verify proof","proof",proof.Signature.Hash(),"addr compare failed, recover addr", addr)
 			return common.Hash{},errors.New("invalid proof")
 		} else {
 			return proofHash, nil
