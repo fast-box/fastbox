@@ -80,6 +80,7 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proof *types.WorkProof, update bool) error {
 	if val, ok := c.proofs.Load(addr); ok {
 		pf := val.(*PeerProof)
+		log.Debug("prometheus verify proof","peer addr",addr, "proof", proof.Signature.Hash(), "root",pf.Root)
 		if hash, err := c.verifyProof(pf.Root, addr, proof); err == nil && update {
 			c.UpdateProof(addr, hash)
 		} else {
@@ -113,15 +114,9 @@ func (c *Prometheus) VerifyState(coinbase common.Address, history *set.Set, proo
 }
 
 func (c *Prometheus) UpdateProof(addr common.Address, root common.Hash) {
-	if val, ok := c.proofs.Load(addr); ok {
-		if pf, ok := val.(*PeerProof); ok {
-			pf.Root = root
-			pf.Latest = time.Now().Unix()
-		}
-	} else {
-		pf := &PeerProof{time.Now().Unix(), root}
-		c.proofs.Store(addr, pf)
-	}
+	log.Debug("update proof","addr",addr, "root",root)
+	pf := &PeerProof{time.Now().Unix(), root}
+	c.proofs.Store(addr, pf)
 }
 
 func (c *Prometheus)GetNodeProof(addr common.Address) (common.Hash,error) {
