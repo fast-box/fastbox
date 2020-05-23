@@ -37,7 +37,7 @@ import (
 const (
 	baseProtocolMaxMsgSize = 80 * 1024        // the max msg size only for protocol handshake
 	pingInterval           = 5 * time.Second  // ping msg loop for peer
-	nodereqInterval        = 15 * time.Second //interval for request nodes
+	nodereqInterval        = 5 * time.Second //interval for request nodes
 )
 
 // PeerEventType is the type of peer events emitted by a p2p.Server
@@ -340,7 +340,7 @@ func (p *PeerBase) updateNodesLoop() {
 				p.protoErr <- err
 				return
 			}
-			nodeTime.Reset(8 * nodereqInterval)
+			nodeTime.Reset(2 * nodereqInterval)
 		case <-p.closed:
 			p.log.Debug("PeerBase update nodes loop CLOSED")
 			return

@@ -79,7 +79,14 @@ func (u *unconfirmedProofs) Confirm(addr common.Address, confirm *types.ProofCon
 				info.work.confirmed = true
 			}
 			// send to worker.
-			go func(){u.confirmedCh <- info.work}()
+			go func(){
+				defer func() {
+					if err := recover();err != nil {
+						log.Debug("error on confirmedCh","err", err)
+					}
+				}()
+				u.confirmedCh <- info.work
+			}()
 			u.proofs.Delete(sigHash)
 		}
 	}

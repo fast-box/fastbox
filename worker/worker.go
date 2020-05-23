@@ -17,6 +17,7 @@
 package worker
 
 import (
+	"encoding/hex"
 	"errors"
 	"gopkg.in/fatih/set.v0"
 	"sync"
@@ -366,6 +367,8 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 		}
 	} 
 	if h := self.workPending.Top(); h != nil {
+		log.Debug("worker get header from workpending", "h",h, "head.Number",h.Block.Header().Number,
+			"head.ProofHash",hex.EncodeToString(h.Block.Header().ProofHash[:]))
 		head = h.Block.Header()
 	} else {
 		head = self.chain.CurrentHeader()
@@ -532,7 +535,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		// wait confirm.
 		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
 	}
-	go func() {
+	go func(work *Work) {
 		if block,err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.proofs, work.receipts); err != nil {
 			work.genCh <- err
 		} else {
@@ -545,7 +548,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 				work.genCh <- nil
 			}
 		}
-	}()
+	}(work)
 
 	return nil
 }
