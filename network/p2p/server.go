@@ -491,16 +491,6 @@ running:
 			// the remote identity is known (but hasn't been verified yet).
 			// TODO: track in-progress inbound node IDs (pre-Peer) to avoid dialing them.
 			err := srv.encHandshakeChecks(peers, c)
-			if err == DiscAlreadyConnected {
-				log.Debug("discAlreadyConnected", "nid", c.id[0:8])
-				nid := c.id
-				delete(peers, nid)
-				shortid := fmt.Sprintf("%x", nid[0:8])
-				if err := PeerMgrInst().unregister(shortid); err != nil {
-					log.Debug("Peer removal failed", "peer", shortid, "err", err)
-				}
-				srv.ntab.RemoveNode(nid)
-			}
 			select {
 			case c.cont <- err:
 			case <-srv.quit:
