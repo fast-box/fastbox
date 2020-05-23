@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"github.com/shx-project/sphinx/account"
 	"github.com/shx-project/sphinx/blockchain/state"
@@ -49,7 +50,7 @@ func (c *Prometheus)MixHash(first, second common.Hash) (h common.Hash) {
 // GenerateProof
 func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.Header,parent *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof, error) {
 	number := header.Number.Uint64()
-	log.Debug("prometheus generate proof","parent", parent, "parent.ProofHash", parent.ProofHash)
+	log.Debug("prometheus generate proof","parent.hash", hex.EncodeToString(parent.Hash()[:]), "parent.ProofHash", hex.EncodeToString(parent.ProofHash[:]))
 
 	if parent == nil {
 		if parent = chain.GetHeaderByNumber(number - 1); parent == nil {
