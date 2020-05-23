@@ -367,11 +367,13 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 		}
 	} 
 	if h := self.workPending.Top(); h != nil {
-		log.Debug("worker get header from workpending", "h.hash",h.Block.Header().Hash(), "head.Number",h.Block.Header().Number,
-			"head.ProofHash",hex.EncodeToString(h.Block.Header().ProofHash[:]))
 		head = h.Block.Header()
+		log.Debug("worker get header from workpending", "h.hash",head.Hash(), "head.Number",head.Number,
+			"head.ProofHash",hex.EncodeToString(head.ProofHash[:]))
 	} else {
 		head = self.chain.CurrentHeader()
+		log.Debug("worker get header from workpending", "h.hash",head.Hash(), "head.Number",head.Number,
+			"head.ProofHash",hex.EncodeToString(head.ProofHash[:]))
 	}
 
 	now := time.Now().UnixNano()/1000/1000
@@ -412,7 +414,14 @@ func (self *worker) RoutineMine() {
 				if self.GetRoundState() == IDLE {
 					if h := self.CheckNeedStartMine(); h != nil {
 						self.SetRoundState(PostMining)
-						go func() { self.newRoundCh <- h }()
+						go func() {
+							defer func() {
+								if err := recover();err != nil {
+									log.Debug("error on newRoundCh","err", err)
+								}
+							}()
+							self.newRoundCh <- h
+						}()
 					}
 				} else if self.GetRoundState() == Mining {
 					// working is mining.

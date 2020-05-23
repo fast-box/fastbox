@@ -86,7 +86,7 @@ func (p *WorkPending) Run() {
 				if now - start > 2 {
 					break
 				}
-				w := p.pop()
+				w := p.Top()
 				_, err := chain.WriteBlockAndState(w.Block, w.receipts, w.state)
 				if err != nil {
 					// enter err mode, not work and receive new work.
@@ -95,6 +95,7 @@ func (p *WorkPending) Run() {
 				} else {
 					w.WorkEnded(true)
 				}
+				p.pop()
 			}
 			timer.Reset(duration)
 		}
