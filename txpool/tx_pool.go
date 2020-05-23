@@ -345,7 +345,7 @@ func (pool *TxPool) AddTxs(txs []*types.Transaction) error {
 	for i, tx := range txs {
 		err := pool.AddTx(tx)
 		if err != nil {
-			log.Debug("AddTxs to add tx failed", "index", i, "err", err)
+			log.Trace("AddTxs to add tx failed", "index", i, "err", err)
 			continue
 		}
 	}
