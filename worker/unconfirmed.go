@@ -72,7 +72,7 @@ func (u *unconfirmedProofs) Confirm(addr common.Address, confirm *types.ProofCon
 		}
 		if info.confirmed.Size() >= info.threshold || info.confirmedUnpass.Size() >= info.threshold {
 			if info.confirmedUnpass.Size() >= info.threshold {
-				log.Debug("workconfirm, confirmunpass enough")
+				log.Info("workconfirm, confirmunpass enough")
 				info.work.confirmed = false
 			} else {
 				log.Debug("worker confirm , confirm enough")

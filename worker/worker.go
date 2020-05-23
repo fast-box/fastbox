@@ -367,7 +367,7 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 		}
 	} 
 	if h := self.workPending.Top(); h != nil {
-		log.Debug("worker get header from workpending", "h.hash",hex.EncodeToString(h.Block.Header().Hash()[:]), "head.Number",h.Block.Header().Number,
+		log.Debug("worker get header from workpending", "h.hash",h.Block.Header().Hash(), "head.Number",h.Block.Header().Number,
 			"head.ProofHash",hex.EncodeToString(h.Block.Header().ProofHash[:]))
 		head = h.Block.Header()
 	} else {
