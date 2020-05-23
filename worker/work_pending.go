@@ -43,6 +43,16 @@ func (p *WorkPending)Top() *Work {
 	return nil
 }
 
+func (p *WorkPending)Head() *Work {
+	p.rwlock.RLock()
+	defer p.rwlock.RUnlock()
+
+	if !p.HaveErr() && len(p.Pending) > 0 {
+		return p.Pending[0]
+	}
+	return nil
+}
+
 func (p *WorkPending) Empty() bool {
 	p.rwlock.RLock()
 	defer p.rwlock.RUnlock()
@@ -86,7 +96,7 @@ func (p *WorkPending) Run() {
 				if now - start > 2 {
 					break
 				}
-				w := p.Top()
+				w := p.Head()
 				_, err := chain.WriteBlockAndState(w.Block, w.receipts, w.state)
 				if err != nil {
 					// enter err mode, not work and receive new work.

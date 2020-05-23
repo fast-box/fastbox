@@ -110,6 +110,7 @@ type worker struct {
 	txConfirmPool 	map[common.Hash]uint64
 	updating 		bool
 	history 		[]common.Hash
+	verifyChMap     map[common.Address]chan bc.WorkProofEvent
 
 	// atomic status counters
 	mining int32
@@ -132,6 +133,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 		updating:	false,
 		history: 	make([]common.Hash,0),
 		workPending:NewWorkPending(),
+		verifyChMap:make(map[common.Address]chan bc.WorkProofEvent),
 	}
 	worker.roundState.Store(IDLE)
 
@@ -244,6 +246,54 @@ func (self *worker) updateTxConfirm() {
 	self.updating = false
 }
 
+func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
+	// 1. receive proof
+	// 2. verify proof
+	pastLocalRoot := set.New()
+	for _,h := range self.history {
+		pastLocalRoot.Add(h)
+	}
+
+	if atomic.LoadInt32(&self.mining) == 1 {
+		if self.current != nil && self.current.header != nil {
+			pastLocalRoot.Add(self.current.header.ProofHash)
+		}
+	}
+
+	if !self.engine.VerifyState(self.coinbase, pastLocalRoot, event.Proof) {
+		log.Debug("worker verify proof state failed")
+		var res= types.ProofConfirm{event.Proof.Signature, false}
+		p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+		return
+	}
+
+	if err := self.engine.VerifyProof(event.Peer.Address(), event.Peer.ProofHash(), event.Proof, true); err != nil {
+		log.Debug("worker verify proof proofhash failed")
+		var res= types.ProofConfirm{event.Proof.Signature, false}
+		p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+		return
+	} else {
+		var res= types.ProofConfirm{event.Proof.Signature, true}
+		p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+	}
+	// add tx to txpool.
+	go txpool.GetTxPool().AddTxs(event.Proof.Txs)
+	// 3. update tx info (tx's signed count)
+	self.txMu.Lock()
+	for _, tx := range event.Proof.Txs {
+		// add to unconfirmed tx.
+		if v,ok := self.txConfirmPool[tx.Hash()]; ok {
+			v += 1
+			self.txConfirmPool[tx.Hash()] = v
+			//log.Debug("worker update tx map", "hash", tx.Hash(), "count", v)
+		} else {
+			self.txConfirmPool[tx.Hash()] = 1
+			//log.Debug("worker update tx map", "new hash", tx.Hash(), "count", 1)
+		}
+	}
+	self.txMu.Unlock()
+}
+
 func (self *worker) eventListener() {
 	events := self.mux.Subscribe(bc.WorkProofEvent{})
 	defer events.Unsubscribe()
@@ -270,53 +320,27 @@ func (self *worker) eventListener() {
 		case obj := <-events.Chan():
 			switch ev:= obj.Data.(type) {
 			case bc.WorkProofEvent:
-				go func() {
-					// 1. receive proof
-					// 2. verify proof
-					pastLocalRoot := set.New()
-					for _,h := range self.history {
-						pastLocalRoot.Add(h)
-					}
-
-					if atomic.LoadInt32(&self.mining) == 1 {
-						if self.current != nil && self.current.header != nil {
-							pastLocalRoot.Add(self.current.header.ProofHash)
-						}
-					}
-
-					if !self.engine.VerifyState(self.coinbase, pastLocalRoot, ev.Proof) {
-						log.Debug("worker verify proof state failed")
-						var res= types.ProofConfirm{ev.Proof.Signature, false}
-						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
-						return
-					}
-
-					if err := self.engine.VerifyProof(ev.Peer.Address(), ev.Peer.ProofHash(), ev.Proof, true); err != nil {
-						log.Debug("worker verify proof proofhash failed")
-						var res= types.ProofConfirm{ev.Proof.Signature, false}
-						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
-						return
-					} else {
-						var res= types.ProofConfirm{ev.Proof.Signature, true}
-						p2p.SendData(ev.Peer, p2p.ProofResMsg, res)
-					}
-					// add tx to txpool.
-					go txpool.GetTxPool().AddTxs(ev.Proof.Txs)
-					// 3. update tx info (tx's signed count)
-					self.txMu.Lock()
-					for _, tx := range ev.Proof.Txs {
-							// add to unconfirmed tx.
-							if v,ok := self.txConfirmPool[tx.Hash()]; ok {
-								v += 1
-								self.txConfirmPool[tx.Hash()] = v
-								//log.Debug("worker update tx map", "hash", tx.Hash(), "count", v)
-							} else {
-								self.txConfirmPool[tx.Hash()] = 1
-								//log.Debug("worker update tx map", "new hash", tx.Hash(), "count", 1)
+				// sorted handle workproofevent for every peer.
+				addr := ev.Peer.Address()
+				if ch,ok := self.verifyChMap[addr]; ok {
+					ch <- ev
+				} else {
+					ch := make(chan bc.WorkProofEvent, 1000)
+					self.verifyChMap[addr] = ch
+					ch <- ev
+					go func(ch chan bc.WorkProofEvent) {
+						for {
+							select {
+							case event,ok := <-ch:
+								if !ok {
+									return
+								} else {
+									self.dealProofEvent(&event)
+								}
 							}
-					}
-					self.txMu.Unlock()
-				}()
+						}
+					}(ch)
+				}
 			}
 		}
 	}
