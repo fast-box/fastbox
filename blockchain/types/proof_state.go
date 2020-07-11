@@ -46,6 +46,7 @@ func (s ProofStates)GetMerkleContent(i int) merkletree.Content{
 type ProofSignature []byte
 
 type WorkProof struct {
+	Number 	  uint64
 	Signature ProofSignature
 	Txs       Transactions
 	States 	  ProofStates

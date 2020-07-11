@@ -73,7 +73,7 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 	header.ProofHash = proofHash
 
 	log.Debug("prometheus generate proof","proofhash",sighash, "txroot", txroot, "localhash", lastHash)
-	return &types.WorkProof{sighash, txs,proofs}, nil
+	return &types.WorkProof{number,sighash, txs,proofs}, nil
 }
 
 // VerifyProof
@@ -83,16 +83,16 @@ func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proo
 		log.Debug("prometheus verify proof","peer addr",addr, "proof", proof.Signature.Hash(), "with root",pf.Root)
 		if hash, err := c.verifyProof(pf.Root, addr, proof); err == nil && update {
 			log.Debug("prometheus verify proof","after verify proof",proof.Signature.Hash(),"update peer",addr,"with root",hash)
-			c.UpdateProof(addr, hash)
+			c.UpdateProof(addr, hash, proof.Number)
 		} else {
 			return err
 		}
 
 	} else {
-		pf := &PeerProof{time.Now().Unix(), initHash}
+		pf := &PeerProof{time.Now().Unix(), proof.Number,initHash}
 		c.proofs.Store(addr, pf)
 		if hash, err := c.verifyProof(pf.Root, addr, proof); err == nil && update {
-			c.UpdateProof(addr, hash)
+			c.UpdateProof(addr, hash, proof.Number)
 		} else {
 			return err
 		}
@@ -114,9 +114,9 @@ func (c *Prometheus) VerifyState(coinbase common.Address, history *set.Set, proo
 	return false
 }
 
-func (c *Prometheus) UpdateProof(addr common.Address, root common.Hash) {
+func (c *Prometheus) UpdateProof(addr common.Address, root common.Hash, number uint64) {
 	log.Debug("update proof","addr",addr, "root",root)
-	pf := &PeerProof{time.Now().Unix(), root}
+	pf := &PeerProof{time.Now().Unix(), number, root}
 	c.proofs.Store(addr, pf)
 }
 

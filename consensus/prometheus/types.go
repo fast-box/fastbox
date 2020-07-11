@@ -34,6 +34,7 @@ var (
 
 type PeerProof struct {
 	Latest   int64 //time stamp for update.
+	Number   uint64
 	Root 	 common.Hash
 }
 
