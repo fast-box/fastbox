@@ -461,4 +461,12 @@ func HandleProofResMsg(p *p2p.Peer, msg p2p.Msg) error {
 	return nil
 }
 
+func HandleResProofsMsg(p *p2p.Peer, msg p2p.Msg) error {
+	return nil
+}
+
+func HandleGetProofsMsg(p *p2p.Peer, msg p2p.Msg) error {
+	return nil
+}
+
 

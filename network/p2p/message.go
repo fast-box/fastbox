@@ -65,6 +65,8 @@ const (
 	NewHashBlockMsg uint64 = 0x2020
 	WorkProofMsg    uint64 = 0x2022
 	ProofResMsg     uint64 = 0x2024
+	GetProofsMsg 	uint64 = 0x2025
+	ResProofsMsg 	uint64 = 0x2026
 )
 
 // Msg defines the structure of a p2p message.
