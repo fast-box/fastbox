@@ -150,6 +150,8 @@ func newSynCtrl(cfg *config.ChainConfig, mode config.SyncMode, txpoolins *txpool
 	p2p.PeerMgrInst().RegMsgProcess(p2p.TxMsg, HandleTxMsg)
 	p2p.PeerMgrInst().RegMsgProcess(p2p.WorkProofMsg, HandleWorkProofMsg)
 	p2p.PeerMgrInst().RegMsgProcess(p2p.ProofResMsg, HandleProofResMsg)
+	p2p.PeerMgrInst().RegMsgProcess(p2p.GetProofsMsg, HandleGetProofsMsg)
+	p2p.PeerMgrInst().RegMsgProcess(p2p.ResProofsMsg, HandleResProofsMsg)
 
 	p2p.PeerMgrInst().RegOnAddPeer(synctrl.RegisterNetPeer)
 	p2p.PeerMgrInst().RegOnDropPeer(synctrl.UnregisterNetPeer)
