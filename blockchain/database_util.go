@@ -18,10 +18,12 @@ package bc
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/shx-project/sphinx/consensus/prometheus"
 	"math/big"
 
 	"github.com/shx-project/sphinx/blockchain/storage"
@@ -60,6 +62,7 @@ var (
 	lookupPrefix        = []byte("l")      // lookupPrefix + hash -> transaction/receipt lookup metadata
 	bloomBitsPrefix     = []byte("B")      // bloomBitsPrefix + bit (uint16 big endian) + section (uint64 big endian) + hash -> bloom bits
 	randomPrefix        = []byte("random") // randomPrefix + num (uint64 big endian) + hash -> header
+	peerProofPrefix     = []byte("pproof") // peerProofPrefix + hash(peer_address) -> PeerProof{number, timestamp, proofhash}
 
 	preimagePrefix = "secure-key-"         // preimagePrefix + hash -> preimage
 	configPrefix   = []byte("hpb-config-") // config prefix for the db
@@ -421,6 +424,23 @@ func GetBloomBits(db DatabaseReader, bit uint, section uint64, head common.Hash)
 	return bits
 }
 
+func GetPeerProof(db DatabaseReader, addr common.Address) *prometheus.PeerProof {
+	hash := sha256.Sum256(addr.Bytes())
+	key := append(append(peerProofPrefix, make([]byte,32)...), hash[:]...)
+
+	data, _ := db.Get(key)
+	if len(data) == 0 {
+		return nil
+	}
+	var pproof prometheus.PeerProof
+	err := rlp.DecodeBytes(data, &pproof)
+	if err != nil {
+		log.Error("Invalid PeerProof RLP", "err", err)
+		return nil
+	}
+	return &pproof
+}
+
 // WriteCanonicalHash stores the canonical hash for the given block number.
 func WriteCanonicalHash(db shxdb.Putter, hash common.Hash, number uint64) error {
 	key := append(append(headerPrefix, encodeBlockNumber(number)...), numSuffix...)
@@ -573,6 +593,21 @@ func WriteBloomBits(db shxdb.Putter, bit uint, section uint64, head common.Hash,
 	}
 }
 
+func WritePeerProof(db shxdb.Putter, addr common.Address, pproof prometheus.PeerProof) {
+	hash := sha256.Sum256(addr.Bytes())
+	key := append(append(peerProofPrefix, make([]byte,32)...), hash[:]...)
+
+	data, err := rlp.EncodeToBytes(pproof)
+	if err != nil {
+		log.Error("Invalid PeerProof to RLP Encode", "err", err)
+		return
+	}
+	err = db.Put(key,data)
+	if err != nil {
+		log.Error("WritePeerProof failed", "err", err)
+	}
+}
+
 // DeleteCanonicalHash removes the number to hash canonical mapping.
 func DeleteCanonicalHash(db DatabaseDeleter, number uint64) {
 	db.Delete(append(append(headerPrefix, encodeBlockNumber(number)...), numSuffix...))
@@ -610,6 +645,13 @@ func DeleteBlockReceipts(db DatabaseDeleter, hash common.Hash, number uint64) {
 // DeleteTxLookupEntry removes all transaction data associated with a hash.
 func DeleteTxLookupEntry(db DatabaseDeleter, hash common.Hash) {
 	db.Delete(append(lookupPrefix, hash.Bytes()...))
+}
+
+// DeletePeerProof removes peer's PeerProof.
+func DeletePeerProof(db DatabaseDeleter, addr common.Address) {
+	hash := sha256.Sum256(addr.Bytes())
+	key := append(append(peerProofPrefix, make([]byte,32)...), hash[:]...)
+	db.Delete(key)
 }
 
 // PreimageTable returns a Database instance with the key prefix for preimage entries.
