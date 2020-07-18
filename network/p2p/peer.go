@@ -68,7 +68,6 @@ type protoHandshake struct {
 	End     *discover.EndPoint
 
 	CoinBase  common.Address
-	ProofHash common.Hash
 	RandNonce []byte
 	Sign      []byte
 }
@@ -221,10 +220,6 @@ func (p *PeerBase) LocalType() discover.NodeType {
 
 func (p *PeerBase) Address() common.Address {
 	return p.rw.their.CoinBase
-}
-
-func (p *PeerBase) ProofHash() common.Hash {
-	return p.rw.their.ProofHash
 }
 
 // Disconnect terminates the peer connection with the given reason.
