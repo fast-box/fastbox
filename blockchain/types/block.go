@@ -68,11 +68,11 @@ func (n *BlockNonce) UnmarshalText(input []byte) error {
 type Header struct {
 	ParentHash  common.Hash    `json:"parentHash"       gencodec:"required"`
 	Coinbase    common.Address `json:"miner"            gencodec:"required"`
-	ProofHash   common.Hash    `json:"proofHash"        gencodec:"required"`
+	ProofHash   common.Hash    `json:"proofHash"        gencodec:"required"` // latest proofHash of current node.
 	Root        common.Hash    `json:"stateRoot"        gencodec:"required"`
 	TxHash      common.Hash    `json:"transactionsRoot" gencodec:"required"`
 	ReceiptHash common.Hash    `json:"receiptsRoot"     gencodec:"required"`
-	ProofRoot   common.Hash	   `json:"proofRoot"		gencodec:"required"`
+	ProofRoot   common.Hash	   `json:"proofRoot"		gencodec:"required"` // merkle-root of peer's proofState in block body.
 	Difficulty  *big.Int       `json:"difficulty"       gencodec:"required"`
 	Number      *big.Int       `json:"number"           gencodec:"required"`
 	Time        *big.Int       `json:"timestamp"        gencodec:"required"`

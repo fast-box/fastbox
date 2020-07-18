@@ -462,11 +462,35 @@ func HandleProofResMsg(p *p2p.Peer, msg p2p.Msg) error {
 }
 
 func HandleResProofsMsg(p *p2p.Peer, msg p2p.Msg) error {
+	var response types.BatchProofData
+	if err := msg.Decode(&response); err != nil {
+		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
+	}
+	ev := bc.BatchProofEvent{p, response}
+	// post to worker
+	syncInstance.NewBlockMux().Post(ev)
+
 	return nil
 }
 
 func HandleGetProofsMsg(p *p2p.Peer, msg p2p.Msg) error {
-	return nil
+	var request types.ReuqestBatchProof
+	if err := msg.Decode(&request); err != nil {
+		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
+	}
+	if request.EndNumber <= request.StartNumber {
+		return p2p.ErrResp(p2p.ErrDecode, "param end (%v)<= start(%v)", request.EndNumber, request.StartNumber)
+	}
+	count := request.EndNumber - request.StartNumber
+
+	response := make([]types.ResponseProofData, count)
+	for i:= uint64(0); i < count; i++ {
+		h := bc.InstanceBlockChain().GetHeaderByNumber(i + request.StartNumber)
+		response[i].Number = h.Number.Uint64()
+		response[i].ProofHash = h.ProofHash
+		response[i].TxRoot = h.TxHash
+	}
+	return p2p.SendData(p, p2p.ResProofsMsg, types.BatchProofData(response))
 }
 
 

@@ -57,15 +57,13 @@ type Engine interface {
 	// generate
 	PrepareBlockHeader(chain ChainReader, header *types.Header, state *state.StateDB) error
 
-	// GetNodeProof return a proofstate
-	GetNodeProof(addr common.Address) (root common.Hash, err error)
-
 	// GerateProof return a workproof
 	GenerateProof(chain ChainReader, header *types.Header, parent *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof,error)
 
 	// VerifyProof check the proof from peer is correct, and return new hash.
-	VerifyProof(addr common.Address, initHash common.Hash, proof *types.WorkProof, update bool) error
+	VerifyProof(addr common.Address, lastHash common.Hash, proof *types.WorkProof) (common.Hash, error)
 	VerifyState(coinbase common.Address, history *set.Set, proof *types.WorkProof) bool
+	VerifyProofQuick(lasthash common.Hash, txroot common.Hash, newHash common.Hash) error
 
 	// Finalize runs any post-transaction state modifications
 	// and assembles the final block.

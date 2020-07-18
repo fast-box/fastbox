@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/shx-project/sphinx/consensus/prometheus"
 	"math/big"
 
 	"github.com/shx-project/sphinx/blockchain/storage"
@@ -424,7 +423,7 @@ func GetBloomBits(db DatabaseReader, bit uint, section uint64, head common.Hash)
 	return bits
 }
 
-func GetPeerProof(db DatabaseReader, addr common.Address) *prometheus.PeerProof {
+func GetPeerProof(db DatabaseReader, addr common.Address) *types.ProofState{
 	hash := sha256.Sum256(addr.Bytes())
 	key := append(append(peerProofPrefix, make([]byte,32)...), hash[:]...)
 
@@ -432,13 +431,13 @@ func GetPeerProof(db DatabaseReader, addr common.Address) *prometheus.PeerProof 
 	if len(data) == 0 {
 		return nil
 	}
-	var pproof prometheus.PeerProof
-	err := rlp.DecodeBytes(data, &pproof)
+	var proof types.ProofState
+	err := rlp.DecodeBytes(data, &proof)
 	if err != nil {
 		log.Error("Invalid PeerProof RLP", "err", err)
 		return nil
 	}
-	return &pproof
+	return &proof
 }
 
 // WriteCanonicalHash stores the canonical hash for the given block number.
@@ -593,7 +592,7 @@ func WriteBloomBits(db shxdb.Putter, bit uint, section uint64, head common.Hash,
 	}
 }
 
-func WritePeerProof(db shxdb.Putter, addr common.Address, pproof prometheus.PeerProof) {
+func WritePeerProof(db shxdb.Putter, addr common.Address, pproof types.ProofState) {
 	hash := sha256.Sum256(addr.Bytes())
 	key := append(append(peerProofPrefix, make([]byte,32)...), hash[:]...)
 

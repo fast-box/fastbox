@@ -62,7 +62,7 @@ type Work struct {
 	header   *types.Header
 	txs      []*types.Transaction
 	receipts []*types.Receipt
-	proofs   []*types.ProofState
+	states   []*types.ProofState
 	createdAt time.Time
 	id 			int64
 	genCh  	chan error
@@ -111,6 +111,7 @@ type worker struct {
 	updating 		bool
 	history 		[]common.Hash
 	verifyChMap     map[common.Address]chan bc.WorkProofEvent
+	peerLockMap     map[common.Address]chan struct{}
 
 	// atomic status counters
 	mining int32
@@ -134,6 +135,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 		history: 	make([]common.Hash,0),
 		workPending:NewWorkPending(),
 		verifyChMap:make(map[common.Address]chan bc.WorkProofEvent),
+		peerLockMap:make(map[common.Address]chan struct{}),
 	}
 	worker.roundState.Store(IDLE)
 
@@ -174,7 +176,7 @@ func (self *worker) pending() (*types.Block, *state.StateDB) {
 		return types.NewBlock(
 			self.current.header,
 			self.current.txs,
-			self.current.proofs,
+			self.current.states,
 			self.current.receipts,
 		), self.current.state.Copy()
 	}
@@ -189,7 +191,7 @@ func (self *worker) pendingBlock() *types.Block {
 		return types.NewBlock(
 			self.current.header,
 			self.current.txs,
-			self.current.proofs,
+			self.current.states,
 			self.current.receipts,
 		)
 	}
@@ -246,6 +248,22 @@ func (self *worker) updateTxConfirm() {
 	self.updating = false
 }
 
+func (self *worker) getBatchProofs(peer *p2p.Peer, start,end uint64) {
+	// request BatchProofsData from peer
+	var request = types.ReuqestBatchProof{StartNumber:start, EndNumber:end}
+	p2p.SendData(peer,p2p.GetProofsMsg, request)
+	var peerlock chan struct{}
+	self.mu.Lock()
+	if l,ok := self.peerLockMap[peer.Address()]; !ok {
+		peerlock = make(chan struct{})
+		self.peerLockMap[peer.Address()] = peerlock
+	} else {
+		peerlock = l
+	}
+	self.mu.Unlock()
+	<-peerlock
+}
+
 func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
 	// 1. receive proof
 	// 2. verify proof
@@ -266,16 +284,46 @@ func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
 		p2p.SendData(event.Peer, p2p.ProofResMsg, res)
 		return
 	}
+	peerProofState := bc.GetPeerProof(self.chainDb, event.Peer.Address())
+	if peerProofState == nil {
+		if event.Proof.Number == 1 {
+			// the first block from peer, lastHash is genesis.ProofHash
+			genesis := self.chain.GetHeaderByNumber(0)
+			peerProofState = &types.ProofState{Addr:event.Peer.Address(), Num:0, Root:genesis.ProofHash}
+		} else {
+			// request BatchProofsData from peer
+			self.getBatchProofs(event.Peer, 1, event.Proof.Number - 1)
 
-	if err := self.engine.VerifyProof(event.Peer.Address(), event.Peer.ProofHash(), event.Proof, true); err != nil {
-		log.Debug("worker verify proof proofhash failed")
-		var res= types.ProofConfirm{event.Proof.Signature, false}
-		p2p.SendData(event.Peer, p2p.ProofResMsg, res)
-		return
-	} else {
-		var res= types.ProofConfirm{event.Proof.Signature, true}
-		p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+			peerProofState = bc.GetPeerProof(self.chainDb, event.Peer.Address())
+		}
 	}
+	for {
+		// loop to request missed proof and re-verify again.
+		if newroot, err := self.engine.VerifyProof(event.Peer.Address(), peerProofState.Root, event.Proof); err != nil {
+			if peerProofState.Num +1 < event.Proof.Number {
+				log.Debug("worker verify proof proofhash failed")
+				var res= types.ProofConfirm{event.Proof.Signature, false}
+				p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+
+				return
+			} else {
+
+				log.Debug("worker verify proof", "missed proof from", peerProofState.Num + 1, "to",event.Proof.Number-1)
+				// request missed proof.
+				self.getBatchProofs(event.Peer, peerProofState.Num + 1, event.Proof.Number-1)
+				peerProofState = bc.GetPeerProof(self.chainDb, event.Peer.Address())
+			}
+		} else {
+			// update peer's proof in local.
+			updateProof := types.ProofState{Addr:event.Peer.Address(), Num:event.Proof.Number, Root:newroot}
+			bc.WritePeerProof(self.chainDb, event.Peer.Address(), updateProof)
+
+			var res= types.ProofConfirm{event.Proof.Signature, true}
+			p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+			break
+		}
+	}
+
 	// add tx to txpool.
 	go txpool.GetTxPool().AddTxs(event.Proof.Txs)
 	// 3. update tx info (tx's signed count)
@@ -295,7 +343,7 @@ func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
 }
 
 func (self *worker) eventListener() {
-	events := self.mux.Subscribe(bc.WorkProofEvent{})
+	events := self.mux.Subscribe(bc.WorkProofEvent{}, bc.BatchProofEvent{})
 	defer events.Unsubscribe()
 
 	defer self.chainHeadSub.Unsubscribe()
@@ -341,6 +389,38 @@ func (self *worker) eventListener() {
 						}
 					}(ch)
 				}
+			case bc.BatchProofEvent:
+				addr := ev.Peer.Address()
+				batch := ev.Batch[:]
+
+				old := bc.GetPeerProof(self.chainDb, addr)
+				updateProof := types.ProofState{Addr:addr}
+				if old == nil {
+					updateProof.Num = batch[0].Number
+					updateProof.Root = batch[0].ProofHash
+
+					batch = batch[1:]
+				} else {
+					updateProof.Num = old.Num
+					updateProof.Root = old.Root
+				}
+				for _,p := range batch {
+					if err := self.engine.VerifyProofQuick(updateProof.Root, p.TxRoot, p.ProofHash); err != nil {
+						updateProof.Num = p.Number
+						updateProof.Root = p.ProofHash
+					} else {
+						break
+					}
+				}
+				bc.WritePeerProof(self.chainDb, addr, updateProof)
+				log.Debug("PeerProof update","addr", addr,"from",old.Num,"to",updateProof.Num)
+
+				self.mu.Lock()
+				ch := self.peerLockMap[addr]
+				self.mu.Unlock()
+				if ch != nil {
+					ch <- struct{}{}
+				}
 			}
 		}
 	}
@@ -356,7 +436,7 @@ func (self *worker) makeCurrent(parent *types.Header, header *types.Header) erro
 		config:    self.config,
 		state:     state,
 		header:    header,
-		proofs:	   make([]*types.ProofState,0),
+		states:	   make([]*types.ProofState,0),
 		createdAt: time.Now(),
 		id:			time.Now().UnixNano(),
 		genCh: 		make(chan error,1),
@@ -366,11 +446,11 @@ func (self *worker) makeCurrent(parent *types.Header, header *types.Header) erro
 	peers := p2p.PeerMgrInst().PeersAll()
 	for _, peer := range peers {
 		if peer.RemoteType() == discover.MineNode {
-			proofState := types.ProofState{Addr:peer.Address(), Root:peer.ProofHash()}
-			if root,err := self.engine.GetNodeProof(peer.Address()); err == nil {
-				proofState.Root = root
+			// Get all peers' proof state from db.
+			proofState := bc.GetPeerProof(self.chainDb,peer.Address())
+			if proofState != nil {
+				work.states = append(work.states, proofState)
 			}
-			work.proofs = append(work.proofs, &proofState)
 		}
 	}
 
@@ -550,7 +630,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	//}
 
 	// generate workproof
-	proof, err := self.engine.GenerateProof(self.chain, self.current.header, parent, work.txs, work.proofs)
+	proof, err := self.engine.GenerateProof(self.chain, self.current.header, parent, work.txs, work.states)
 	if err != nil {
 		log.Error("Premine","GenerateProof failed, err", err, "headerNumber", header.Number)
 		return err
@@ -569,7 +649,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
 	}
 	go func(work *Work) {
-		if block,err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.proofs, work.receipts); err != nil {
+		if block,err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.states, work.receipts); err != nil {
 			work.genCh <- err
 		} else {
 			log.Debug("worker after engine.Finalize", "time ", time.Now().UnixNano()/1000/1000)

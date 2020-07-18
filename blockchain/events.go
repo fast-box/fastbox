@@ -56,3 +56,8 @@ type ProofConfirmEvent struct {
 	Peer    *p2p.Peer
 	Confirm *types.ProofConfirm
 }
+
+type BatchProofEvent struct {
+	Peer *p2p.Peer
+	Batch types.BatchProofData
+}

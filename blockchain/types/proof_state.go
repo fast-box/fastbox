@@ -9,6 +9,7 @@ import (
 type ProofState struct {
 	Addr 	common.Address
 	Root 	common.Hash
+	Num     uint64
 }
 
 func (p ProofState)CalculateHash()([]byte, error){
@@ -38,12 +39,16 @@ func (s ProofStates) GetRlp(i int) []byte {
 	return enc
 }
 
-
 func (s ProofStates)GetMerkleContent(i int) merkletree.Content{
 	return s[i]
 }
 
 type ProofSignature []byte
+func (p ProofSignature)Hash() common.Hash{
+	h := common.Hash{}
+	h.SetBytes(p)
+	return h
+}
 
 type WorkProof struct {
 	Number 	  uint64
@@ -57,9 +62,16 @@ type ProofConfirm struct {
 	Confirm   bool
 }
 
-func (p ProofSignature)Hash() common.Hash{
-	h := common.Hash{}
-	h.SetBytes(p)
-	return h
+type ReuqestBatchProof struct {
+	StartNumber uint64
+	EndNumber uint64
 }
+
+type ResponseProofData struct {
+	Number uint64
+	TxRoot common.Hash
+	ProofHash common.Hash
+}
+type BatchProofData []ResponseProofData
+
 

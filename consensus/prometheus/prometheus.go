@@ -76,28 +76,17 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 	return &types.WorkProof{number,sighash, txs,proofs}, nil
 }
 
-// VerifyProof
-func (c *Prometheus) VerifyProof(addr common.Address, initHash common.Hash, proof *types.WorkProof, update bool) error {
-	if val, ok := c.proofs.Load(addr); ok {
-		pf := val.(*PeerProof)
-		log.Debug("prometheus verify proof","peer addr",addr, "proof", proof.Signature.Hash(), "with root",pf.Root)
-		if hash, err := c.verifyProof(pf.Root, addr, proof); err == nil && update {
-			log.Debug("prometheus verify proof","after verify proof",proof.Signature.Hash(),"update peer",addr,"with root",hash)
-			c.UpdateProof(addr, hash, proof.Number)
-		} else {
-			return err
-		}
-
-	} else {
-		pf := &PeerProof{time.Now().Unix(), proof.Number,initHash}
-		c.proofs.Store(addr, pf)
-		if hash, err := c.verifyProof(pf.Root, addr, proof); err == nil && update {
-			c.UpdateProof(addr, hash, proof.Number)
-		} else {
-			return err
-		}
+func (c *Prometheus) VerifyProofQuick(lasthash common.Hash, txroot common.Hash, newHash common.Hash) error {
+	newproofhash := c.MixHash(lasthash, txroot)
+	if bytes.Compare(newproofhash[:], newHash[:]) == 0 {
+		return nil
 	}
-	return nil
+	return errors.New("proof incorrect")
+}
+
+// VerifyProof
+func (c *Prometheus) VerifyProof(addr common.Address, lastHash common.Hash, proof *types.WorkProof) (common.Hash, error) {
+	return c.verifyProof(lastHash, addr, proof)
 }
 
 
@@ -108,25 +97,10 @@ func (c *Prometheus) VerifyState(coinbase common.Address, history *set.Set, proo
 		if stat.Addr == coinbase {
 			if history.Has(stat.Root) {
 				return true
+			} else {
+				return false
 			}
 		}
 	}
 	return false
-}
-
-func (c *Prometheus) UpdateProof(addr common.Address, root common.Hash, number uint64) {
-	log.Debug("update proof","addr",addr, "root",root)
-	pf := &PeerProof{time.Now().Unix(), number, root}
-	c.proofs.Store(addr, pf)
-}
-
-func (c *Prometheus)GetNodeProof(addr common.Address) (common.Hash,error) {
-	if val, ok := c.proofs.Load(addr); ok {
-		if pf, ok := val.(*PeerProof); ok {
-			return pf.Root, nil
-		}
-		return common.Hash{}, errors.New("not find")
-	} else {
-		return common.Hash{}, errors.New("not find")
-	}
 }
