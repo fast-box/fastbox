@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"gopkg.in/fatih/set.v0"
+	"math/big"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -42,7 +43,7 @@ import (
 const (
 	// chainHeadChanSize is the size of channel listening to ChainHeadEvent.
 	chainHeadChanSize = 10
-	waitConfirmTimeout = 40 // a proof wait confirm timeout seconds
+	waitConfirmTimeout = 30 // a proof wait confirm timeout seconds
 )
 var (
 	blockMaxTxs = 5000 * 10
@@ -248,11 +249,12 @@ func (self *worker) updateTxConfirm() {
 	self.updating = false
 }
 
-func (self *worker) getBatchProofs(peer *p2p.Peer, start,end uint64) {
+func (self *worker) getBatchProofs(peer *p2p.Peer, start,end uint64,timeout int) error{
 	// request BatchProofsData from peer
 	var request = types.ReuqestBatchProof{StartNumber:start, EndNumber:end}
 	p2p.SendData(peer,p2p.GetProofsMsg, request)
 	var peerlock chan struct{}
+
 	self.mu.Lock()
 	if l,ok := self.peerLockMap[peer.Address()]; !ok {
 		peerlock = make(chan struct{})
@@ -261,12 +263,25 @@ func (self *worker) getBatchProofs(peer *p2p.Peer, start,end uint64) {
 		peerlock = l
 	}
 	self.mu.Unlock()
-	<-peerlock
+	log.Debug("getBatchProofs before <-peerlock", "peer is ", peer.Address())
+	timer := time.NewTimer(time.Duration(timeout) * time.Second)
+	defer timer.Stop()
+	select {
+	case <-peerlock:
+		log.Debug("getBatchProofs after <-peerlock","peer is ", peer.Address())
+		return nil
+	case <-timer.C:
+		log.Debug("getBatchProofs timeout ","peer is ", peer.Address())
+		self.peerLockMap[peer.Address()] = nil
+		return errors.New("timeout")
+	}
+
 }
 
 func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
 	// 1. receive proof
 	// 2. verify proof
+	log.Debug("start deal proof event","peer", event.Peer.ID(), "proof",event.Proof.Number)
 	pastLocalRoot := set.New()
 	for _,h := range self.history {
 		pastLocalRoot.Add(h)
@@ -292,15 +307,20 @@ func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
 			peerProofState = &types.ProofState{Addr:event.Peer.Address(), Num:0, Root:genesis.ProofHash}
 		} else {
 			// request BatchProofsData from peer
-			self.getBatchProofs(event.Peer, 1, event.Proof.Number - 1)
-
-			peerProofState = bc.GetPeerProof(self.chainDb, event.Peer.Address())
+			log.Debug("worker goto getBatchProof", "from ", event.Peer.ID(), "st",1,"end",event.Proof.Number - 1)
+			if err := self.getBatchProofs(event.Peer, 1, event.Proof.Number - 1, 30); err == nil {
+				peerProofState = bc.GetPeerProof(self.chainDb, event.Peer.Address())
+			} else {
+				var res= types.ProofConfirm{event.Proof.Signature, false}
+				p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+				return
+			}
 		}
 	}
 	for {
 		// loop to request missed proof and re-verify again.
 		if newroot, err := self.engine.VerifyProof(event.Peer.Address(), peerProofState.Root, event.Proof); err != nil {
-			if peerProofState.Num +1 < event.Proof.Number {
+			if peerProofState.Num +1 >= event.Proof.Number {
 				log.Debug("worker verify proof proofhash failed")
 				var res= types.ProofConfirm{event.Proof.Signature, false}
 				p2p.SendData(event.Peer, p2p.ProofResMsg, res)
@@ -310,7 +330,13 @@ func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
 
 				log.Debug("worker verify proof", "missed proof from", peerProofState.Num + 1, "to",event.Proof.Number-1)
 				// request missed proof.
-				self.getBatchProofs(event.Peer, peerProofState.Num + 1, event.Proof.Number-1)
+				err := self.getBatchProofs(event.Peer, peerProofState.Num + 1, event.Proof.Number-1, 30)
+				if err != nil {
+					var res= types.ProofConfirm{event.Proof.Signature, false}
+					p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+
+					return
+				}
 				peerProofState = bc.GetPeerProof(self.chainDb, event.Peer.Address())
 			}
 		} else {
@@ -370,6 +396,7 @@ func (self *worker) eventListener() {
 			case bc.WorkProofEvent:
 				// sorted handle workproofevent for every peer.
 				addr := ev.Peer.Address()
+				log.Debug("worker got workproof event")
 				if ch,ok := self.verifyChMap[addr]; ok {
 					ch <- ev
 				} else {
@@ -392,10 +419,12 @@ func (self *worker) eventListener() {
 			case bc.BatchProofEvent:
 				addr := ev.Peer.Address()
 				batch := ev.Batch[:]
+				log.Debug("BatchProofEvent","got from",addr,"length",len(batch))
 
 				old := bc.GetPeerProof(self.chainDb, addr)
 				updateProof := types.ProofState{Addr:addr}
 				if old == nil {
+					old = &types.ProofState{Addr:addr, Root:batch[0].ProofHash, Num:batch[0].Number}
 					updateProof.Num = batch[0].Number
 					updateProof.Root = batch[0].ProofHash
 
@@ -405,7 +434,7 @@ func (self *worker) eventListener() {
 					updateProof.Root = old.Root
 				}
 				for _,p := range batch {
-					if err := self.engine.VerifyProofQuick(updateProof.Root, p.TxRoot, p.ProofHash); err != nil {
+					if err := self.engine.VerifyProofQuick(updateProof.Root, p.TxRoot, p.ProofHash); err == nil {
 						updateProof.Num = p.Number
 						updateProof.Root = p.ProofHash
 					} else {
@@ -476,7 +505,7 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 			"head.ProofHash",hex.EncodeToString(head.ProofHash[:]))
 	} else {
 		head = self.chain.CurrentHeader()
-		log.Debug("worker get header from workpending", "h.hash",head.Hash(), "head.Number",head.Number,
+		log.Debug("worker get header from self.chain", "h.hash",head.Hash(), "head.Number",head.Number,
 			"head.ProofHash",hex.EncodeToString(head.ProofHash[:]))
 	}
 
@@ -591,11 +620,11 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	if parent == nil {
 		parent = self.chain.CurrentHeader()
 	}
-	num := parent.Number
+	num := big.NewInt(0).Add(parent.Number,common.Big1)
 	header := &types.Header{
 		ParentHash: parent.Hash(),
 		Coinbase:	self.coinbase,
-		Number:     num.Add(num, common.Big1),
+		Number:     num,
 		Extra:      self.extra,
 	}
 	// prepare header
@@ -614,7 +643,6 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	}
 
 	txs := txpool.GetTxPool().Pending(self.current.id, blockMaxTxs)
-
 	// Create the current work task and check any fork transitions needed
 	work := self.current
 	work.commitTransactions(txs, self.coinbase)

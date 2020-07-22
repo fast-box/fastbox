@@ -117,7 +117,7 @@ func (u *unconfirmedProofs) CheckTimeout() {
 
 
 func (u *unconfirmedProofs) RoutineLoop () {
-	evict := time.NewTicker(10 * time.Second)
+	evict := time.NewTicker(5 * time.Second)
 	defer evict.Stop()
 	for {
 		select {

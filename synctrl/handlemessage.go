@@ -440,6 +440,7 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 func HandleWorkProofMsg(p *p2p.Peer, msg p2p.Msg) error {
 	var proof types.WorkProof
 	if err := msg.Decode(&proof); err != nil {
+		log.Error("Decode workproofmsg failed","err", err)
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
 	ev := bc.WorkProofEvent{p, &proof}
@@ -476,12 +477,14 @@ func HandleResProofsMsg(p *p2p.Peer, msg p2p.Msg) error {
 func HandleGetProofsMsg(p *p2p.Peer, msg p2p.Msg) error {
 	var request types.ReuqestBatchProof
 	if err := msg.Decode(&request); err != nil {
+		log.Error("handlemsg GetProofsMsg decode failed","err",err)
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
 	if request.EndNumber <= request.StartNumber {
+		log.Error("handlemsg GetProofsMsg endnumber <= startnumber", "end", request.EndNumber,"start",request.StartNumber)
 		return p2p.ErrResp(p2p.ErrDecode, "param end (%v)<= start(%v)", request.EndNumber, request.StartNumber)
 	}
-	count := request.EndNumber - request.StartNumber
+	count := request.EndNumber - request.StartNumber + 1
 
 	response := make([]types.ResponseProofData, count)
 	for i:= uint64(0); i < count; i++ {

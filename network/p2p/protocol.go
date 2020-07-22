@@ -243,7 +243,7 @@ func (hp *ShxProto) handleMsg(p *Peer) error {
 		}
 		return nil
 
-	case NewBlockHashesMsg,NewBlockMsg,NewHashBlockMsg,TxMsg,WorkProofMsg,ProofResMsg:
+	case NewBlockHashesMsg,NewBlockMsg,NewHashBlockMsg,TxMsg,WorkProofMsg,ProofResMsg,GetProofsMsg,ResProofsMsg:
 		if cb := hp.msgProcess[msg.Code]; cb != nil{
 			err := cb(p,msg)
 			p.log.Trace("Process syn new msg","msg",msg,"err",err)
