@@ -20,7 +20,6 @@ import (
 	"container/heap"
 	"fmt"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/shx-project/sphinx/common/log"
@@ -29,12 +28,8 @@ import (
 )
 
 const (
-	dialHistoryExpiration = 30 * time.Second
+	dialHistoryExpiration = 10 * time.Second
 )
-
-var dialHistroyAddr []string = []string{}
-var fronttime int64 = time.Now().Unix()
-var mutex sync.Mutex
 
 // NodeDialer is used to connect to nodes in the network, typically by using
 // an underlying net.Dialer but also using net.Pipe in tests
@@ -60,7 +55,7 @@ type dialstate struct {
 
 	dialing map[discover.NodeID]connFlag   //nodes list for dialing
 	static  map[discover.NodeID]*dialTask  //static nodes list. not used now.
-	hist    *dialHistory       // dial history node
+	//hist    *dialHistory       // dial history node
 
 	start     time.Time        // time when the dialer was first used
 	bootnodes []*discover.Node // default dials when there are no peers
@@ -109,7 +104,7 @@ func newDialState(static []*discover.Node, bootnodes []*discover.Node, ntab disc
 		static:      make(map[discover.NodeID]*dialTask),
 		dialing:     make(map[discover.NodeID]connFlag),
 		bootnodes:   make([]*discover.Node, len(bootnodes)),
-		hist:        new(dialHistory),
+		//hist:        new(dialHistory),
 	}
 
 	copy(s.bootnodes, bootnodes)
@@ -128,7 +123,7 @@ func (s *dialstate) removeStatic(n *discover.Node) {
 	delete(s.static, n.ID)
 	// This removes a previous dial timestamp so that application
 	// can force a server to reconnect with chosen peer immediately.
-	s.hist.remove(n.ID)
+	//s.hist.remove(n.ID)
 }
 
 func (s *dialstate) newTasks(nRunning int, peers map[discover.NodeID]*PeerBase, now time.Time) []task {
@@ -148,7 +143,7 @@ func (s *dialstate) newTasks(nRunning int, peers map[discover.NodeID]*PeerBase, 
 	}
 
 	// Expire the dial history on every invocation.
-	s.hist.expire(now)
+	//s.hist.expire(now)
 
 	// Create dials for static nodes if they are not connected.
 	for id, t := range s.static {
@@ -189,8 +184,8 @@ func (s *dialstate) checkDial(n *discover.Node, peers map[discover.NodeID]*PeerB
 		return errSelf
 	case s.netrestrict != nil && !s.netrestrict.Contains(n.IP):
 		return errNotWhitelisted
-	case s.hist.contains(n.ID):
-		return errRecentlyDialed
+	//case s.hist.contains(n.ID):
+	//	return errRecentlyDialed
 	}
 	return nil
 }
@@ -198,7 +193,7 @@ func (s *dialstate) checkDial(n *discover.Node, peers map[discover.NodeID]*PeerB
 func (s *dialstate) taskDone(t task, now time.Time) {
 	switch t := t.(type) {
 	case *dialTask:
-		s.hist.add(t.dest.ID, now.Add(dialHistoryExpiration))
+		//s.hist.add(t.dest.ID, now.Add(dialHistoryExpiration))
 		delete(s.dialing, t.dest.ID)
 	}
 }
@@ -220,21 +215,6 @@ func (t *dialTask) Do(srv *Server) {
 func (t *dialTask) dial(srv *Server, dest *discover.Node) bool {
 	addr := &net.TCPAddr{IP: dest.IP, Port: int(dest.TCP)}
 
-	if len(dialHistroyAddr) > 30 || time.Now().Unix()-fronttime > int64(100) {
-		fronttime = time.Now().Unix()
-		mutex.Lock()
-		dialHistroyAddr = []string{}
-		mutex.Unlock()
-	}
-	for _, v := range dialHistroyAddr {
-		if v == addr.String() {
-			log.Trace("dile histroy", "len=", len(dialHistroyAddr), "restime:", time.Now().Unix()-fronttime)
-			return false
-		}
-	}
-	mutex.Lock()
-	dialHistroyAddr = append(dialHistroyAddr, addr.String())
-	mutex.Unlock()
 	log.Debug("Connect:", "ip=", addr.String(), "id=", dest.ID, "time=", time.Now().Second())
 	fd, err := srv.dialer.Dial(dest)
 	if err != nil {

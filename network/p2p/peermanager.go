@@ -17,16 +17,13 @@
 package p2p
 
 import (
-	"encoding/hex"
 	"errors"
-	"fmt"
 	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/common/log"
 	"github.com/shx-project/sphinx/config"
 	"github.com/shx-project/sphinx/network/p2p/discover"
 	"math/big"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -452,51 +449,3 @@ func (prm *PeerManager) RegStatMining(cb StatMining) {
 	return
 }
 
-////////////////////////////////////////////////////////////////////
-const bindInfoFileName = "binding.json"
-
-type bindInfo struct {
-	CID string `json:"cid"`
-	HID string `json:"hid"`
-	ADR string `json:"coinbase"`
-}
-
-type HwPair struct {
-	Adr string
-	Cid []byte
-	Hid []byte
-}
-
-func (prm *PeerManager) GetHwInfo() []HwPair {
-	return prm.server.getHdtab()
-}
-
-func (prm *PeerManager) SetHwInfo(pairs []HwPair) error {
-	return prm.server.updateHdtab(pairs, false)
-}
-
-func (prm *PeerManager) parseBindInfo(filename string) error {
-	// Load the nodes from the config file.
-	var binding []bindInfo
-	if err := common.LoadJSON(filename, &binding); err != nil {
-		log.Error(fmt.Sprintf("Can't load node file %s: %v", filename, err))
-		panic("Hardware Info Parse Error. Can't load node file.")
-	}
-	log.Debug("Boot node parse binding hardware table.", "binding", binding)
-	hdtab := make([]HwPair, 0, len(binding))
-	for i, b := range binding {
-		cid, cerr := hex.DecodeString(b.CID)
-		hid, herr := hex.DecodeString(b.HID)
-		if cerr != nil || herr != nil {
-			log.Error(fmt.Sprintf("Can't parse node file %s(index=%d)", filename, i))
-			panic("Hardware Info Parse Error.")
-		}
-
-		hdtab = append(hdtab, HwPair{Adr: strings.ToLower(b.ADR), Cid: cid, Hid: hid})
-	}
-
-	log.Debug("Boot node parse binding hardware table.", "hdtab", hdtab)
-	prm.server.updateHdtab(hdtab, true)
-
-	return nil
-}

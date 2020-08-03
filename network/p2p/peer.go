@@ -82,7 +82,6 @@ type statusData struct {
 }
 type hardwareTable struct {
 	Version uint32
-	Hdtab   []HwPair
 }
 
 // Peer represents a connected remote node.

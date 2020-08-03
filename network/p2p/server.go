@@ -31,8 +31,6 @@ import (
 	"github.com/shx-project/sphinx/network/p2p/netutil"
 	"math/rand"
 	"net"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 )
@@ -114,11 +112,7 @@ type Server struct {
 
 	delHist *dialHistory //history list of del nodes
 
-	//only for test
-	synPid []SynnodePid
-
 	hdlock sync.RWMutex
-	hdtab  []HwPair // hardware table of "ADDR CID HID"
 
 	setupLock sync.Mutex
 }
@@ -159,7 +153,6 @@ type transport interface {
 	// The two handshakes.
 	doEncHandshake(prv *ecdsa.PrivateKey, dialDest *discover.Node) (discover.NodeID, []byte, []byte, error)
 	doProtoHandshake(our *protoHandshake) (*protoHandshake, error)
-	doHardwareTable(our *hardwareTable) (*hardwareTable, error)
 	// The MsgReadWriter can only be used after the encryption
 	// handshake has completed. The code uses conn.id to track this
 	// by setting it to a non-nil value after the encryption handshake.
@@ -360,7 +353,6 @@ func (srv *Server) Start() (err error) {
 
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	if srv.TestMode {
-		srv.parseSynnode()
 	}
 	//////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -578,8 +570,6 @@ func (srv *Server) protoHandshakeChecks(peers map[discover.NodeID]*PeerBase, c *
 func (srv *Server) encHandshakeChecks(peers map[discover.NodeID]*PeerBase, c *conn) error {
 	switch {
 	case peers[c.id] != nil:
-		p := peers[c.id]
-		go p.Disconnect(DiscAlreadyConnected)
 		return DiscAlreadyConnected
 	case c.id == srv.Self().ID:
 		return DiscSelf
@@ -704,112 +694,11 @@ func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *discover.Nod
 	c.their = *their
 	clog.Debug("Do protocol handshake OK.", "id", c.id)
 
-	/////////////////////////////////////////////////////////////////////////////////
-	//isRemoteBoot := false
-	//hdtab := srv.getHdtab()
-	//
-	//for _, n := range srv.BootstrapNodes {
-	//	if c.id == n.ID {
-	//		clog.Info("Remote node is boot.", "id", c.id)
-	//		c.isboe = true
-	//		//isRemoteBoot = true
-	//	}
-	//}
-	//
-	//if !c.isboe {
-	//	remoteCoinbase := strings.ToLower(c.their.CoinBase.String())
-	//	clog.Trace("Remote coinbase", "address", remoteCoinbase)
-	//	if len(hdtab) == 0 {
-	//		clog.Debug("Do not ready for connected.", "id", c.id.TerminalString())
-	//		c.close(DiscHwSignError)
-	//		return
-	//	}
-	//
-	//	for _, hw := range hdtab {
-	//		if hw.Adr == remoteCoinbase {
-	//			c.isboe = true
-	//		}
-	//	}
-	//}
-	//clog.Info("Verify the remote hardware.", "id", c.id.TerminalString(), "result", c.isboe)
-	//
-	//if !srv.TestMode && c.isboe == false {
-	//	clog.Debug("SynNode peer SynNode, dorp peer.")
-	//	c.close(DiscHwSignError)
-	//	return
-	//}
-
-	//{
-	//	ourHdtable := &hardwareTable{Version: 0x00, Hdtab: hdtab}
-	//	theirHdtable, err := c.doHardwareTable(ourHdtable)
-	//	if err != nil {
-	//		clog.Debug("Failed hardware table handshake", "reason", err)
-	//		c.close(err)
-	//		return
-	//	}
-	//
-	//	clog.Trace("Exchange hardware table.", "our", ourHdtable, "their", theirHdtable)
-	//
-	//	if isRemoteBoot {
-	//		srv.updateHdtab(theirHdtable.Hdtab, true)
-	//		clog.Trace("Update hardware table from boot.", "srv hdtab", srv.getHdtab())
-	//	}
-	//}
-
-	/////////////////////////////////////////////////////////////////////////////////
 	if err := srv.checkpoint(c, srv.addpeer); err != nil {
 		clog.Warn("Rejected peer", "err", err, "dialDest", dialDest)
 		c.close(err)
 		return
 	}
-}
-
-func (srv *Server) updateHdtab(pairs []HwPair, boot bool) error {
-	//
-	//log.Trace("hw pairs from prometheus", "boot", boot, "pairs", pairs)
-	//
-	//if len(srv.hdtab) == len(pairs) {
-	//	theSame := true
-	//	for _, our := range srv.hdtab {
-	//		find := false
-	//		for _, there := range pairs {
-	//			if our.Adr == there.Adr {
-	//				find = true
-	//				break
-	//			}
-	//		}
-	//
-	//		if !find {
-	//			log.Debug("update hardware table do not fond.", "address", our.Adr)
-	//			theSame = false
-	//			break
-	//		}
-	//	}
-	//
-	//	if theSame {
-	//		log.Debug("do not need update hardware table.")
-	//		return nil
-	//	}
-	//}
-	//
-	//log.Trace("server need to update hardware table", "boot", boot, "our", len(srv.hdtab), "there", len(pairs), "hdtab", pairs)
-	//srv.hdlock.Lock()
-	//defer srv.hdlock.Unlock()
-	//srv.hdtab = pairs
-
-	return nil
-}
-
-func (srv *Server) getHdtab() []HwPair {
-	srv.hdlock.RLock()
-	defer srv.hdlock.RUnlock()
-	return srv.hdtab
-}
-
-func (srv *Server) getHdtabSize() int {
-	srv.hdlock.RLock()
-	defer srv.hdlock.RUnlock()
-	return len(srv.hdtab)
 }
 
 // checkpoint sends the conn to run, which performs the
@@ -870,49 +759,4 @@ func (srv *Server) setPeerInitType(p *PeerBase, isboe bool) {
 			return
 		}
 	}
-
-	//if isboe {
-	//	p.remoteType = discover.PreNode
-	//	p.log.Info("P2P set init peer remote type prenode")
-	//	return
-	//}
-
-	//if srv.TestMode {
-	//	p.remoteType = discover.MineNode
-	//	for _, spid := range srv.synPid {
-	//		if spid.PID == p.ID().TerminalString() {
-	//			p.remoteType = discover.MineNode
-	//			p.log.Info("P2P set init peer remote type synnode (TestMode)")
-	//			return
-	//		}
-	//	}
-	//	p.log.Info("P2P set init peer remote type prenode (TestMode)")
-	//}
-
 }
-
-///////////////////////////////////////////////////////////////////////////////
-
-//for test synnode
-const synnodeFile = "synnode.json"
-
-type SynnodePid struct {
-	PID string `json:"pid"`
-}
-
-func (srv *Server) parseSynnode() error {
-
-	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-	filename := filepath.Join(dir, synnodeFile)
-	log.Debug("Parse syn node pid from config.", "filename", filename)
-
-	if err := common.LoadJSON(filename, &srv.synPid); err != nil {
-		log.Warn(fmt.Sprintf("Can't load file %s: %v", filename, err))
-		return nil
-	}
-	log.Debug("Parse syn node pid from config.", "synPid", srv.synPid)
-
-	return nil
-}
-
-///////////////////////////////////////////////////////////////////////////////
