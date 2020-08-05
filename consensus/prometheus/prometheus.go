@@ -72,7 +72,7 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 	header.TxHash = txroot
 	header.ProofHash = proofHash
 
-	log.Debug("prometheus generate proof","proofhash",sighash, "txroot", txroot, "localhash", lastHash)
+	log.Debug("prometheus generate proof","proofhash",hex.EncodeToString(sighash), "txroot", txroot, "localhash", lastHash)
 	return &types.WorkProof{number,sighash, txs,proofs}, nil
 }
 

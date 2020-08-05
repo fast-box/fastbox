@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -437,6 +438,7 @@ func GetPeerProof(db DatabaseReader, addr common.Address) *types.ProofState{
 		log.Error("Invalid PeerProof RLP", "err", err)
 		return nil
 	}
+	log.Debug("database GetPeerProof", "key",hex.EncodeToString(key), "value", hex.EncodeToString(proof.Root[:]), "num", proof.Num)
 	return &proof
 }
 
@@ -595,7 +597,7 @@ func WriteBloomBits(db shxdb.Putter, bit uint, section uint64, head common.Hash,
 func WritePeerProof(db shxdb.Putter, addr common.Address, pproof types.ProofState) {
 	hash := sha256.Sum256(addr.Bytes())
 	key := append(append(peerProofPrefix, make([]byte,32)...), hash[:]...)
-
+	log.Debug("database WritePeerProof", "key",hex.EncodeToString(key), "value", hex.EncodeToString(pproof.Root[:]), "num", pproof.Num)
 	data, err := rlp.EncodeToBytes(pproof)
 	if err != nil {
 		log.Error("Invalid PeerProof to RLP Encode", "err", err)
