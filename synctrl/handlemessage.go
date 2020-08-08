@@ -17,6 +17,7 @@
 package synctrl
 
 import (
+	"github.com/hashicorp/golang-lru"
 	"github.com/shx-project/sphinx/blockchain"
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
@@ -27,11 +28,31 @@ import (
 	"github.com/shx-project/sphinx/txpool"
 	"gopkg.in/fatih/set.v0"
 	"math/big"
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
 var handleKnownBlocks = set.New()
+
+type muLru struct {
+	mu sync.Mutex
+	cache *lru.Cache
+}
+
+var defaultRoutCount = int32(3)
+var handleKnownProof muLru
+var handleKnownProofConfirm muLru
+var handleLocalProof muLru
+
+func init() {
+	c1,_ := lru.New(100000)
+	c2,_ := lru.New(100000)
+	c3,_ := lru.New(100000)
+	handleKnownProof = muLru{cache:c1}
+	handleKnownProofConfirm = muLru{cache:c2}
+	handleLocalProof = muLru{cache:c3}
+}
 
 
 // HandleGetBlockHeadersMsg deal received GetBlockHeadersMsg
@@ -443,6 +464,22 @@ func HandleWorkProofMsg(p *p2p.Peer, msg p2p.Msg) error {
 		log.Error("Decode workproofmsg failed","err", err)
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
+	{
+		// broadcast proof max times.
+		handleKnownProof.mu.Lock()
+		defer handleKnownProof.mu.Unlock()
+		var count int32
+		if cache, ok := handleKnownProof.cache.Get(proof.Signature); ok {
+			count = cache.(int32)
+		} else {
+			count = defaultRoutCount
+		}
+		if count > 0 {
+			routProof(&proof)
+			count--
+			handleKnownProof.cache.Add(proof.Signature, count)
+		}
+	}
 	ev := bc.WorkProofEvent{p, &proof}
 	// post to worker
 	syncInstance.NewBlockMux().Post(ev)
@@ -454,6 +491,22 @@ func HandleProofResMsg(p *p2p.Peer, msg p2p.Msg) error {
 	var confirm types.ProofConfirm
 	if err := msg.Decode(&confirm); err != nil {
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
+	}
+	{
+		// broadcast proof confirm max times.
+		handleKnownProofConfirm.mu.Lock()
+		defer handleKnownProofConfirm.mu.Unlock()
+		var count int32
+		if cache, ok := handleKnownProofConfirm.cache.Get(confirm.Signature); ok {
+			count = cache.(int32)
+		} else {
+			count = defaultRoutCount
+		}
+		if count > 0 {
+			routProofConfirm(&confirm)
+			count--
+			handleKnownProofConfirm.cache.Add(confirm.Signature, count)
+		}
 	}
 	ev := bc.ProofConfirmEvent{p, &confirm}
 	// post to worker

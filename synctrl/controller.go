@@ -173,7 +173,7 @@ func (this *SynCtrl) Start() {
 	go this.txRoutingLoop()
 
 	// broadcast mined blocks
-	this.minedBlockSub = this.newBlockMux.Subscribe(bc.NewWorkProofEvent{})
+	this.minedBlockSub = this.newBlockMux.Subscribe(bc.RoutWorkProofEvent{},bc.RoutProofConfirmEvent{})
 	go this.minedRoutingLoop()
 
 	// start sync handlers
@@ -208,9 +208,10 @@ func (this *SynCtrl) minedRoutingLoop() {
 	// automatically stops if unsubscribe
 	for obj := range this.minedBlockSub.Chan() {
 		switch ev := obj.Data.(type) {
-		case bc.NewWorkProofEvent:
-			log.Debug("synctrl got proof to rout")
+		case bc.RoutWorkProofEvent:
 			go routProof(ev.Proof)
+		case bc.RoutProofConfirmEvent:
+			go routProofConfirm(ev.Confirm)
 		}
 	}
 }

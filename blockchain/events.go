@@ -46,7 +46,10 @@ type ChainEvent struct {
 }
 
 type ChainHeadEvent struct{ Block *types.Block }
-type NewWorkProofEvent struct { Proof *types.WorkProof }
+
+type RoutWorkProofEvent struct { Proof *types.WorkProof }
+type RoutProofConfirmEvent struct { Confirm *types.ProofConfirm}
+
 type WorkProofEvent struct {
 	Peer  *p2p.Peer
 	Proof *types.WorkProof

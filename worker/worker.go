@@ -296,7 +296,7 @@ func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
 	if !self.engine.VerifyState(self.coinbase, pastLocalRoot, event.Proof) {
 		log.Debug("worker verify proof state failed")
 		var res= types.ProofConfirm{event.Proof.Signature, false}
-		p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+		self.mux.Post(bc.RoutProofConfirmEvent{Confirm:&res})
 		return
 	}
 	peerProofState := bc.GetPeerProof(self.chainDb, event.Peer.Address())
@@ -312,7 +312,7 @@ func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
 				peerProofState = bc.GetPeerProof(self.chainDb, event.Peer.Address())
 			} else {
 				var res= types.ProofConfirm{event.Proof.Signature, false}
-				p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+				self.mux.Post(bc.RoutProofConfirmEvent{Confirm:&res})
 				return
 			}
 		}
@@ -323,7 +323,7 @@ func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
 			if peerProofState.Num +1 >= event.Proof.Number {
 				log.Debug("worker verify proof proofhash failed")
 				var res= types.ProofConfirm{event.Proof.Signature, false}
-				p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+				self.mux.Post(bc.RoutProofConfirmEvent{Confirm:&res})
 
 				return
 			} else {
@@ -333,7 +333,7 @@ func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
 				err := self.getBatchProofs(event.Peer, peerProofState.Num + 1, event.Proof.Number-1, 30)
 				if err != nil {
 					var res= types.ProofConfirm{event.Proof.Signature, false}
-					p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+					self.mux.Post(bc.RoutProofConfirmEvent{Confirm:&res})
 
 					return
 				}
@@ -345,7 +345,7 @@ func (self *worker) dealProofEvent(event *bc.WorkProofEvent) {
 			bc.WritePeerProof(self.chainDb, event.Peer.Address(), updateProof)
 
 			var res= types.ProofConfirm{event.Proof.Signature, true}
-			p2p.SendData(event.Peer, p2p.ProofResMsg, res)
+			self.mux.Post(bc.RoutProofConfirmEvent{Confirm:&res})
 			break
 		}
 	}
@@ -648,14 +648,6 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	work.commitTransactions(txs, self.coinbase)
 
 	log.Info("luxqdebug","total work.txs ", len(work.txs), "total pending txs", len(txs),"time ", time.Now().UnixNano()/1000/1000)
-	//for s := int(0); s < len(work.txs); s++ {
-	//	tx := work.txs[s]
-	//	if tx != nil {
-	//		fmt.Printf("luxqdebug txs[%d] : info = %s, receipt = %s\n", s, tx.String(), work.receipts[s].String())
-	//	} else {
-	//		fmt.Printf("luxqdebug txs[%d] is nil\n", s)
-	//	}
-	//}
 
 	// generate workproof
 	proof, err := self.engine.GenerateProof(self.chain, self.current.header, parent, work.txs, work.states)
@@ -671,7 +663,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		go func() {self.confirmCh <- work}()
 	} else {
 		// broadcast proof.
-		self.mux.Post(bc.NewWorkProofEvent{Proof:proof})
+		self.mux.Post(bc.RoutWorkProofEvent{Proof:proof})
 		log.Debug("worker proof goto wait confirm","time ", time.Now().UnixNano()/1000/1000)
 		// wait confirm.
 		self.unconfirmed.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)

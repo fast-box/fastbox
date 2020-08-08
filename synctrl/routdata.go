@@ -223,3 +223,12 @@ func routProof(proof *types.WorkProof) {
 		}
 	}
 }
+
+func routProofConfirm(proof *types.ProofConfirm) {
+	peers := p2p.PeerMgrInst().PeersAll()
+	for _, peer := range peers {
+		if peer.RemoteType() != discover.BootNode {
+			p2p.SendData(peer, p2p.ProofResMsg,*proof)
+		}
+	}
+}
