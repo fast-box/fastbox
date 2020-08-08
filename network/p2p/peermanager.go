@@ -17,6 +17,7 @@
 package p2p
 
 import (
+	"bytes"
 	"errors"
 	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/common/log"
@@ -322,6 +323,17 @@ type PeerInfo struct {
 type ShxInfo struct {
 	TD   *big.Int `json:"handshakeTD"` // Total difficulty of the peer's blockchain
 	Head string   `json:"handshakeHD"` // SHA3 hash of the peer's best owned block
+}
+
+func (prm *PeerManager) PeerWithAddr(addr common.Address) *Peer {
+	prm.lock.RLock()
+	defer prm.lock.RUnlock()
+	for _, p := range prm.peers {
+		if p.remoteType == discover.MineNode && bytes.Compare(p.Address().Bytes(),addr.Bytes()) == 0{
+			return p
+		}
+	}
+	return nil
 }
 
 func (prm *PeerManager) PeersInfo() []*PeerInfo {

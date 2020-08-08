@@ -43,15 +43,13 @@ type muLru struct {
 var defaultRoutCount = int32(3)
 var handleKnownProof muLru
 var handleKnownProofConfirm muLru
-var handleLocalProof muLru
+
 
 func init() {
 	c1,_ := lru.New(100000)
 	c2,_ := lru.New(100000)
-	c3,_ := lru.New(100000)
 	handleKnownProof = muLru{cache:c1}
 	handleKnownProofConfirm = muLru{cache:c2}
-	handleLocalProof = muLru{cache:c3}
 }
 
 
@@ -480,7 +478,7 @@ func HandleWorkProofMsg(p *p2p.Peer, msg p2p.Msg) error {
 			handleKnownProof.cache.Add(proof.Signature, count)
 		}
 	}
-	ev := bc.WorkProofEvent{p, &proof}
+	ev := bc.WorkProofEvent{p.Address(), &proof}
 	// post to worker
 	syncInstance.NewBlockMux().Post(ev)
 
@@ -508,7 +506,7 @@ func HandleProofResMsg(p *p2p.Peer, msg p2p.Msg) error {
 			handleKnownProofConfirm.cache.Add(confirm.Signature, count)
 		}
 	}
-	ev := bc.ProofConfirmEvent{p, &confirm}
+	ev := bc.ProofConfirmEvent{p.Address(), &confirm}
 	// post to worker
 	syncInstance.NewBlockMux().Post(ev)
 

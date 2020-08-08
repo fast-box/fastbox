@@ -51,12 +51,12 @@ type RoutWorkProofEvent struct { Proof *types.WorkProof }
 type RoutProofConfirmEvent struct { Confirm *types.ProofConfirm}
 
 type WorkProofEvent struct {
-	Peer  *p2p.Peer
+	Addr  common.Address
 	Proof *types.WorkProof
 }
 
 type ProofConfirmEvent struct {
-	Peer    *p2p.Peer
+	Addr common.Address
 	Confirm *types.ProofConfirm
 }
 
