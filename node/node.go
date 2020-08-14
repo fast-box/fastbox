@@ -295,6 +295,17 @@ func (hpbnode *Node) Start(conf *config.ShxConfig) error {
 	hpbnode.Shxrpcmanager.Start(hpbnode.RpcAPIs)
 	hpbnode.Shxtxpool.Start()
 
+	if promeengine, ok := hpbnode.Shxengine.(*prometheus.Prometheus); ok {
+		wallet, err := hpbnode.accman.Find(accounts.Account{Address: hpbnode.hpberbase})
+		if wallet == nil || err != nil {
+			log.Error("Shxerbase account unavailable locally", "err", err)
+			return fmt.Errorf("signer missing: %v", err)
+		}
+		promeengine.Authorize(hpbnode.hpberbase, wallet.SignHash)
+	} else {
+		log.Error("Cannot set authorize without prometheus", "err", hpbnode.Shxengine)
+	}
+
 	return nil
 
 }
