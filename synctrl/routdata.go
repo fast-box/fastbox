@@ -215,20 +215,38 @@ func sendTransactions(peer *p2p.Peer, txs types.Transactions) error {
 }
 
 
-func routProof(proof *types.WorkProof) {
+func routProof(proof types.WorkProofMsg) {
 	peers := p2p.PeerMgrInst().PeersAll()
 	for _, peer := range peers {
 		if peer.RemoteType() != discover.BootNode {
-			p2p.SendData(peer, p2p.WorkProofMsg,*proof)
+			p2p.SendData(peer, p2p.WorkProofMsg, proof)
 		}
 	}
 }
 
-func routProofConfirm(proof *types.ProofConfirm) {
+func routProofConfirm(confirm types.ConfirmMsg) {
 	peers := p2p.PeerMgrInst().PeersAll()
 	for _, peer := range peers {
 		if peer.RemoteType() != discover.BootNode {
-			p2p.SendData(peer, p2p.ProofResMsg,*proof)
+			p2p.SendData(peer, p2p.ProofConfirmMsg, confirm)
+		}
+	}
+}
+
+func routQueryState(query types.QueryStateMsg) {
+	peers := p2p.PeerMgrInst().PeersAll()
+	for _, peer := range peers {
+		if peer.RemoteType() != discover.BootNode {
+			p2p.SendData(peer, p2p.GetStateMsg, query)
+		}
+	}
+}
+
+func routResponseState(response types.ResponseStateMsg) {
+	peers := p2p.PeerMgrInst().PeersAll()
+	for _, peer := range peers {
+		if peer.RemoteType() != discover.BootNode {
+			p2p.SendData(peer, p2p.ResStateMsg, response)
 		}
 	}
 }

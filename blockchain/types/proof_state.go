@@ -1,7 +1,10 @@
 package types
 
 import (
+	"bytes"
+	"encoding/binary"
 	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto/sha3"
 	"github.com/shx-project/sphinx/common/merkletree"
 	"github.com/shx-project/sphinx/common/rlp"
 )
@@ -43,18 +46,51 @@ func (s ProofStates)GetMerkleContent(i int) merkletree.Content{
 	return s[i]
 }
 
+
 type ProofSignature []byte
 func (p ProofSignature)Hash() common.Hash{
 	h := common.Hash{}
-	h.SetBytes(p)
+	hash := sha3.Sum256(p)
+	h.SetBytes(hash[:])
 	return h
+}
+
+
+type WorkProofMsg struct {
+	Proof WorkProof
+	Sign []byte
+}
+
+type ConfirmMsg struct {
+	Confirm ProofConfirm
+	Sign []byte
+}
+
+type QueryStateMsg struct {
+	Qs QueryState
+	Sign []byte
+}
+
+type ResponseStateMsg struct {
+	Rs ResponseState
+	Sign []byte
 }
 
 type WorkProof struct {
 	Number 	  uint64
-	Signature ProofSignature
+	Sign 	  ProofSignature
 	Txs       Transactions
 	States 	  ProofStates
+}
+
+// return data to sign a signature.
+func (wp WorkProof)Data() []byte {
+	buf := bytes.NewBuffer([]byte{})
+	tmpbuf := make([]byte, 8)
+	binary.BigEndian.PutUint64(tmpbuf, wp.Number)
+	buf.Write(tmpbuf)
+	buf.Write(wp.Sign)
+	return buf.Bytes()
 }
 
 type ProofConfirm struct {
@@ -62,16 +98,43 @@ type ProofConfirm struct {
 	Confirm   bool
 }
 
-type ReuqestBatchProof struct {
-	StartNumber uint64
-	EndNumber uint64
+func (pc ProofConfirm)Data() []byte {
+	buf := bytes.NewBuffer([]byte{})
+	buf.Write(pc.Signature)
+	if pc.Confirm {
+		buf.WriteByte(1)
+	} else {
+		buf.WriteByte(0)
+	}
+	return buf.Bytes()
 }
 
-type ResponseProofData struct {
+type QueryState struct {
+	Miner common.Address
 	Number uint64
-	TxRoot common.Hash
-	ProofHash common.Hash
 }
-type BatchProofData []ResponseProofData
 
+func (qs QueryState)Data() []byte {
+	buf := bytes.NewBuffer([]byte{})
+	tmpbuf := make([]byte, 8)
+	binary.BigEndian.PutUint64(tmpbuf, qs.Number)
+	buf.Write(tmpbuf)
+	buf.Write(qs.Miner.Bytes())
+	return buf.Bytes()
+}
 
+type ResponseState struct {
+	Number uint64
+	Root common.Hash
+	Querier common.Address
+}
+
+func (rs ResponseState )Data() []byte {
+	buf := bytes.NewBuffer([]byte{})
+	tmpbuf := make([]byte, 8)
+	binary.BigEndian.PutUint64(tmpbuf, rs.Number)
+	buf.Write(tmpbuf)
+	buf.Write(rs.Root.Bytes())
+	buf.Write(rs.Querier.Bytes())
+	return buf.Bytes()
+}

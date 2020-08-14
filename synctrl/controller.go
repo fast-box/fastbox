@@ -149,10 +149,10 @@ func newSynCtrl(cfg *config.ChainConfig, mode config.SyncMode, txpoolins *txpool
 
 	p2p.PeerMgrInst().RegMsgProcess(p2p.TxMsg, HandleTxMsg)
 	p2p.PeerMgrInst().RegMsgProcess(p2p.WorkProofMsg, HandleWorkProofMsg)
-	p2p.PeerMgrInst().RegMsgProcess(p2p.ProofResMsg, HandleProofResMsg)
+	p2p.PeerMgrInst().RegMsgProcess(p2p.ProofConfirmMsg, HandleProofConfirmMsg)
 
-	p2p.PeerMgrInst().RegMsgProcess(p2p.GetProofsMsg, HandleGetProofsMsg)
-	p2p.PeerMgrInst().RegMsgProcess(p2p.ResProofsMsg, HandleResProofsMsg)
+	p2p.PeerMgrInst().RegMsgProcess(p2p.GetStateMsg, HandleGetStateMsg)
+	p2p.PeerMgrInst().RegMsgProcess(p2p.ResStateMsg, HandleResStateMsg)
 
 	p2p.PeerMgrInst().RegOnAddPeer(synctrl.RegisterNetPeer)
 	p2p.PeerMgrInst().RegOnDropPeer(synctrl.UnregisterNetPeer)
@@ -173,7 +173,7 @@ func (this *SynCtrl) Start() {
 	go this.txRoutingLoop()
 
 	// broadcast mined blocks
-	this.minedBlockSub = this.newBlockMux.Subscribe(bc.RoutWorkProofEvent{},bc.RoutProofConfirmEvent{})
+	this.minedBlockSub = this.newBlockMux.Subscribe(bc.RoutWorkProofEvent{},bc.RoutConfirmEvent{},bc.RoutQueryStateEvent{},bc.RoutResponseStateEvent{})
 	go this.minedRoutingLoop()
 
 	// start sync handlers
@@ -207,11 +207,16 @@ func (this *SynCtrl) minedRoutingLoop() {
 	log.Debug("synctrl minedRoutingLoop enter")
 	// automatically stops if unsubscribe
 	for obj := range this.minedBlockSub.Chan() {
+		// used to broadcast generate event.
 		switch ev := obj.Data.(type) {
 		case bc.RoutWorkProofEvent:
-			go routProof(ev.Proof)
-		case bc.RoutProofConfirmEvent:
-			go routProofConfirm(ev.Confirm)
+			go routProof(ev.ProofMsg)
+		case bc.RoutConfirmEvent:
+			go routProofConfirm(ev.ConfirmMsg)
+		case bc.RoutQueryStateEvent:
+			go routQueryState(ev.QsMsg)
+		case bc.RoutResponseStateEvent:
+			go routResponseState(ev.Rs)
 		}
 	}
 }

@@ -19,7 +19,6 @@ package bc
 import (
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
-	"github.com/shx-project/sphinx/network/p2p"
 )
 
 // TxPreEvent is posted when a transaction enters the transaction pool.
@@ -47,20 +46,18 @@ type ChainEvent struct {
 
 type ChainHeadEvent struct{ Block *types.Block }
 
-type RoutWorkProofEvent struct { Proof *types.WorkProof }
-type RoutProofConfirmEvent struct { Confirm *types.ProofConfirm}
-
-type WorkProofEvent struct {
-	Addr  common.Address
-	Proof *types.WorkProof
+type RoutWorkProofEvent struct {
+	ProofMsg types.WorkProofMsg
 }
 
-type ProofConfirmEvent struct {
-	Addr common.Address
-	Confirm *types.ProofConfirm
+type RoutConfirmEvent struct {
+	ConfirmMsg types.ConfirmMsg
 }
 
-type BatchProofEvent struct {
-	Peer *p2p.Peer
-	Batch types.BatchProofData
+type RoutQueryStateEvent struct {
+	QsMsg types.QueryStateMsg
+}
+
+type RoutResponseStateEvent struct {
+	Rs types.ResponseStateMsg
 }

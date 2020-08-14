@@ -21,6 +21,7 @@ import (
 	"github.com/shx-project/sphinx/blockchain"
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto/sha3"
 	"github.com/shx-project/sphinx/common/log"
 	"github.com/shx-project/sphinx/common/rlp"
 	"github.com/shx-project/sphinx/network/p2p"
@@ -28,30 +29,17 @@ import (
 	"github.com/shx-project/sphinx/txpool"
 	"gopkg.in/fatih/set.v0"
 	"math/big"
-	"sync"
 	"sync/atomic"
 	"time"
 )
 
 var handleKnownBlocks = set.New()
 
-type muLru struct {
-	mu sync.Mutex
-	cache *lru.Cache
-}
-
 var defaultRoutCount = int32(3)
-var handleKnownProof muLru
-var handleKnownProofConfirm muLru
-
-
-func init() {
-	c1,_ := lru.New(100000)
-	c2,_ := lru.New(100000)
-	handleKnownProof = muLru{cache:c1}
-	handleKnownProofConfirm = muLru{cache:c2}
-}
-
+var handleKnownProof,_ = lru.New(100000)
+var handleKnownProofConfirm,_ = lru.New(100000)
+var handleResponseState,_ = lru.New(100000)
+var handleQueryState,_ = lru.New(100000)
 
 // HandleGetBlockHeadersMsg deal received GetBlockHeadersMsg
 func HandleGetBlockHeadersMsg(p *p2p.Peer, msg p2p.Msg) error {
@@ -457,94 +445,106 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 
 
 func HandleWorkProofMsg(p *p2p.Peer, msg p2p.Msg) error {
-	var proof types.WorkProof
-	if err := msg.Decode(&proof); err != nil {
+	var proof types.WorkProofMsg
+	if err := msg.Decode(&msg); err != nil {
 		log.Error("Decode workproofmsg failed","err", err)
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
 	{
 		// broadcast proof max times.
-		handleKnownProof.mu.Lock()
-		defer handleKnownProof.mu.Unlock()
 		var count int32
-		if cache, ok := handleKnownProof.cache.Get(proof.Signature); ok {
+		if cache, ok := handleKnownProof.Get(proof.Proof.Sign); ok {
 			count = cache.(int32)
 		} else {
 			count = defaultRoutCount
+			// first time post to worker
+			syncInstance.NewBlockMux().Post(proof)
 		}
 		if count > 0 {
-			routProof(&proof)
+			routProof(proof)
 			count--
-			handleKnownProof.cache.Add(proof.Signature, count)
+			handleKnownProof.Add(proof.Proof.Sign, count)
 		}
 	}
-	ev := bc.WorkProofEvent{p.Address(), &proof}
-	// post to worker
-	syncInstance.NewBlockMux().Post(ev)
 
 	return nil
 }
 
-func HandleProofResMsg(p *p2p.Peer, msg p2p.Msg) error {
-	var confirm types.ProofConfirm
+func HandleProofConfirmMsg(p *p2p.Peer, msg p2p.Msg) error {
+	var confirm types.ConfirmMsg
 	if err := msg.Decode(&confirm); err != nil {
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
 	{
 		// broadcast proof confirm max times.
-		handleKnownProofConfirm.mu.Lock()
-		defer handleKnownProofConfirm.mu.Unlock()
 		var count int32
-		if cache, ok := handleKnownProofConfirm.cache.Get(confirm.Signature); ok {
+		if cache, ok := handleKnownProofConfirm.Get(confirm.Confirm.Signature); ok {
 			count = cache.(int32)
 		} else {
 			count = defaultRoutCount
+			// first time post to worker
+			syncInstance.NewBlockMux().Post(confirm)
 		}
 		if count > 0 {
-			routProofConfirm(&confirm)
+			routProofConfirm(confirm)
 			count--
-			handleKnownProofConfirm.cache.Add(confirm.Signature, count)
+			handleKnownProofConfirm.Add(confirm.Confirm.Signature, count)
 		}
 	}
-	ev := bc.ProofConfirmEvent{p.Address(), &confirm}
-	// post to worker
-	syncInstance.NewBlockMux().Post(ev)
 
 	return nil
 }
 
-func HandleResProofsMsg(p *p2p.Peer, msg p2p.Msg) error {
-	var response types.BatchProofData
+func HandleResStateMsg(p *p2p.Peer, msg p2p.Msg) error {
+	var response types.ResponseStateMsg
 	if err := msg.Decode(&response); err != nil {
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
-	ev := bc.BatchProofEvent{p, response}
-	// post to worker
-	syncInstance.NewBlockMux().Post(ev)
+	{
+		// broadcast proof confirm max times.
+		var count int32
+		hash := sha3.Sum256(response.Rs.Data())
+		if cache, ok := handleResponseState.Get(hash[:]); ok {
+			count = cache.(int32)
+		} else {
+			count = defaultRoutCount
+			// first time post to worker
+			syncInstance.NewBlockMux().Post(response)
+		}
+		if count > 0 {
+			routResponseState(response)
+			count--
+			handleResponseState.Add(hash, count)
+		}
+	}
 
 	return nil
 }
 
-func HandleGetProofsMsg(p *p2p.Peer, msg p2p.Msg) error {
-	var request types.ReuqestBatchProof
-	if err := msg.Decode(&request); err != nil {
-		log.Error("handlemsg GetProofsMsg decode failed","err",err)
+func HandleGetStateMsg(p *p2p.Peer, msg p2p.Msg) error {
+	var query types.QueryStateMsg
+	if err := msg.Decode(&query); err != nil {
+		log.Error("handlemsg QueryStateMsg decode failed","err",err)
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
-	if request.EndNumber <= request.StartNumber {
-		log.Error("handlemsg GetProofsMsg endnumber <= startnumber", "end", request.EndNumber,"start",request.StartNumber)
-		return p2p.ErrResp(p2p.ErrDecode, "param end (%v)<= start(%v)", request.EndNumber, request.StartNumber)
+	{
+		// broadcast proof confirm max times.
+		var count int32
+		hash := sha3.Sum256(query.Qs.Data())
+		if cache, ok := handleQueryState.Get(hash[:]); ok {
+			count = cache.(int32)
+		} else {
+			count = defaultRoutCount
+			// first time post to worker
+			syncInstance.NewBlockMux().Post(query)
+		}
+		if count > 0 {
+			routQueryState(query)
+			count--
+			handleQueryState.Add(hash, count)
+		}
 	}
-	count := request.EndNumber - request.StartNumber + 1
-
-	response := make([]types.ResponseProofData, count)
-	for i:= uint64(0); i < count; i++ {
-		h := bc.InstanceBlockChain().GetHeaderByNumber(i + request.StartNumber)
-		response[i].Number = h.Number.Uint64()
-		response[i].ProofHash = h.ProofHash
-		response[i].TxRoot = h.TxHash
-	}
-	return p2p.SendData(p, p2p.ResProofsMsg, types.BatchProofData(response))
+	return nil
 }
 
 
