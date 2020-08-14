@@ -21,7 +21,6 @@ import (
 	"github.com/shx-project/sphinx/blockchain"
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
-	"github.com/shx-project/sphinx/common/crypto/sha3"
 	"github.com/shx-project/sphinx/common/log"
 	"github.com/shx-project/sphinx/common/rlp"
 	"github.com/shx-project/sphinx/network/p2p"
@@ -29,6 +28,7 @@ import (
 	"github.com/shx-project/sphinx/txpool"
 	"gopkg.in/fatih/set.v0"
 	"math/big"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -36,10 +36,23 @@ import (
 var handleKnownBlocks = set.New()
 
 var defaultRoutCount = int32(3)
-var handleKnownProof,_ = lru.New(100000)
-var handleKnownProofConfirm,_ = lru.New(100000)
-var handleResponseState,_ = lru.New(100000)
-var handleQueryState,_ = lru.New(100000)
+type mulr struct {
+	cache *lru.Cache
+	mu sync.Mutex
+}
+var (
+	handleKnownProof mulr
+	handleKnownProofConfirm mulr
+	handleResponseState mulr
+	handleQueryState mulr
+)
+
+func init() {
+	handleKnownProof.cache,_ = lru.New(100000)
+	handleKnownProofConfirm.cache,_ = lru.New(100000)
+	handleResponseState.cache,_ = lru.New(100000)
+	handleQueryState.cache,_ = lru.New(100000)
+}
 
 // HandleGetBlockHeadersMsg deal received GetBlockHeadersMsg
 func HandleGetBlockHeadersMsg(p *p2p.Peer, msg p2p.Msg) error {
@@ -446,14 +459,16 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 
 func HandleWorkProofMsg(p *p2p.Peer, msg p2p.Msg) error {
 	var proof types.WorkProofMsg
-	if err := msg.Decode(&msg); err != nil {
+	if err := msg.Decode(&proof); err != nil {
 		log.Error("Decode workproofmsg failed","err", err)
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
 	{
 		// broadcast proof max times.
+		handleKnownProof.mu.Lock()
+		defer handleKnownProof.mu.Unlock()
 		var count int32
-		if cache, ok := handleKnownProof.Get(proof.Proof.Sign); ok {
+		if cache, ok := handleKnownProof.cache.Get(proof.Hash()); ok {
 			count = cache.(int32)
 		} else {
 			count = defaultRoutCount
@@ -463,7 +478,7 @@ func HandleWorkProofMsg(p *p2p.Peer, msg p2p.Msg) error {
 		if count > 0 {
 			routProof(proof)
 			count--
-			handleKnownProof.Add(proof.Proof.Sign, count)
+			handleKnownProof.cache.Add(proof.Hash(), count)
 		}
 	}
 
@@ -475,10 +490,13 @@ func HandleProofConfirmMsg(p *p2p.Peer, msg p2p.Msg) error {
 	if err := msg.Decode(&confirm); err != nil {
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
+
 	{
 		// broadcast proof confirm max times.
+		handleKnownProofConfirm.mu.Lock()
+		defer handleKnownProofConfirm.mu.Unlock()
 		var count int32
-		if cache, ok := handleKnownProofConfirm.Get(confirm.Confirm.Signature); ok {
+		if cache, ok := handleKnownProofConfirm.cache.Get(confirm.Hash()); ok {
 			count = cache.(int32)
 		} else {
 			count = defaultRoutCount
@@ -488,7 +506,7 @@ func HandleProofConfirmMsg(p *p2p.Peer, msg p2p.Msg) error {
 		if count > 0 {
 			routProofConfirm(confirm)
 			count--
-			handleKnownProofConfirm.Add(confirm.Confirm.Signature, count)
+			handleKnownProofConfirm.cache.Add(confirm.Hash(), count)
 		}
 	}
 
@@ -502,9 +520,10 @@ func HandleResStateMsg(p *p2p.Peer, msg p2p.Msg) error {
 	}
 	{
 		// broadcast proof confirm max times.
+		handleResponseState.mu.Lock()
+		defer handleResponseState.mu.Unlock()
 		var count int32
-		hash := sha3.Sum256(response.Rs.Data())
-		if cache, ok := handleResponseState.Get(hash[:]); ok {
+		if cache, ok := handleResponseState.cache.Get(response.Hash()); ok {
 			count = cache.(int32)
 		} else {
 			count = defaultRoutCount
@@ -514,7 +533,7 @@ func HandleResStateMsg(p *p2p.Peer, msg p2p.Msg) error {
 		if count > 0 {
 			routResponseState(response)
 			count--
-			handleResponseState.Add(hash, count)
+			handleResponseState.cache.Add(response.Hash(), count)
 		}
 	}
 
@@ -529,9 +548,10 @@ func HandleGetStateMsg(p *p2p.Peer, msg p2p.Msg) error {
 	}
 	{
 		// broadcast proof confirm max times.
+		handleQueryState.mu.Lock()
+		defer handleQueryState.mu.Unlock()
 		var count int32
-		hash := sha3.Sum256(query.Qs.Data())
-		if cache, ok := handleQueryState.Get(hash[:]); ok {
+		if cache, ok := handleQueryState.cache.Get(query.Hash()); ok {
 			count = cache.(int32)
 		} else {
 			count = defaultRoutCount
@@ -541,7 +561,7 @@ func HandleGetStateMsg(p *p2p.Peer, msg p2p.Msg) error {
 		if count > 0 {
 			routQueryState(query)
 			count--
-			handleQueryState.Add(hash, count)
+			handleQueryState.cache.Add(query.Hash(), count)
 		}
 	}
 	return nil

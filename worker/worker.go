@@ -217,7 +217,7 @@ func (self *worker) stop() {
 }
 
 func (self *worker) eventListener() {
-	events := self.mux.Subscribe(types.WorkProofMsg{}, types.QueryStateMsg{}, types.ResponseStateMsg{}, types.ConfirmMsg{})
+	events := self.mux.Subscribe(types.WorkProofMsg{}, types.QueryStateMsg{}, types.ResponseStateMsg{})
 	defer events.Unsubscribe()
 
 	defer self.chainHeadSub.Unsubscribe()
@@ -247,7 +247,7 @@ func (self *worker) eventListener() {
 					log.Debug("worker recover sender failed", "err ", e)
 				} else {
 					// sorted handle workproofevent for every peer.
-					log.Debug("worker got workproof event")
+					log.Debug("worker got workproof event", "from", sender)
 					if ch,ok := self.verifyChMap[sender]; ok {
 						ch <- ev
 					} else {
@@ -273,6 +273,7 @@ func (self *worker) eventListener() {
 				if e != nil {
 					log.Debug("worker recover sender failed", "err ", e)
 				} else {
+					log.Debug("worker got QueryState event", "from", sender)
 					self.dealQueryState(&ev, sender)
 				}
 			case types.ResponseStateMsg:
@@ -280,6 +281,7 @@ func (self *worker) eventListener() {
 				if e != nil {
 					log.Debug("worker recover sender failed", "err ", e)
 				} else {
+					log.Debug("worker got ResponseState event", "from", sender)
 					self.dealResponseState(&ev, sender)
 				}
 			}

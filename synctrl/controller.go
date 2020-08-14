@@ -212,6 +212,7 @@ func (this *SynCtrl) minedRoutingLoop() {
 		case bc.RoutWorkProofEvent:
 			go routProof(ev.ProofMsg)
 		case bc.RoutConfirmEvent:
+			log.Debug("controller got confirm event, and to rout.")
 			go routProofConfirm(ev.ConfirmMsg)
 		case bc.RoutQueryStateEvent:
 			go routQueryState(ev.QsMsg)

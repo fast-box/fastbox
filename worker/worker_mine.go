@@ -92,7 +92,7 @@ func (self *worker) setRoundState(s RoundState) {
 
 
 func (self *worker) RoutineMine() {
-	events := self.mux.Subscribe(bc.RoutConfirmEvent{})
+	events := self.mux.Subscribe(types.ConfirmMsg{})
 	defer events.Unsubscribe()
 
 	self.confirmCh = make(chan *Work)
@@ -151,6 +151,7 @@ func (self *worker) RoutineMine() {
 				if e != nil {
 					log.Debug("worker got confirmEvent, but recover sender failed","err",e)
 				} else if sender != self.coinbase {
+					log.Debug("worker got confirmMsg ","from",sender)
 					self.dealConfirm(&ev, sender)
 				}
 			}
@@ -242,7 +243,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		self.mux.Post(routEv)
 		log.Debug("worker proof goto wait confirm","time ", time.Now().UnixNano()/1000/1000)
 
-		handleLocalProof.Add(proof.Sign, struct {}{})
+		handleLocalProof.Add(proof.Sign.Hash(), struct {}{})
 		// wait confirm.
 		self.unconfirm_mine.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
 	}

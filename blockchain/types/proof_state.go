@@ -2,11 +2,11 @@ package types
 
 import (
 	"bytes"
-	"encoding/binary"
 	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/common/crypto/sha3"
 	"github.com/shx-project/sphinx/common/merkletree"
 	"github.com/shx-project/sphinx/common/rlp"
+	"math/big"
 )
 
 type ProofState struct {
@@ -60,24 +60,64 @@ type WorkProofMsg struct {
 	Proof WorkProof
 	Sign []byte
 }
+func (wpm WorkProofMsg)Hash() common.Hash {
+	s := sha3.New256()
+	s.Write(wpm.Proof.Data())
+	s.Write(wpm.Sign)
+	hash := common.Hash{}
+	hash.SetBytes(s.Sum(nil))
+
+	return hash
+}
 
 type ConfirmMsg struct {
 	Confirm ProofConfirm
 	Sign []byte
 }
+func (cfm ConfirmMsg)Hash() common.Hash {
+	s := sha3.New256()
+	s.Write(cfm.Confirm.Data())
+	s.Write(cfm.Sign)
+	hash := common.Hash{}
+	hash.SetBytes(s.Sum(nil))
+
+	return hash
+}
+
+
 
 type QueryStateMsg struct {
 	Qs QueryState
 	Sign []byte
 }
 
+func (qsm QueryStateMsg)Hash() common.Hash {
+	s := sha3.New256()
+	s.Write(qsm.Qs.Data())
+	s.Write(qsm.Sign)
+	hash := common.Hash{}
+	hash.SetBytes(s.Sum(nil))
+	return hash
+}
+
+
+
 type ResponseStateMsg struct {
 	Rs ResponseState
 	Sign []byte
 }
 
+func (rsm ResponseStateMsg)Hash() common.Hash {
+	s := sha3.New256()
+	s.Write(rsm.Rs.Data())
+	s.Write(rsm.Sign)
+	hash := common.Hash{}
+	hash.SetBytes(s.Sum(nil))
+	return hash
+}
+
 type WorkProof struct {
-	Number 	  uint64
+	Number 	  big.Int
 	Sign 	  ProofSignature
 	Txs       Transactions
 	States 	  ProofStates
@@ -86,9 +126,7 @@ type WorkProof struct {
 // return data to sign a signature.
 func (wp WorkProof)Data() []byte {
 	buf := bytes.NewBuffer([]byte{})
-	tmpbuf := make([]byte, 8)
-	binary.BigEndian.PutUint64(tmpbuf, wp.Number)
-	buf.Write(tmpbuf)
+	buf.Write(wp.Number.Bytes())
 	buf.Write(wp.Sign)
 	return buf.Bytes()
 }
@@ -111,29 +149,25 @@ func (pc ProofConfirm)Data() []byte {
 
 type QueryState struct {
 	Miner common.Address
-	Number uint64
+	Number big.Int
 }
 
 func (qs QueryState)Data() []byte {
 	buf := bytes.NewBuffer([]byte{})
-	tmpbuf := make([]byte, 8)
-	binary.BigEndian.PutUint64(tmpbuf, qs.Number)
-	buf.Write(tmpbuf)
+	buf.Write(qs.Number.Bytes())
 	buf.Write(qs.Miner.Bytes())
 	return buf.Bytes()
 }
 
 type ResponseState struct {
-	Number uint64
+	Number big.Int
 	Root common.Hash
 	Querier common.Address
 }
 
 func (rs ResponseState )Data() []byte {
 	buf := bytes.NewBuffer([]byte{})
-	tmpbuf := make([]byte, 8)
-	binary.BigEndian.PutUint64(tmpbuf, rs.Number)
-	buf.Write(tmpbuf)
+	buf.Write(rs.Number.Bytes())
 	buf.Write(rs.Root.Bytes())
 	buf.Write(rs.Querier.Bytes())
 	return buf.Bytes()

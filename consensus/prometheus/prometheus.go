@@ -93,7 +93,7 @@ func (c *Prometheus) GenerateProof(chain consensus.ChainReader, header *types.He
 	header.ProofHash = proofHash
 
 	log.Debug("prometheus generate proof","proofhash",hex.EncodeToString(sighash), "txroot", txroot, "localhash", lastHash)
-	return &types.WorkProof{number,sighash, txs,proofs}, nil
+	return &types.WorkProof{*big.NewInt(int64(number)),sighash, txs,proofs}, nil
 }
 
 func (c *Prometheus) VerifyProofQuick(lasthash common.Hash, txroot common.Hash, newHash common.Hash) error {
