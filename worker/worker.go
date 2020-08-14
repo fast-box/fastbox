@@ -107,7 +107,7 @@ type worker struct {
 	txConfirmPool 	map[common.Hash]uint64
 	updating 		bool
 	history 		*lru.Cache
-	verifyChMap     map[common.Address]chan bc.WorkProofEvent
+	verifyChMap     map[common.Address]chan types.WorkProofMsg
 	peerLockMap     map[common.Address]chan struct{}
 
 	// atomic status counters
@@ -130,7 +130,7 @@ func newWorker(config *config.ChainConfig, engine consensus.Engine, coinbase com
 		txConfirmPool: make(map[common.Hash]uint64),
 		updating:	false,
 		workPending:NewWorkPending(),
-		verifyChMap:make(map[common.Address]chan bc.WorkProofEvent),
+		verifyChMap:make(map[common.Address]chan types.WorkProofMsg),
 		peerLockMap:make(map[common.Address]chan struct{}),
 	}
 	worker.history,_ = lru.New(10)
@@ -217,7 +217,7 @@ func (self *worker) stop() {
 }
 
 func (self *worker) eventListener() {
-	events := self.mux.Subscribe(bc.WorkProofEvent{}, bc.BatchProofEvent{})
+	events := self.mux.Subscribe(types.WorkProofMsg{}, types.QueryStateMsg{}, types.ResponseStateMsg{}, types.ConfirmMsg{})
 	defer events.Unsubscribe()
 
 	defer self.chainHeadSub.Unsubscribe()
@@ -241,62 +241,46 @@ func (self *worker) eventListener() {
 
 		case obj := <-events.Chan():
 			switch ev:= obj.Data.(type) {
-			case bc.WorkProofEvent:
-				// sorted handle workproofevent for every peer.
-				addr := ev.Addr
-				log.Debug("worker got workproof event")
-				if ch,ok := self.verifyChMap[addr]; ok {
-					ch <- ev
+			case types.WorkProofMsg:
+				sender, e := self.engine.RecoverSender(ev.Proof.Data(), ev.Sign)
+				if e != nil {
+					log.Debug("worker recover sender failed", "err ", e)
 				} else {
-					ch := make(chan bc.WorkProofEvent, 1000)
-					self.verifyChMap[addr] = ch
-					ch <- ev
-					go func(ch chan bc.WorkProofEvent) {
-						for {
-							select {
-							case event,ok := <-ch:
-								if !ok {
-									return
-								} else {
-									self.dealProofEvent(&event)
+					// sorted handle workproofevent for every peer.
+					log.Debug("worker got workproof event")
+					if ch,ok := self.verifyChMap[sender]; ok {
+						ch <- ev
+					} else {
+						ch := make(chan types.WorkProofMsg, 1000)
+						self.verifyChMap[sender] = ch
+						ch <- ev
+						go func(ch chan types.WorkProofMsg, sender common.Address) {
+							for {
+								select {
+								case event,ok := <-ch:
+									if !ok {
+										return
+									} else {
+										self.dealProofEvent(&event, sender)
+									}
 								}
 							}
-						}
-					}(ch)
-				}
-			case bc.BatchProofEvent:
-				addr := ev.Peer.Address()
-				batch := ev.Batch[:]
-				log.Debug("BatchProofEvent","got from",addr,"length",len(batch))
-
-				old := bc.GetPeerProof(self.chainDb, addr)
-				updateProof := types.ProofState{Addr:addr}
-				if old == nil {
-					old = &types.ProofState{Addr:addr, Root:batch[0].ProofHash, Num:batch[0].Number}
-					updateProof.Num = batch[0].Number
-					updateProof.Root = batch[0].ProofHash
-
-					batch = batch[1:]
-				} else {
-					updateProof.Num = old.Num
-					updateProof.Root = old.Root
-				}
-				for _,p := range batch {
-					if err := self.engine.VerifyProofQuick(updateProof.Root, p.TxRoot, p.ProofHash); err == nil {
-						updateProof.Num = p.Number
-						updateProof.Root = p.ProofHash
-					} else {
-						break
+						}(ch, sender)
 					}
 				}
-				bc.WritePeerProof(self.chainDb, addr, updateProof)
-				log.Debug("PeerProof update","addr", addr,"from",old.Num,"to",updateProof.Num)
-
-				self.mu.Lock()
-				ch := self.peerLockMap[addr]
-				self.mu.Unlock()
-				if ch != nil {
-					ch <- struct{}{}
+			case types.QueryStateMsg:
+				sender, e := self.engine.RecoverSender(ev.Qs.Data(), ev.Sign)
+				if e != nil {
+					log.Debug("worker recover sender failed", "err ", e)
+				} else {
+					self.dealQueryState(&ev, sender)
+				}
+			case types.ResponseStateMsg:
+				sender, e := self.engine.RecoverSender(ev.Rs.Data(), ev.Sign)
+				if e != nil {
+					log.Debug("worker recover sender failed", "err ", e)
+				} else {
+					self.dealResponseState(&ev, sender)
 				}
 			}
 		}

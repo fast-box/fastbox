@@ -92,7 +92,7 @@ func (self *worker) setRoundState(s RoundState) {
 
 
 func (self *worker) RoutineMine() {
-	events := self.mux.Subscribe(bc.ProofConfirmEvent{})
+	events := self.mux.Subscribe(bc.RoutConfirmEvent{})
 	defer events.Unsubscribe()
 
 	self.confirmCh = make(chan *Work)
@@ -146,8 +146,13 @@ func (self *worker) RoutineMine() {
 		select {
 		case obj := <-events.Chan():
 			switch ev:= obj.Data.(type) {
-			case bc.ProofConfirmEvent:
-				self.dealConfirm(&ev)
+			case types.ConfirmMsg:
+				sender,e := self.engine.RecoverSender(ev.Confirm.Data(), ev.Sign)
+				if e != nil {
+					log.Debug("worker got confirmEvent, but recover sender failed","err",e)
+				} else if sender != self.coinbase {
+					self.dealConfirm(&ev, sender)
+				}
 			}
 		case work:= <- self.confirmCh:
 			self.wg.Add(1)
@@ -215,7 +220,7 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		log.Error("Premine","GenerateProof failed, err", err, "headerNumber", header.Number)
 		return err
 	}
-	log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Signature.Hash(), "time ", time.Now().UnixNano()/1000/1000)
+	log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Sign.Hash(), "time ", time.Now().UnixNano()/1000/1000)
 
 	if config.GetShxConfigInstance().Node.TestMode == 2 {
 		// single test, direct pass confirm.
@@ -223,13 +228,21 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 		go func() {self.confirmCh <- work}()
 	} else {
 		// broadcast proof.
-		self.mux.Post(bc.RoutWorkProofEvent{Proof:proof})
+		msg := types.WorkProofMsg{
+			Proof:*proof,
+		}
+		routEv := bc.RoutWorkProofEvent{
+			ProofMsg:msg,
+		}
+		routEv.ProofMsg.Sign, err = self.engine.SignData(msg.Proof.Data())
+		if err != nil {
+			log.Debug("worker sign proof failed", "err", err)
+			return err
+		}
+		self.mux.Post(routEv)
 		log.Debug("worker proof goto wait confirm","time ", time.Now().UnixNano()/1000/1000)
 
-		handleLocalProof.mu.Lock()
-		handleLocalProof.cache.Add(proof.Signature, struct {}{})
-		handleLocalProof.mu.Unlock()
-
+		handleLocalProof.Add(proof.Sign, struct {}{})
 		// wait confirm.
 		self.unconfirm_mine.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
 	}

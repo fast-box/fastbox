@@ -50,7 +50,7 @@ func newUnconfirmedProofs(confirmedCh chan *Work) *unconfirmedProofs{
 }
 
 func (u *unconfirmedProofs) Insert(proof *types.WorkProof, work *Work, threshold int) error {
-	sigHash := proof.Signature.Hash()
+	sigHash := proof.Sign.Hash()
 	if _, ok := u.proofs.Load(sigHash); !ok {
 		info := &proofInfo{threshold:threshold, work:work, confirmed:set.New(), confirmedUnpass:set.New(), time:time.Now().Unix()}
 		u.proofs.Store(sigHash, info)
