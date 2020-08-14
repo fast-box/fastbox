@@ -59,6 +59,8 @@ type Engine interface {
 
 	// GerateProof return a workproof
 	GenerateProof(chain ChainReader, header *types.Header, parent *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof,error)
+	SignData(data []byte) ([]byte, error)
+	RecoverSender(data []byte, signature []byte) (common.Address, error)
 
 	// VerifyProof check the proof from peer is correct, and return new hash.
 	VerifyProof(addr common.Address, lastHash common.Hash, proof *types.WorkProof) (common.Hash, error)

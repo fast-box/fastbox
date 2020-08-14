@@ -8,6 +8,7 @@ import (
 	"github.com/shx-project/sphinx/blockchain/state"
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
+	"github.com/shx-project/sphinx/common/crypto"
 	"github.com/shx-project/sphinx/common/crypto/sha3"
 	"github.com/shx-project/sphinx/common/log"
 	"github.com/shx-project/sphinx/consensus"
@@ -45,6 +46,25 @@ func (c *Prometheus)MixHash(first, second common.Hash) (h common.Hash) {
 	hw.Write(data)
 	hw.Sum(h[:0])
 	return
+}
+
+func (c *Prometheus) SignData(data []byte) ([]byte, error) {
+	signfn, signer := c.signFn, c.signer
+	if signfn == nil {
+		return nil, errors.New("not set the coinbase")
+	}
+	hash := sha3.Sum256(data)
+	signatur,err := signfn(accounts.Account{Address: signer}, hash[:])
+	return signatur, err
+}
+
+func (c *Prometheus) RecoverSender(data []byte, signature []byte) (common.Address, error) {
+	hash := sha3.Sum256(data)
+	pubk,err := crypto.Ecrecover(hash[:], signature)
+	if err != nil {
+		return common.Address{}, err
+	}
+	return recoverpk2address(pubk), nil
 }
 
 // GenerateProof

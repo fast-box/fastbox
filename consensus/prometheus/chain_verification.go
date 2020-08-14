@@ -126,18 +126,23 @@ func (c *Prometheus) verifySeal(chain consensus.ChainReader, header *types.Heade
 	return nil
 }
 
+func recoverpk2address(pub []byte)(common.Address){
+	var addr common.Address
+	copy(addr[:], crypto.Keccak256(pub[1:])[12:])
+	return addr
+}
+
 func (c *Prometheus) verifyProof(lHash common.Hash, address common.Address, proof *types.WorkProof) (common.Hash,error) {
 	txroot := types.DeriveSha(proof.Txs)
 	//proofRoot := types.DeriveSha(proof.States)
 	//proofHash := c.MixHash(txroot,proofRoot)
 	proofHash := c.MixHash(lHash,txroot)
-	log.Debug("prometheus verify proof","proofhash", proof.Signature.Hash(),"txroot",txroot,"localhash",lHash)
+	log.Debug("prometheus verify proof","proofhash", proof.Sign.Hash(),"txroot",txroot,"localhash",lHash)
 
-	if pub, err := crypto.Ecrecover(proofHash.Bytes(), proof.Signature); err == nil {
-		var addr common.Address
-		copy(addr[:], crypto.Keccak256(pub[1:])[12:])
+	if pub, err := crypto.Ecrecover(proofHash.Bytes(), proof.Sign); err == nil {
+		addr := recoverpk2address(pub)
 		if bytes.Compare(addr.Bytes(), address.Bytes()) != 0 {
-			log.Debug("prometheus verify proof","proof",proof.Signature.Hash(),"addr compare failed, recover addr", addr)
+			log.Debug("prometheus verify proof","proof",proof.Sign.Hash(),"addr compare failed, recover addr", addr)
 			return common.Hash{},errors.New("invalid proof")
 		} else {
 			return proofHash, nil
