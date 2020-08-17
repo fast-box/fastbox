@@ -57,10 +57,10 @@ func (self *worker) queryRemoteState(miner common.Address, number *big.Int, time
 		log.Debug("worker query state sign failed", "err", err)
 		return err
 	}
+	queryCache.Add(miner, msg)
+
 	ev := bc.RoutQueryStateEvent{msg}
 	self.mux.Post(ev)
-
-	queryCache.Add(miner, ev)
 
 	var peerlock chan struct{}
 	self.mu.Lock()
