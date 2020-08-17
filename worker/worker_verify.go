@@ -17,6 +17,8 @@ import (
 var handleLocalProof,_ = lru.New(100000)
 var queryCache,_ = lru.New(100000)
 
+var cap_block_count uint64 = 5
+
 func (self *worker) updateTxConfirm() {
 	self.txMu.Lock()
 	defer self.txMu.Unlock()
@@ -116,8 +118,9 @@ func (self *worker) dealProofEvent(ev *types.WorkProofMsg, sender common.Address
 	}
 	peerProofState := bc.GetPeerProof(self.chainDb, sender)
 
+	evnum := ev.Proof.Number.Uint64()
+	// if local have no peer proof state or this is a re-mined block with last n count, we can resync remote state.
 	if peerProofState == nil {
-		evnum := ev.Proof.Number.Uint64()
 		if evnum == 1 {
 			// the first block from peer, lastHash is genesis.ProofHash
 			genesis := self.chain.GetHeaderByNumber(0)
@@ -143,8 +146,7 @@ func (self *worker) dealProofEvent(ev *types.WorkProofMsg, sender common.Address
 		// loop to request missed proof and re-verify again.
 		if newroot, err := self.engine.VerifyProof(sender, peerProofState.Root, &ev.Proof); err != nil {
 			snum := peerProofState.Num + 1
-			evnum := ev.Proof.Number.Int64()
-			if int64(snum) >= evnum {
+			if snum == evnum {
 				log.Debug("worker verify proof proofhash failed")
 				if routEv.ConfirmMsg.Sign,err = self.engine.SignData(routEv.ConfirmMsg.Confirm.Data()); err != nil {
 					log.Debug("worker deal proof event, sign confirm failed","err", err)
@@ -156,7 +158,7 @@ func (self *worker) dealProofEvent(ev *types.WorkProofMsg, sender common.Address
 
 				log.Debug("worker verify proof", "query remote state from", sender, "number",evnum-1)
 				// request missed proof.
-				err := self.queryRemoteState(sender, big.NewInt(evnum-1), 30)
+				err := self.queryRemoteState(sender, big.NewInt(int64(evnum-1)), 30)
 				if err != nil {
 					break
 				}
@@ -228,6 +230,7 @@ func (self *worker) dealQueryState(ev *types.QueryStateMsg, sender common.Addres
 			log.Debug("worker deal query state, get header is nil","number", ev.Qs.Number)
 			return
 		} else {
+			log.Debug("dealQueryState ", "from", sender,"num",ev.Qs.Number.Uint64())
 			root = h.ProofHash
 		}
 	}
@@ -262,11 +265,11 @@ func (self *worker) dealResponseState(ev *types.ResponseStateMsg, sender common.
 		return
 	}
 
-	oldState := bc.GetPeerProof(self.chainDb, sender)
-	if oldState != nil && oldState.Num > ev.Rs.Number.Uint64() {
-		log.Debug("worker deal ResponseState got an lower state","response number ", ev.Rs.Number, "local number", oldState.Num)
-		return
-	}
+	//oldState := bc.GetPeerProof(self.chainDb, sender)
+	//if oldState != nil && oldState.Num > ev.Rs.Number.Uint64() {
+	//	log.Debug("worker deal ResponseState got an lower state","response number ", ev.Rs.Number, "local number", oldState.Num)
+	//	return
+	//}
 	//
 	peerstate := types.ProofState{
 		Addr:sender,
@@ -275,7 +278,7 @@ func (self *worker) dealResponseState(ev *types.ResponseStateMsg, sender common.
 	}
 
 	bc.WritePeerProof(self.chainDb, sender, peerstate)
-	log.Debug("PeerProof update","addr", sender,"from",oldState.Num,"to",peerstate.Num)
+	log.Debug("PeerProof update","addr", sender,"to",peerstate.Num)
 
 	self.mu.Lock()
 	ch := self.peerLockMap[sender]
