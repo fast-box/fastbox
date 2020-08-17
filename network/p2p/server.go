@@ -570,6 +570,8 @@ func (srv *Server) protoHandshakeChecks(peers map[discover.NodeID]*PeerBase, c *
 func (srv *Server) encHandshakeChecks(peers map[discover.NodeID]*PeerBase, c *conn) error {
 	switch {
 	case peers[c.id] != nil:
+        p := peers[c.id]
+        go p.Disconnect(DiscAlreadyConnected)
 		return DiscAlreadyConnected
 	case c.id == srv.Self().ID:
 		return DiscSelf
