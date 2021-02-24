@@ -7,6 +7,7 @@
 .PHONY: shx-linux-arm shx-linux-arm-5 shx-linux-arm-6 shx-linux-arm-7 shx-linux-arm64
 .PHONY: shx-darwin shx-darwin-386 shx-darwin-amd64
 .PHONY: shx-windows shx-windows-386 shx-windows-amd64
+.PHONY: docker
 
 GOBIN = $(shell pwd)/build/bin
 GOSHX = $(shell pwd)
@@ -147,3 +148,6 @@ shx-windows-amd64:
 	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=windows/amd64 -v ./cmd/shx
 	@echo "Windows amd64 cross compilation done:"
 	@ls -ld $(GOBIN)/shx-windows-* | grep amd64
+
+docker:
+	docker build -t sphinx/shx:latest .
