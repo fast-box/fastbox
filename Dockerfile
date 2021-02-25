@@ -18,6 +18,5 @@ RUN apk update \
         && /bin/bash
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /sphinx/build/bin/shx /usr/local/bin/
-COPY --from=builder /sphinx/build/bin/iperf3 /
 EXPOSE 8545 8546 30303 30303/udp
 ENTRYPOINT ["shx"]
