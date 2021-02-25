@@ -3,7 +3,7 @@ FROM golang:alpine as builder
 RUN apk add --no-cache make git gcc musl-dev linux-headers
 
 ADD . /sphinx
-
+ENV GO111MODULE off
 RUN cd /sphinx && make shx
 # Pull Ghpb into a second stage deploy alpine container
 FROM alpine:latest
