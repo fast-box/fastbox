@@ -189,7 +189,6 @@ var AppHelpFlagGroups = []flagGroup{
 		Name: "DEPRECATED",
 		Flags: []cli.Flag{
 			utils.FastSyncFlag,
-			utils.LightModeFlag,
 		},
 	},
 	{

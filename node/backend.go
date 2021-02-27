@@ -37,7 +37,7 @@ type LesServer interface {
 	Protocols() []p2p.Protocol
 }
 
-// APIs returns the collection of RPC services the hpb package offers.
+// APIs returns the collection of RPC services the shx package offers.
 // NOTE, some of these services probably need to be moved to somewhere else.
 func (s *Node) APIs() []rpc.API {
 	apis := shxapi.GetAPIs(s.ApiBackend)
@@ -54,7 +54,7 @@ func (s *Node) APIs() []rpc.API {
 			Version:   "1.0",
 			Service:   NewPrivateMinerAPI(s),
 			Public:    false,
-		},{
+		}, {
 			Namespace: "shx",
 			Version:   "1.0",
 			Service:   filters.NewPublicFilterAPI(s.ApiBackend, false),
@@ -80,15 +80,14 @@ func (s *Node) APIs() []rpc.API {
 		},
 	}...)
 
-
 	// Append any APIs exposed explicitly by the consensus engine
 	if s.Shxengine != nil {
 		apis = append(apis, s.Shxengine.APIs(s.BlockChain())...)
 		apis = append(apis, []rpc.API{
 			{Namespace: "shx",
-				Version:   "1.0",
-					Service:   synctrl.NewPublicSyncerAPI(s.Shxsyncctr.Syncer(), s.newBlockMux),
-					Public:    true,
+				Version: "1.0",
+				Service: synctrl.NewPublicSyncerAPI(s.Shxsyncctr.Syncer(), s.newBlockMux),
+				Public:  true,
 			},
 		}...)
 
@@ -96,15 +95,15 @@ func (s *Node) APIs() []rpc.API {
 	return apis
 }
 
-func (s *Node) StopMining()         { s.miner.Stop() }
-func (s *Node) IsMining() bool      { return s.miner.Mining() }
+func (s *Node) StopMining()          { s.miner.Stop() }
+func (s *Node) IsMining() bool       { return s.miner.Mining() }
 func (s *Node) Miner() *worker.Miner { return s.miner }
 
-func (s *Node) APIAccountManager() *accounts.Manager  { return s.accman }
-func (s *Node) BlockChain() *bc.BlockChain         { return s.Shxbc }
-func (s *Node) TxPool() *txpool.TxPool             { return s.Shxtxpool }
-func (s *Node) Engine() consensus.Engine           { return s.Shxengine }
-func (s *Node) ChainDb() shxdb.Database            { return s.ShxDb }
-func (s *Node) IsListening() bool                  { return true } // Always listening
-func (s *Node) EthVersion() int                    { return int(s.Shxpeermanager.Protocol()[0].Version)}
-func (s *Node) NetVersion() uint64                 { return s.networkId }
+func (s *Node) APIAccountManager() *accounts.Manager { return s.accman }
+func (s *Node) BlockChain() *bc.BlockChain           { return s.Shxbc }
+func (s *Node) TxPool() *txpool.TxPool               { return s.Shxtxpool }
+func (s *Node) Engine() consensus.Engine             { return s.Shxengine }
+func (s *Node) ChainDb() shxdb.Database              { return s.ShxDb }
+func (s *Node) IsListening() bool                    { return true } // Always listening
+func (s *Node) ShxVersion() int                      { return int(s.Shxpeermanager.Protocol()[0].Version) }
+func (s *Node) NetVersion() uint64                   { return s.networkId }

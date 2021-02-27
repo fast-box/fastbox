@@ -41,7 +41,7 @@ const (
 	baseMsgMax uint64 = 0x0FFF
 )
 
-// message of hpb protocol
+// message of shx protocol
 const (
 	StatusMsg         uint64 = 0x1010
 	ExchangeMsg       uint64 = 0x1011
@@ -64,9 +64,9 @@ const (
 
 	NewHashBlockMsg uint64 = 0x2020
 	WorkProofMsg    uint64 = 0x2022
-	ProofConfirmMsg     uint64 = 0x2024
-	GetStateMsg 	uint64 = 0x2025
-	ResStateMsg 	uint64 = 0x2026
+	ProofConfirmMsg uint64 = 0x2024
+	GetStateMsg     uint64 = 0x2025
+	ResStateMsg     uint64 = 0x2026
 )
 
 // Msg defines the structure of a p2p message.

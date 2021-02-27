@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package filters implements an hpb filtering system for block,
+// Package filters implements an shx filtering system for block,
 // transactions and log events.
 package filters
 
@@ -108,7 +108,6 @@ func NewEventSystem(mux *sub.TypeMux, backend Backend, lightMode bool) *EventSys
 		install:   make(chan *subscription),
 		uninstall: make(chan *subscription),
 	}
-
 
 	go m.eventLoop()
 
@@ -397,27 +396,25 @@ func (es *EventSystem) lightFilterLogs(header *types.Header, addresses []common.
 func (es *EventSystem) eventLoop() {
 	var (
 		index = make(filterIndex)
-		subs   = es.mux.Subscribe(bc.PendingLogsEvent{})
+		subs  = es.mux.Subscribe(bc.PendingLogsEvent{})
 		// Subscribe TxPreEvent form txpool
 
 		// Subscribe RemovedLogsEvent
 
-
 	)
 
-	txCh  := make(chan bc.TxPreEvent, txChanSize) //TODO fix
+	txCh := make(chan bc.TxPreEvent, txChanSize)  //TODO fix
 	txSub := es.backend.SubscribeTxPreEvent(txCh) //TODO fix
 
-	rmLogsCh  := make(chan bc.RemovedLogsEvent, rmLogsChanSize)
+	rmLogsCh := make(chan bc.RemovedLogsEvent, rmLogsChanSize)
 	rmLogsSub := es.backend.SubscribeRemovedLogsEvent(rmLogsCh)
 
 	// Subscribe []*types.Log
-	logsCh  := make(chan []*types.Log, logsChanSize)
+	logsCh := make(chan []*types.Log, logsChanSize)
 	logsSub := es.backend.SubscribeLogsEvent(logsCh)
 	// Subscribe ChainEvent
-	chainEvCh  := make(chan bc.ChainEvent, chainEvChanSize)
+	chainEvCh := make(chan bc.ChainEvent, chainEvChanSize)
 	chainEvSub := es.backend.SubscribeChainEvent(chainEvCh)
-
 
 	txPreReceiver := event.RegisterReceiver("tx_pool_tx_pre_receiver",
 		func(payload interface{}) {

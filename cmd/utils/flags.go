@@ -150,10 +150,6 @@ var (
 		Name:  "fast",
 		Usage: "Enable fast syncing through state downloads",
 	}
-	LightModeFlag = cli.BoolFlag{
-		Name:  "light",
-		Usage: "Enable light client mode",
-	}
 	defaultSyncMode = config.DefaultConfig.SyncMode
 	SyncModeFlag    = TextMarshalerFlag{
 		Name:  "syncmode",
@@ -681,7 +677,7 @@ func setShxerbase(ctx *cli.Context, ks *keystore.KeyStore, cfg *config.Nodeconfi
 		if len(accounts) > 0 {
 			cfg.Shxerbase = accounts[0].Address
 		} else {
-			log.Warn("No hpberbase set and no accounts found as default")
+			log.Warn("No shxerbase set and no accounts found as default")
 		}
 	}
 }
@@ -727,9 +723,6 @@ func SetNetWorkConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 	}
 	if ctx.GlobalIsSet(MaxPendingPeersFlag.Name) {
 		cfg.Network.MaxPendingPeers = ctx.GlobalInt(MaxPendingPeersFlag.Name)
-	}
-	if ctx.GlobalIsSet(NoDiscoverFlag.Name) || ctx.GlobalBool(LightModeFlag.Name) {
-		cfg.Network.NoDiscovery = true
 	}
 
 	if netrestrict := ctx.GlobalString(NetrestrictFlag.Name); netrestrict != "" {
@@ -813,7 +806,7 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 	case ctx.GlobalIsSet(DataDirFlag.Name):
 		cfg.Node.DataDir = ctx.GlobalString(DataDirFlag.Name)
 	case ctx.GlobalBool(DevModeFlag.Name):
-		cfg.Node.DataDir = filepath.Join(os.TempDir(), "hpb_dev_mode")
+		cfg.Node.DataDir = filepath.Join(os.TempDir(), "shx_dev_mode")
 	case ctx.GlobalBool(TestnetFlag.Name):
 		cfg.Node.DataDir = filepath.Join(config.DefaultDataDir(), "testnet")
 	}
@@ -960,9 +953,6 @@ func MakeChainDatabase(ctx *cli.Context, stack *node.Node) shxdb.Database {
 		handles = makeDatabaseHandles()
 	)
 	name := "chaindata"
-	if ctx.GlobalBool(LightModeFlag.Name) {
-		name = "lightchaindata"
-	}
 	chainDb, err := db.OpenDatabase(name, cache, handles)
 	if err != nil {
 		Fatalf("Could not open database: %v", err)

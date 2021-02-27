@@ -193,7 +193,7 @@ func newUDP(priv *ecdsa.PrivateKey, c conn, natm nat.Interface, nodeDBPath strin
 	realaddr := c.LocalAddr().(*net.UDPAddr)
 	if natm != nil {
 		if !realaddr.IP.IsLoopback() {
-			go nat.Map(natm, udp.closing, "udp", realaddr.Port, realaddr.Port, "hpb discovery")
+			go nat.Map(natm, udp.closing, "udp", realaddr.Port, realaddr.Port, "shx discovery")
 		}
 
 		if ext, err := natm.ExternalIP(); err == nil {

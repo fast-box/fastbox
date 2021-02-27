@@ -31,7 +31,7 @@ import (
 	"github.com/shx-project/sphinx/common/log"
 	"github.com/shx-project/sphinx/config"
 	"github.com/shx-project/sphinx/event/sub"
-	hpbinter "github.com/shx-project/sphinx/interface"
+	shx_project "github.com/shx-project/sphinx/interface"
 )
 
 var (
@@ -228,13 +228,13 @@ func NewSyncer(mode config.SyncMode, stateDb shxdb.Database, mux *sub.TypeMux, l
 // In addition, during the state sync phase of fast synchronisation the number
 // of processed and the total number of known states are also returned. Otherwise
 // these are zero.
-func (this *Syncer) Progress() hpbinter.SyncProgress {
+func (this *Syncer) Progress() shx_project.SyncProgress {
 	// Lock the current stats and return the progress
 	this.syncStatsLock.RLock()
 	defer this.syncStatsLock.RUnlock()
 
 	current := bc.InstanceBlockChain().CurrentBlock().NumberU64()
-	return hpbinter.SyncProgress{
+	return shx_project.SyncProgress{
 		StartingBlock: this.syncStatsChainOrigin,
 		CurrentBlock:  current,
 		HighestBlock:  this.syncStatsChainHeight,

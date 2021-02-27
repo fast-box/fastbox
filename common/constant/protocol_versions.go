@@ -16,8 +16,8 @@
 
 package params
 
-// hpb protocol version control
+// shx protocol version control
 const (
-	ProtocolV111 uint    = 111 // match up protocol versions and messages versions
+	ProtocolV111    uint = 111 // match up protocol versions and messages versions
 	SubProtocolV111 uint = 111 // Light Shx Sub-protocol versions
 )

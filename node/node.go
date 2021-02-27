@@ -76,11 +76,11 @@ type Node struct {
 	bloomIndexer  *bc.ChainIndexer               // Bloom indexer operating during block imports
 
 	// Channel for shutting down the service
-	shutdownChan  chan bool    // Channel for shutting down the hpb
+	shutdownChan  chan bool    // Channel for shutting down the shx
 	stopDbUpgrade func() error // stop chain db sequential key upgrade
 
 	miner     *worker.Miner
-	hpberbase common.Address
+	shxerbase common.Address
 
 	ephemeralKeystore string         // if non-empty, the key directory that will be removed by Stop
 	instanceDirLock   flock.Releaser // prevents concurrent use of instance directory
@@ -97,7 +97,7 @@ type Node struct {
 
 }
 
-// New creates a hpb node, create all object and start
+// New creates a shx node, create all object and start
 func New(conf *config.ShxConfig) (*Node, error) {
 	if conf.Node.DataDir != "" {
 		absdatadir, err := filepath.Abs(conf.Node.DataDir)
@@ -134,7 +134,7 @@ func New(conf *config.ShxConfig) (*Node, error) {
 		accman:      nil,
 		Shxengine:   nil,
 
-		hpberbase:     common.Address{},
+		shxerbase:     common.Address{},
 		bloomRequests: make(chan chan *bloombits.Retrieval),
 		bloomIndexer:  nil,
 		stop:          make(chan struct{}),
@@ -152,7 +152,7 @@ func New(conf *config.ShxConfig) (*Node, error) {
 
 	if wallets := hpbnode.AccountManager().Wallets(); len(wallets) > 0 {
 		if account := wallets[0].Accounts(); len(account) > 0 {
-			hpbnode.hpberbase = account[0].Address
+			hpbnode.shxerbase = account[0].Address
 		}
 		log.Info("Set coinbase with account[0]")
 	} else {
@@ -204,7 +204,7 @@ func (hpbnode *Node) WorkerInit(conf *config.ShxConfig) error {
 		hpbnode.Shxsyncctr = synctrl.InstanceSynCtrl()
 		hpbnode.newBlockMux = hpbnode.Shxsyncctr.NewBlockMux()
 
-		hpbnode.miner = worker.New(&conf.BlockChain, hpbnode.NewBlockMux(), hpbnode.Shxengine, hpbnode.hpberbase, hpbnode.ShxDb)
+		hpbnode.miner = worker.New(&conf.BlockChain, hpbnode.NewBlockMux(), hpbnode.Shxengine, hpbnode.shxerbase, hpbnode.ShxDb)
 		hpbnode.bloomIndexer.Start(hpbnode.Shxbc.CurrentHeader(), hpbnode.Shxbc.SubscribeChainEvent)
 
 	} else {
@@ -279,7 +279,7 @@ func (hpbnode *Node) Start(conf *config.ShxConfig) error {
 		return errors.New("synctrl is nil")
 	}
 	hpbnode.Shxsyncctr.Start()
-	retval := hpbnode.Shxpeermanager.Start(hpbnode.hpberbase)
+	retval := hpbnode.Shxpeermanager.Start(hpbnode.shxerbase)
 	if retval != nil {
 		log.Error("Start hpbpeermanager error")
 		return errors.New(`start peermanager error ".ipc"`)
@@ -291,12 +291,12 @@ func (hpbnode *Node) Start(conf *config.ShxConfig) error {
 	hpbnode.Shxtxpool.Start()
 
 	if promeengine, ok := hpbnode.Shxengine.(*prometheus.Prometheus); ok {
-		wallet, err := hpbnode.accman.Find(accounts.Account{Address: hpbnode.hpberbase})
+		wallet, err := hpbnode.accman.Find(accounts.Account{Address: hpbnode.shxerbase})
 		if wallet == nil || err != nil {
 			log.Error("Shxerbase account unavailable locally", "err", err)
 			return fmt.Errorf("signer missing: %v", err)
 		}
-		promeengine.Authorize(hpbnode.hpberbase, wallet.SignHash)
+		promeengine.Authorize(hpbnode.shxerbase, wallet.SignHash)
 	} else {
 		log.Error("Cannot set authorize without prometheus", "err", hpbnode.Shxengine)
 	}
@@ -525,7 +525,7 @@ func (s *Node) ResetWithGenesisBlock(gb *types.Block) {
 
 func (s *Node) Shxerbase() (eb common.Address, err error) {
 	s.lock.RLock()
-	hpberbase := s.hpberbase
+	hpberbase := s.shxerbase
 	s.lock.RUnlock()
 
 	if hpberbase != (common.Address{}) {
@@ -542,13 +542,13 @@ func (s *Node) Shxerbase() (eb common.Address, err error) {
 // set in js console via admin interface or wrapper from cli flags
 func (self *Node) SetShxerbase(hpberbase common.Address) {
 	self.lock.Lock()
-	self.hpberbase = hpberbase
+	self.shxerbase = hpberbase
 	self.lock.Unlock()
 }
 
 func (s *Node) StartMining(local bool) error {
 	//read coinbase from node
-	eb := s.hpberbase
+	eb := s.shxerbase
 
 	if promeengine, ok := s.Shxengine.(*prometheus.Prometheus); ok {
 		wallet, err := s.accman.Find(accounts.Account{Address: eb})

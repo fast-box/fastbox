@@ -67,7 +67,6 @@ var (
 		utils.TxPoolGlobalQueueFlag,
 		utils.TxPoolLifetimeFlag,
 		utils.FastSyncFlag,
-		utils.LightModeFlag,
 		utils.SyncModeFlag,
 		utils.LightServFlag,
 		utils.LightPeersFlag,
@@ -193,13 +192,13 @@ func main() {
 // blocking mode, waiting for it to be shut down.
 func shx(ctx *cli.Context) error {
 	cfg := MakeConfigNode(ctx)
-	hpbnode, err := createNode(cfg)
+	shxnode, err := createNode(cfg)
 	if err != nil {
 		utils.Fatalf("Failed to create node")
 		return err
 	}
-	startNode(ctx, hpbnode, cfg)
-	hpbnode.Wait()
+	startNode(ctx, shxnode, cfg)
+	shxnode.Wait()
 	return nil
 }
 

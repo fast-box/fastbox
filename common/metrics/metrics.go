@@ -24,11 +24,11 @@ import (
 	"time"
 
 	"github.com/deathowl/go-metrics-prometheus"
-	"github.com/shx-project/sphinx/common/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rcrowley/go-metrics"
 	"github.com/rcrowley/go-metrics/exp"
+	"github.com/shx-project/sphinx/common/log"
 	"net/http"
 )
 
@@ -52,7 +52,7 @@ func Start() {
 	prometheusRegistry.MustRegister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheusRegistry.MustRegister(prometheus.NewGoCollector())
 	metricsRegistry := metrics.DefaultRegistry
-	pClient := prometheusmetrics.NewPrometheusProvider(metricsRegistry, "go_hpb", "", prometheusRegistry, 1*time.Second)
+	pClient := prometheusmetrics.NewPrometheusProvider(metricsRegistry, "go_shx", "", prometheusRegistry, 1*time.Second)
 	go pClient.UpdatePrometheusMetrics()
 	exp.Exp(metricsRegistry)
 	go func() {

@@ -132,9 +132,9 @@ func (api *PrivateMinerAPI) SetExtra(extra string) (bool, error) {
 	return true, nil
 }
 
-// SetShxerbase sets the hpberbase of the miner
-func (api *PrivateMinerAPI) SetShxerbase(hpberbase common.Address) bool {
-	api.e.SetShxerbase(hpberbase)
+// SetShxerbase sets the shxerbase of the miner
+func (api *PrivateMinerAPI) SetShxerbase(shxerbase common.Address) bool {
+	api.e.SetShxerbase(shxerbase)
 	return true
 }
 

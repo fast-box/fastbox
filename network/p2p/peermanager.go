@@ -48,7 +48,7 @@ type PeerManager struct {
 	closed bool
 
 	server *Server   // pointer to server of p2p
-	hpbpro *ShxProto // pointer to hpb protocol
+	shxpro *ShxProto // pointer to shx protocol
 
 }
 
@@ -60,7 +60,7 @@ func PeerMgrInst() *PeerManager {
 			peers:  make(map[string]*Peer),
 			boots:  make(map[string]*Peer),
 			server: &Server{},
-			hpbpro: NewProtos(),
+			shxpro: NewProtos(),
 		}
 		INSTANCE.Store(pm)
 	}
@@ -84,19 +84,19 @@ func (prm *PeerManager) Start(coinbase common.Address) error {
 		BootstrapNodes:  config.Network.BootstrapNodes,
 		EnableMsgEvents: config.Network.EnableMsgEvents,
 
-		Protocols: prm.hpbpro.Protocols(),
+		Protocols: prm.shxpro.Protocols(),
 	}
 
 	prm.server.Config.CoinBase = coinbase
 	log.Info("Set coinbase address by start", "address", coinbase.String(), "roletype", config.Network.RoleType)
-	prm.hpbpro.networkId = prm.server.NetworkId
-	prm.hpbpro.regMsgProcess(ReqNodesMsg, HandleReqNodesMsg)
-	prm.hpbpro.regMsgProcess(ResNodesMsg, HandleResNodesMsg)
+	prm.shxpro.networkId = prm.server.NetworkId
+	prm.shxpro.regMsgProcess(ReqNodesMsg, HandleReqNodesMsg)
+	prm.shxpro.regMsgProcess(ResNodesMsg, HandleResNodesMsg)
 
-	prm.hpbpro.regMsgProcess(ReqRemoteStateMsg, HandleReqRemoteStateMsg)
-	prm.hpbpro.regMsgProcess(ResRemoteStateMsg, HandleResRemoteStateMsg)
+	prm.shxpro.regMsgProcess(ReqRemoteStateMsg, HandleReqRemoteStateMsg)
+	prm.shxpro.regMsgProcess(ResRemoteStateMsg, HandleResRemoteStateMsg)
 
-	copy(prm.server.Protocols, prm.hpbpro.Protocols())
+	copy(prm.server.Protocols, prm.shxpro.Protocols())
 
 	localType := discover.MineNode
 	if config.Network.RoleType == "bootnode" {
@@ -297,7 +297,7 @@ func (prm *PeerManager) close() {
 }
 
 func (prm *PeerManager) Protocol() []Protocol {
-	return prm.hpbpro.protos
+	return prm.shxpro.protos
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -305,7 +305,7 @@ func (prm *PeerManager) Protocol() []Protocol {
 type PeerInfo struct {
 	ID       string `json:"id"`       // Unique node identifier (also the encryption key)
 	Name     string `json:"name"`     // Name of the node, including client type, version, OS, custom data
-	Version  string `json:"version"`  // Ghpb version
+	Version  string `json:"version"`  // Gshx version
 	Remote   string `json:"remote"`   // Remote node type
 	CoinBase string `json:"coinbase"` //Remote Node's CoinBase
 	Cap      string `json:"cap"`      // Sum-protocols advertised by this particular peer
@@ -316,7 +316,7 @@ type PeerInfo struct {
 	Start  string      `json:"start"`  //
 	Beat   string      `json:"beat"`   //
 	Mining string      `json:"mining"` //
-	SHX    interface{} `json:"hpb"`    // Sub-protocol specific metadata fields
+	SHX    interface{} `json:"shx"`    // Sub-protocol specific metadata fields
 }
 
 type ShxInfo struct {
@@ -432,30 +432,30 @@ func (prm *PeerManager) NodeInfo() *NodeInfo {
 
 ////////////////////////////////////////////////////////////////////
 func (prm *PeerManager) RegMsgProcess(msg uint64, cb MsgProcessCB) {
-	prm.hpbpro.regMsgProcess(msg, cb)
+	prm.shxpro.regMsgProcess(msg, cb)
 	return
 }
 
 func (prm *PeerManager) RegChanStatus(cb ChanStatusCB) {
-	prm.hpbpro.regChanStatus(cb)
+	prm.shxpro.regChanStatus(cb)
 	log.Debug("ChanStatus has been register")
 	return
 }
 
 func (prm *PeerManager) RegOnAddPeer(cb OnAddPeerCB) {
-	prm.hpbpro.regOnAddPeer(cb)
+	prm.shxpro.regOnAddPeer(cb)
 	log.Debug("OnAddPeer has been register")
 	return
 }
 
 func (prm *PeerManager) RegOnDropPeer(cb OnDropPeerCB) {
-	prm.hpbpro.regOnDropPeer(cb)
+	prm.shxpro.regOnDropPeer(cb)
 	log.Debug("OnDropPeer has been register")
 	return
 }
 
 func (prm *PeerManager) RegStatMining(cb StatMining) {
-	prm.hpbpro.regStatMining(cb)
+	prm.shxpro.regStatMining(cb)
 	log.Debug("StatMining has been register")
 	return
 }
