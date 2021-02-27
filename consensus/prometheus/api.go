@@ -19,7 +19,6 @@ package prometheus
 import (
 	//"fmt"
 	"github.com/shx-project/sphinx/blockchain/types"
-	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/consensus"
 	"github.com/shx-project/sphinx/network/rpc"
 )
@@ -36,27 +35,4 @@ func (api *API) GetLatestBlockHeader(number *rpc.BlockNumber) (header *types.Hea
 		header = api.chain.GetHeaderByNumber(uint64(number.Int64()))
 	}
 	return header
-}
-
-func (api *API) Proposals() map[common.Address]bool {
-	api.prometheus.lock.RLock()
-	defer api.prometheus.lock.RUnlock()
-
-	proposals := make(map[common.Address]bool)
-	for address, auth := range api.prometheus.proposals {
-		proposals[address] = auth
-	}
-	return proposals
-}
-
-func (api *API) Propose(address common.Address, confRand string, auth bool) {
-	api.prometheus.lock.Lock()
-	defer api.prometheus.lock.Unlock()
-	api.prometheus.proposals[address] = auth
-}
-
-func (api *API) Discard(address common.Address, confRand string) {
-	api.prometheus.lock.Lock()
-	defer api.prometheus.lock.Unlock()
-	delete(api.prometheus.proposals, address)
 }

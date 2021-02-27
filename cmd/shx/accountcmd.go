@@ -38,7 +38,7 @@ var (
 		Description: `
     shx wallet import /path/to/my/presale.wallet
 
-will prompt for your password and imports your hpber presale account.
+will prompt for your password and imports your shxer presale account.
 It can be used non-interactively with the --password option taking a
 passwordfile as argument containing the wallet password in plaintext.`,
 		Subcommands: []cli.Command{
@@ -58,7 +58,7 @@ passwordfile as argument containing the wallet password in plaintext.`,
 				Description: `
 	shx wallet [options] /path/to/my/presale.wallet
 
-will prompt for your password and imports your hpber presale account.
+will prompt for your password and imports your shxer presale account.
 It can be used non-interactively with the --password option taking a
 passwordfile as argument containing the wallet password in plaintext.`,
 			},
@@ -86,7 +86,7 @@ Note that exporting your key in unencrypted format is NOT supported.
 
 Keys are stored under <DATADIR>/keystore.
 It is safe to transfer the entire directory or the individual keys therein
-between hpb nodes by simply copying.
+between shx nodes by simply copying.
 
 Make sure you backup your keys regularly.`,
 		Subcommands: []cli.Command{
@@ -183,7 +183,7 @@ For non-interactive use the passphrase can be specified with the -password flag:
     shx account import [options] <keyfile>
 
 Note:
-As you can directly copy your encrypted accounts to another hpb instance,
+As you can directly copy your encrypted accounts to another shx instance,
 this import mechanism is not needed when you transfer an account between
 nodes.
 `,

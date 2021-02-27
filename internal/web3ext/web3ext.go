@@ -20,7 +20,6 @@ package web3ext
 var Modules = map[string]string{
 	"admin":      Admin_JS,
 	"chequebook": Chequebook_JS,
-	"prometheus": Prometheus_JS,
 	"debug":      Debug_JS,
 	"shx":        Shx_JS,
 	"miner":      Miner_JS,
@@ -59,65 +58,6 @@ web3._extend({
 			params: 2,
 			inputFormatter: [null, null]
 		}),
-	]
-});
-` 
-/*
-new web3._extend.Method({
-			name: 'getShxNodeSnapAtHash',
-			call: 'prometheus_getShxNodeSnapAtHash',
-			params: 1
-		}),
-		
-		,
-	properties: [
-		new web3._extend.Property({
-			name: 'proposals',
-			getter: 'prometheus_proposals'
-		}),
-	] 
-	
-	new web3._extend.Method({
-			name: 'propose',
-			call: 'prometheus_propose',
-			params: 3
-		}),
-		new web3._extend.Method({
-			name: 'discard',
-			call: 'prometheus_discard',
-			params: 2
-		}),
-*/
-
-const Prometheus_JS = `
-web3._extend({
-	property: 'prometheus',
-	methods: [
-		new web3._extend.Method({
-			name: 'getShxNodeSnap',
-			call: 'prometheus_getShxNodeSnap',
-			params: 1,
-			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
-		}),
-		new web3._extend.Method({
-			name: 'getShxNodes',
-			call: 'prometheus_getShxNodes',
-			params: 1,
-			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
-		}),
-		
-		new web3._extend.Method({
-			name: 'getCandidateNodes',
-			call: 'prometheus_getCandidateNodes',
-			params: 1,
-			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
-		}),
-		new web3._extend.Method({
-			name: 'getCandidateNodeSnap',
-			call: 'prometheus_getCandidateNodeSnap',
-			params: 1,
-			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
-		})
 	]
 });
 `
@@ -376,18 +316,6 @@ const Shx_JS = `
 web3._extend({
 	property: 'shx',
 	methods: [
-		new web3._extend.Method({
-			name: 'getStatediffbyblock',
-			call: 'shx_getStatediffbyblock',
-			params: 1,
-			inputFormatter: [null]
-		}),
-		new web3._extend.Method({
-			name: 'getStatediffbyblockandTx',
-			call: 'shx_getStatediffbyblockandTx',
-			params: 2,
-			inputFormatter: [null,null]
-		}),
 		new web3._extend.Method({
 			name: 'sign',
 			call: 'shx_sign',

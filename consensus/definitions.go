@@ -19,11 +19,9 @@ package consensus
 import (
 	"errors"
 
+	"github.com/hashicorp/golang-lru"
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
-	"github.com/shx-project/sphinx/common/hexutil"
-
-	"github.com/hashicorp/golang-lru"
 	"github.com/shx-project/sphinx/common/crypto"
 	"github.com/shx-project/sphinx/common/crypto/sha3"
 	"github.com/shx-project/sphinx/common/rlp"
@@ -82,9 +80,7 @@ var (
 )
 
 var (
-	NonceAuthVote = hexutil.MustDecode("0xffffffffffffffff") // Magic nonce number to vote on adding a new signerHash
-	NonceDropVote = hexutil.MustDecode("0x0000000000000000") // Magic nonce number to vote on removing a signerHash.
-	Zeroaddr      = common.HexToAddress("0x0000000000000000000000000000000000000000")
+	Zeroaddr = common.HexToAddress("0x0000000000000000000000000000000000000000")
 
 	ExtraVanity = 32 // Fixed number of extra-data prefix bytes reserved for signerHash vanity
 	ExtraSeal   = 65 // Fixed number of extra-data suffix bytes reserved for signerHash seal

@@ -58,7 +58,7 @@ type Engine interface {
 	PrepareBlockHeader(chain ChainReader, header *types.Header, state *state.StateDB) error
 
 	// GerateProof return a workproof
-	GenerateProof(chain ChainReader, header *types.Header, parent *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof,error)
+	GenerateProof(chain ChainReader, header *types.Header, parent *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof, error)
 	SignData(data []byte) ([]byte, error)
 	RecoverSender(data []byte, signature []byte) (common.Address, error)
 
@@ -72,7 +72,7 @@ type Engine interface {
 	// Note: The block header and state database might be updated to reflect any
 	// consensus rules that happen at finalization.
 	Finalize(chain ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction,
-		proofs []*types.ProofState,	receipts []*types.Receipt) (*types.Block, error)
+		proofs []*types.ProofState, receipts []*types.Receipt) (*types.Block, error)
 
 	// Seal generates a new block for the given input block with the local miner's
 	// seal place on top.
@@ -93,10 +93,6 @@ type Engine interface {
 	// a results channel to retrieve the async verifications (the order is that of
 	// the input slice).
 	VerifyHeaders(chain ChainReader, headers []*types.Header, seals []bool, mode config.SyncMode) (chan<- struct{}, <-chan error)
-
-	// VerifySeal checks whether the crypto seal on a header is valid according to
-	// the consensus rules of the given engine.
-	VerifySeal(chain ChainReader, header *types.Header) error
 
 	// APIs returns the RPC APIs this consensus engine provides.
 	APIs(chain ChainReader) []rpc.API

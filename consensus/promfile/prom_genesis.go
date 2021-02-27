@@ -32,12 +32,11 @@ import (
 
 // generate genesis file with user input.
 func (p *prometh) makeGenesis() {
-	
+
 	genesis := &bc.Genesis{
-		Timestamp:  uint64(time.Now().Unix()/1000/1000),
-		Difficulty: big.NewInt(1048576),
-		Config: &config.ChainConfig{
-		},
+		Timestamp:  uint64(time.Now().Unix() / 1000 / 1000),
+		Difficulty: big.NewInt(1),
+		Config:     &config.ChainConfig{},
 	}
 	// Figure out which consensus engine to choose
 	fmt.Println()
@@ -45,12 +44,12 @@ func (p *prometh) makeGenesis() {
 
 	genesis.Difficulty = big.NewInt(1)
 	genesis.Config.Prometheus = &config.PrometheusConfig{
-		Period: 4,
+		Period: 3,
 		Epoch:  30000,
 	}
 	fmt.Println()
-	fmt.Println("How many seconds should blocks take? (default = 4)")
-	genesis.Config.Prometheus.Period = uint64(p.readDefaultInt(4))
+	fmt.Println("How many seconds should blocks take? (default = 3)")
+	genesis.Config.Prometheus.Period = uint64(p.readDefaultInt(3))
 
 	fmt.Println()
 	fmt.Println("How many blocks should voting epoch be ? (default = 30000)")

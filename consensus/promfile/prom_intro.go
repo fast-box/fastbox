@@ -45,13 +45,12 @@ func makePrometh(network string) *prometh {
 // setting up a new or managing an existing SHX private network.
 func (p *prometh) run() {
 	fmt.Println("+-----------------------------------------------------------+")
-	fmt.Println("| Welcome to prometh, your SHX private network manager |")
+	fmt.Println("| Welcome to promfile, your SHX private network manager     |")
 	fmt.Println("|                                                           |")
-	fmt.Println("| This tool lets you create a new SHX network down to  |")
-	fmt.Println("| the genesis block, bootnodes, miners and ethstats servers |")
-	fmt.Println("| without the hassle that it would normally entail.         |")
+	fmt.Println("| This tool lets you create a new SHX network down to the   |")
+	fmt.Println("| genesis block, bootnodes, miners.                         |")
 	fmt.Println("|                                                           |")
-	fmt.Println("| Prometh uses SSH to dial in to remote servers, and builds |")
+	fmt.Println("| Promfile uses SSH to dial in to remote servers, and builds |")
 	fmt.Println("| its network components out of Docker containers using the |")
 	fmt.Println("| docker-compose toolset.                                   |")
 	fmt.Println("+-----------------------------------------------------------+")
@@ -72,7 +71,7 @@ func (p *prometh) run() {
 	log.Info("Administering SHX network", "name", p.network)
 
 	// Load initial configurations and connect to all live servers
-	p.conf.path = filepath.Join(os.Getenv("HOME"), ".prometh", p.network)
+	p.conf.path = filepath.Join(os.Getenv("HOME"), ".promfile", p.network)
 
 	blob, err := ioutil.ReadFile(p.conf.path)
 	if err != nil {
@@ -91,7 +90,7 @@ func (p *prometh) run() {
 		p.networkStats(false)
 	}
 	// Basics done, loop ad infinitum about what to do
-	for{
+	for {
 		fmt.Println()
 		fmt.Println("What would you like to do? (default = stats)")
 		fmt.Println(" 1. Configure new genesis")

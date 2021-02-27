@@ -51,10 +51,6 @@ func (c *Prometheus) VerifyHeaders(chain consensus.ChainReader, headers []*types
 	return abort, results
 }
 
-func (c *Prometheus) SetNetTopology(chain consensus.ChainReader, headers []*types.Header) {
-
-}
-
 func (c *Prometheus) verifyHeader(chain consensus.ChainReader, header *types.Header, parents []*types.Header, mode config.SyncMode) error {
 	if header.Number == nil {
 		return consensus.ErrUnknownBlock
@@ -105,50 +101,33 @@ func (c *Prometheus) verifyCascadingFields(chain consensus.ChainReader, header *
 		return consensus.ErrInvalidTimestamp
 	}
 
-	// All basic checks passed, verify the seal and return
-	return c.verifySeal(chain, header, parents, mode)
-}
-
-// VerifySeal implements consensus.Engine, checking whether the signature contained
-//in the header satisfies the consensus protocol requirements.
-func (c *Prometheus) VerifySeal(chain consensus.ChainReader, header *types.Header) error {
+	// All basic checks passed, return
 	return nil
 }
 
-// verify the signature and other logics
-func (c *Prometheus) verifySeal(chain consensus.ChainReader, header *types.Header, parents []*types.Header, mode config.SyncMode) error {
-	// Verifying the genesis block is not supported
-
-	number := header.Number.Uint64()
-	if number == 0 {
-		return consensus.ErrUnknownBlock
-	}
-	return nil
-}
-
-func recoverpk2address(pub []byte)(common.Address){
+func recoverpk2address(pub []byte) common.Address {
 	var addr common.Address
 	copy(addr[:], crypto.Keccak256(pub[1:])[12:])
 	return addr
 }
 
-func (c *Prometheus) verifyProof(lHash common.Hash, address common.Address, proof *types.WorkProof) (common.Hash,error) {
+func (c *Prometheus) verifyProof(lHash common.Hash, address common.Address, proof *types.WorkProof) (common.Hash, error) {
 	txroot := types.DeriveSha(proof.Txs)
 	//proofRoot := types.DeriveSha(proof.States)
 	//proofHash := c.MixHash(txroot,proofRoot)
-	proofHash := c.MixHash(lHash,txroot)
-	log.Debug("prometheus verify proof","proofhash", proof.Sign.Hash(),"txroot",txroot,"localhash",lHash)
+	proofHash := c.MixHash(lHash, txroot)
+	log.Debug("prometheus verify proof", "proofhash", proof.Sign.Hash(), "txroot", txroot, "localhash", lHash)
 
 	if pub, err := crypto.Ecrecover(proofHash.Bytes(), proof.Sign); err == nil {
 		addr := recoverpk2address(pub)
 		if bytes.Compare(addr.Bytes(), address.Bytes()) != 0 {
-			log.Debug("prometheus verify proof","proof",proof.Sign.Hash(),"addr compare failed, recover addr", addr)
-			return common.Hash{},errors.New("invalid proof")
+			log.Debug("prometheus verify proof", "proof", proof.Sign.Hash(), "addr compare failed, recover addr", addr)
+			return common.Hash{}, errors.New("invalid proof")
 		} else {
 			return proofHash, nil
 		}
 	} else {
-		log.Debug("prometheus verify proof","recover failed, err", err.Error())
+		log.Debug("prometheus verify proof", "recover failed, err", err.Error())
 		return common.Hash{}, errors.New("invalid proof")
 	}
 }
