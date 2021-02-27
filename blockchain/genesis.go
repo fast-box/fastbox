@@ -39,13 +39,13 @@ var errGenesisNoConfig = errors.New("genesis has no chain configuration")
 // Genesis specifies the header fields, state of a genesis block. It also defines hard
 // fork switch-over blocks through the chain configuration.
 type Genesis struct {
-	Config    *config.ChainConfig `json:"config"`
-	Timestamp uint64              `json:"timestamp"`
-	ExtraData []byte              `json:"extraData"`
-	Difficulty     *big.Int       `json:"difficulty" gencodec:"required"`
-	Coinbase       common.Address `json:"coinbase"`
-	Number         uint64         `json:"number"`
-	ParentHash     common.Hash    `json:"parentHash"`
+	Config     *config.ChainConfig `json:"config"`
+	Timestamp  uint64              `json:"timestamp"`
+	ExtraData  []byte              `json:"extraData"`
+	Difficulty *big.Int            `json:"difficulty" gencodec:"required"`
+	Coinbase   common.Address      `json:"coinbase"`
+	Number     uint64              `json:"number"`
+	ParentHash common.Hash         `json:"parentHash"`
 }
 
 // GenesisAlloc specifies the initial state that is part of the genesis block.
@@ -53,16 +53,12 @@ type GenesisAlloc map[common.Address]GenesisAccount
 
 // GenesisAccount is an account in the state of the genesis block.
 type GenesisAccount struct {
-	Code       []byte                      `json:"code,omitempty"`
 	Storage    map[common.Hash]common.Hash `json:"storage,omitempty"`
-	Balance    *big.Int                    `json:"balance" gencodec:"required"`
 	Nonce      uint64                      `json:"nonce,omitempty"`
 	PrivateKey []byte                      `json:"secretKey,omitempty"` // for tests
 }
 
 type genesisAccountMarshaling struct {
-	Code       hexutil.Bytes
-	Balance    *math.HexOrDecimal256
 	Nonce      math.HexOrDecimal64
 	Storage    map[storageJSON]storageJSON
 	PrivateKey hexutil.Bytes
@@ -237,25 +233,17 @@ func GenesisBlockForTesting(db shxdb.Database, addr common.Address, balance *big
 // DefaultGenesisBlock returns the Shx main net genesis block.
 func DefaultGenesisBlock() *Genesis {
 	return &Genesis{
-		Config:         config.MainnetChainConfig,
-		ExtraData:      hexutil.MustDecode("0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa"),
-		Difficulty:     big.NewInt(17179869184),
+		Config:     config.MainnetChainConfig,
+		ExtraData:  hexutil.MustDecode("0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa"),
+		Difficulty: big.NewInt(17179869184),
 	}
 }
 
 // DefaultTestnetGenesisBlock returns the Ropsten network genesis block.
 func DefaultTestnetGenesisBlock() *Genesis {
 	return &Genesis{
-		Config:         config.MainnetChainConfig,
-		ExtraData:      hexutil.MustDecode("0x3535353535353535353535353535353535353535353535353535353535353535"),
-		Difficulty:     big.NewInt(1048576),
-	}
-}
-
-// DevGenesisBlock returns the 'geth --dev' genesis block.
-func DevGenesisBlock() *Genesis {
-	return &Genesis{
 		Config:     config.MainnetChainConfig,
-		Difficulty: big.NewInt(131072),
+		ExtraData:  hexutil.MustDecode("0x3535353535353535353535353535353535353535353535353535353535353535"),
+		Difficulty: big.NewInt(1048576),
 	}
 }

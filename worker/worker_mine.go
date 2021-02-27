@@ -7,7 +7,6 @@ import (
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/common/log"
-	"github.com/shx-project/sphinx/config"
 	"github.com/shx-project/sphinx/consensus"
 	"github.com/shx-project/sphinx/network/p2p"
 	"github.com/shx-project/sphinx/network/p2p/discover"
@@ -15,7 +14,6 @@ import (
 	"math/big"
 	"time"
 )
-
 
 // makeCurrent creates a new environment for the current cycle.
 func (self *worker) makeCurrent(parent *types.Header, header *types.Header) error {
@@ -27,10 +25,10 @@ func (self *worker) makeCurrent(parent *types.Header, header *types.Header) erro
 		config:    self.config,
 		state:     state,
 		header:    header,
-		states:	   make([]*types.ProofState,0),
+		states:    make([]*types.ProofState, 0),
 		createdAt: time.Now(),
-		id:			time.Now().UnixNano(),
-		genCh: 		make(chan error,1),
+		id:        time.Now().UnixNano(),
+		genCh:     make(chan error, 1),
 		confirmed: false,
 	}
 
@@ -38,7 +36,7 @@ func (self *worker) makeCurrent(parent *types.Header, header *types.Header) erro
 	for _, peer := range peers {
 		if peer.RemoteType() == discover.MineNode {
 			// Get all peers' proof state from db.
-			proofState := bc.GetPeerProof(self.chainDb,peer.Address())
+			proofState := bc.GetPeerProof(self.chainDb, peer.Address())
 			if proofState != nil {
 				work.states = append(work.states, proofState)
 			}
@@ -63,16 +61,16 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 	}
 	if h := self.workPending.Top(); h != nil {
 		head = h.Block.Header()
-		log.Debug("worker get header from workpending", "h.hash",head.Hash(), "head.Number",head.Number,
-			"head.ProofHash",hex.EncodeToString(head.ProofHash[:]))
+		log.Debug("worker get header from workpending", "h.hash", head.Hash(), "head.Number", head.Number,
+			"head.ProofHash", hex.EncodeToString(head.ProofHash[:]))
 	} else {
 		head = self.chain.CurrentHeader()
-		log.Debug("worker get header from self.chain", "h.hash",head.Hash(), "head.Number",head.Number,
-			"head.ProofHash",hex.EncodeToString(head.ProofHash[:]))
+		log.Debug("worker get header from self.chain", "h.hash", head.Hash(), "head.Number", head.Number,
+			"head.ProofHash", hex.EncodeToString(head.ProofHash[:]))
 	}
 
-	now := time.Now().UnixNano()/1000/1000
-	pending,_ := self.txpool.Pended()
+	now := time.Now().UnixNano() / 1000 / 1000
+	pending, _ := self.txpool.Pended()
 	delta := now - head.Time.Int64()
 	if delta >= int64(blockPeorid*1000) || (len(pending) >= minTxsToMine) && delta > 20 {
 		return head
@@ -80,16 +78,14 @@ func (self *worker) CheckNeedStartMine() *types.Header {
 	return nil
 }
 
-func (self *worker) getRoundState() RoundState{
-	v:=self.roundState.Load().(RoundState)
+func (self *worker) getRoundState() RoundState {
+	v := self.roundState.Load().(RoundState)
 	return v
 }
 
 func (self *worker) setRoundState(s RoundState) {
 	self.roundState.Store(s)
 }
-
-
 
 func (self *worker) RoutineMine() {
 	events := self.mux.Subscribe(types.ConfirmMsg{})
@@ -113,8 +109,8 @@ func (self *worker) RoutineMine() {
 						self.setRoundState(PostMining)
 						go func() {
 							defer func() {
-								if err := recover();err != nil {
-									log.Debug("error on newRoundCh","err", err)
+								if err := recover(); err != nil {
+									log.Debug("error on newRoundCh", "err", err)
 								}
 							}()
 							self.newRoundCh <- h
@@ -145,24 +141,24 @@ func (self *worker) RoutineMine() {
 	for {
 		select {
 		case obj := <-events.Chan():
-			switch ev:= obj.Data.(type) {
+			switch ev := obj.Data.(type) {
 			case types.ConfirmMsg:
-				sender,e := self.engine.RecoverSender(ev.Confirm.Data(), ev.Sign)
+				sender, e := self.engine.RecoverSender(ev.Confirm.Data(), ev.Sign)
 				if e != nil {
-					log.Debug("worker got confirmEvent, but recover sender failed","err",e)
+					log.Debug("worker got confirmEvent, but recover sender failed", "err", e)
 				} else if sender != self.coinbase {
-					log.Debug("worker got confirmMsg ","from",sender)
+					log.Debug("worker got confirmMsg ", "from", sender)
 					self.dealConfirm(&ev, sender)
 				}
 			}
-		case work:= <- self.confirmCh:
+		case work := <-self.confirmCh:
 			self.wg.Add(1)
 			go func() {
 				defer self.wg.Done()
 				log.Debug("worker start to exec finalMine", "time ", time.Now().UnixNano()/1000/1000)
 				err := self.FinalMine(work)
 				if err != nil {
-					log.Debug("worker finalmine failed","err ", err)
+					log.Debug("worker finalmine failed", "err ", err)
 				}
 				self.setRoundState(IDLE)
 			}()
@@ -186,10 +182,10 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	if parent == nil {
 		parent = self.chain.CurrentHeader()
 	}
-	num := big.NewInt(0).Add(parent.Number,common.Big1)
+	num := big.NewInt(0).Add(parent.Number, common.Big1)
 	header := &types.Header{
 		ParentHash: parent.Hash(),
-		Coinbase:	self.coinbase,
+		Coinbase:   self.coinbase,
 		Number:     num,
 		Extra:      self.extra,
 	}
@@ -213,27 +209,23 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 	work := self.current
 	work.commitTransactions(txs, self.coinbase)
 
-	log.Info("luxqdebug","total work.txs ", len(work.txs), "total pending txs", len(txs),"time ", time.Now().UnixNano()/1000/1000)
+	log.Info("luxqdebug", "total work.txs ", len(work.txs), "total pending txs", len(txs), "time ", time.Now().UnixNano()/1000/1000)
 
 	// generate workproof
 	proof, err := self.engine.GenerateProof(self.chain, self.current.header, parent, work.txs, work.states)
 	if err != nil {
-		log.Error("Premine","GenerateProof failed, err", err, "headerNumber", header.Number)
+		log.Error("Premine", "GenerateProof failed, err", err, "headerNumber", header.Number)
 		return err
 	}
-	log.Debug("SHX profile","generate block proof, blockNumber", header.Number, "proofHash", proof.Sign.Hash(), "time ", time.Now().UnixNano()/1000/1000)
+	log.Debug("SHX profile", "generate block proof, blockNumber", header.Number, "proofHash", proof.Sign.Hash(), "time ", time.Now().UnixNano()/1000/1000)
 
-	if config.GetShxConfigInstance().Node.TestMode == 2 {
-		// single test, direct pass confirm.
-		work.confirmed = true
-		go func() {self.confirmCh <- work}()
-	} else {
+	{
 		// broadcast proof.
 		msg := types.WorkProofMsg{
-			Proof:*proof,
+			Proof: *proof,
 		}
 		routEv := bc.RoutWorkProofEvent{
-			ProofMsg:msg,
+			ProofMsg: msg,
 		}
 		routEv.ProofMsg.Sign, err = self.engine.SignData(msg.Proof.Data())
 		if err != nil {
@@ -241,18 +233,18 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 			return err
 		}
 		self.mux.Post(routEv)
-		log.Debug("worker proof goto wait confirm","time ", time.Now().UnixNano()/1000/1000)
+		log.Debug("worker proof goto wait confirm", "time ", time.Now().UnixNano()/1000/1000)
 
-		handleLocalProof.Add(proof.Sign.Hash(), struct {}{})
+		handleLocalProof.Add(proof.Sign.Hash(), struct{}{})
 		// wait confirm.
-		self.unconfirm_mine.Insert(proof, work, consensus.MinerNumber/2 + 1 - 1)
+		self.unconfirm_mine.Insert(proof, work, consensus.MinerNumber/2+1-1)
 	}
 	go func(work *Work) {
-		if block,err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.states, work.receipts); err != nil {
+		if block, err := self.engine.Finalize(self.chain, work.header, work.state, work.txs, work.states, work.receipts); err != nil {
 			work.genCh <- err
 		} else {
 			log.Debug("worker after engine.Finalize", "time ", time.Now().UnixNano()/1000/1000)
-			if result, err := self.engine.GenBlockWithSig(self.chain, block);err != nil {
+			if result, err := self.engine.GenBlockWithSig(self.chain, block); err != nil {
 				work.genCh <- err
 			} else {
 				log.Debug("worker after engine.GenBlockWithSig", "time ", time.Now().UnixNano()/1000/1000)
@@ -264,8 +256,6 @@ func (self *worker) NewMineRound(parent *types.Header) error {
 
 	return nil
 }
-
-
 
 func (w *Work) WorkEnded(succeed bool) {
 	txpool.GetTxPool().WorkEnded(w.id, w.header.Number.Uint64(), succeed)
@@ -280,7 +270,7 @@ func (self *worker) FinalMine(work *Work) error {
 		}
 	}()
 	if work.confirmed {
-		err = <- work.genCh
+		err = <-work.genCh
 		if err == nil {
 			result := work.Block
 			self.history.Add(result.ProofHash(), struct{}{})
@@ -299,4 +289,3 @@ func (self *worker) FinalMine(work *Work) error {
 	}
 	return err
 }
-

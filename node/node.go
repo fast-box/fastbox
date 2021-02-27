@@ -29,6 +29,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/prometheus/prometheus/util/flock"
 	"github.com/shx-project/sphinx/account"
 	"github.com/shx-project/sphinx/account/keystore"
 	"github.com/shx-project/sphinx/blockchain"
@@ -51,7 +52,6 @@ import (
 	"github.com/shx-project/sphinx/synctrl"
 	"github.com/shx-project/sphinx/txpool"
 	"github.com/shx-project/sphinx/worker"
-	"github.com/prometheus/prometheus/util/flock"
 )
 
 // Node is a container on which services can be registered.
@@ -179,11 +179,6 @@ func New(conf *config.ShxConfig) (*Node, error) {
 
 	hpbnode.Shxtxpool = hpbtxpool
 	hpbnode.ApiBackend = &ShxApiBackend{hpbnode}
-
-	gpoParams := conf.Node.GPO
-	if gpoParams.Default == nil {
-		gpoParams.Default = conf.Node.GasPrice
-	}
 
 	hpbnode.bloomIndexer = NewBloomIndexer(hpbdatabase, params.BloomBitsBlocks)
 	return hpbnode, nil
@@ -576,8 +571,8 @@ func (s *Node) StartMining(local bool) error {
 	return nil
 }
 
-func (s *Node)SetOpt(maxtxs,peorid int) {
-	s.miner.SetOpt(maxtxs,peorid)
+func (s *Node) SetOpt(maxtxs, peorid int) {
+	s.miner.SetOpt(maxtxs, peorid)
 }
 
 // get all rpc api from modules
@@ -590,4 +585,3 @@ func (n *Node) SetNodeAPI() error {
 	n.RpcAPIs = append(n.RpcAPIs, n.Nodeapis()...)
 	return nil
 }
-

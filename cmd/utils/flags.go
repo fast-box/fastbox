@@ -190,16 +190,6 @@ var (
 		Usage: "Time interval to regenerate the local transaction journal",
 		Value: config.DefaultTxPoolConfig.Rejournal,
 	}
-	TxPoolPriceLimitFlag = cli.Uint64Flag{
-		Name:  "txpool.pricelimit",
-		Usage: "Minimum gas price limit to enforce for acceptance into the pool",
-		Value: config.DefaultTxPoolConfig.PriceLimit,
-	}
-	TxPoolPriceBumpFlag = cli.Uint64Flag{
-		Name:  "txpool.pricebump",
-		Usage: "Price bump percentage to replace an already existing transaction",
-		Value: config.DefaultTxPoolConfig.PriceBump,
-	}
 	TxPoolAccountSlotsFlag = cli.Uint64Flag{
 		Name:  "txpool.accountslots",
 		Usage: "Minimum number of executable transaction slots guaranteed per account",
@@ -255,11 +245,6 @@ var (
 		Name:  "shxerbase",
 		Usage: "Public address for block mining rewards (default = first account created)",
 		Value: "0",
-	}
-	GasPriceFlag = BigFlag{
-		Name:  "gasprice",
-		Usage: "Minimal gas price to accept for mining a transactions",
-		Value: config.DefaultConfig.GasPrice,
 	}
 	ExtraDataFlag = cli.StringFlag{
 		Name:  "extradata",
@@ -845,8 +830,6 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 		cfg.Node.SyncMode = *GlobalTextMarshaler(ctx, SyncModeFlag.Name).(*config.SyncMode)
 	case ctx.GlobalBool(FastSyncFlag.Name):
 		cfg.Node.SyncMode = config.FastSync
-	case ctx.GlobalBool(LightModeFlag.Name):
-		cfg.Node.SyncMode = config.LightSync
 	}
 	if ctx.GlobalIsSet(LightServFlag.Name) {
 		cfg.Node.LightServ = ctx.GlobalInt(LightServFlag.Name)
@@ -872,17 +855,8 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 	if ctx.GlobalIsSet(ExtraDataFlag.Name) {
 		cfg.Node.ExtraData = []byte(ctx.GlobalString(ExtraDataFlag.Name))
 	}
-	if ctx.GlobalIsSet(GasPriceFlag.Name) {
-		cfg.Node.GasPrice = GlobalBig(ctx, GasPriceFlag.Name)
-	}
 	if ctx.GlobalIsSet(VMEnableDebugFlag.Name) {
 		cfg.Node.EnablePreimageRecording = ctx.GlobalBool(VMEnableDebugFlag.Name)
-	}
-	if ctx.GlobalIsSet(TestModeFlag.Name) {
-		cfg.Node.TestMode = uint8(TestModeFlag.Value)
-		if cfg.Node.TestMode > 2 {
-			cfg.Node.TestMode = 0
-		}
 	}
 	if ctx.GlobalIsSet(ConfigFileFlag.Name) {
 		res := ctx.GlobalString(ConfigFileFlag.Name)
@@ -895,10 +869,6 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 	case ctx.GlobalBool(TestnetFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.Node.NetworkId = 3
-		}
-	case ctx.GlobalBool(DevModeFlag.Name):
-		if !ctx.GlobalIsSet(GasPriceFlag.Name) {
-			cfg.Node.GasPrice = new(big.Int)
 		}
 	}
 
@@ -948,12 +918,6 @@ func SetTxPool(ctx *cli.Context, cfg *config.TxPoolConfiguration) {
 	}
 	if ctx.GlobalIsSet(TxPoolRejournalFlag.Name) {
 		cfg.Rejournal = ctx.GlobalDuration(TxPoolRejournalFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolPriceLimitFlag.Name) {
-		cfg.PriceLimit = ctx.GlobalUint64(TxPoolPriceLimitFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolPriceBumpFlag.Name) {
-		cfg.PriceBump = ctx.GlobalUint64(TxPoolPriceBumpFlag.Name)
 	}
 	if ctx.GlobalIsSet(TxPoolAccountSlotsFlag.Name) {
 		cfg.AccountSlots = ctx.GlobalUint64(TxPoolAccountSlotsFlag.Name)
@@ -1011,8 +975,6 @@ func MakeGenesis(ctx *cli.Context) *bc.Genesis {
 	switch {
 	case ctx.GlobalBool(TestnetFlag.Name):
 		genesis = bc.DefaultTestnetGenesisBlock()
-	case ctx.GlobalBool(DevModeFlag.Name):
-		genesis = bc.DevGenesisBlock()
 	}
 	return genesis
 }

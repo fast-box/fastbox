@@ -108,7 +108,7 @@ func (api *PrivateMinerAPI) Start(threads *int) error {
 
 func (api *PrivateMinerAPI) SetOpt(maxtxs int, peorid int) error {
 	// Set the number of threads if the seal engine supports it
-	api.e.SetOpt(maxtxs,peorid)
+	api.e.SetOpt(maxtxs, peorid)
 	return nil
 }
 
@@ -141,13 +141,13 @@ func (api *PrivateMinerAPI) SetShxerbase(hpberbase common.Address) bool {
 // PrivateAdminAPI is the collection of Shx full node-related APIs
 // exposed over the private admin endpoint.
 type PrivateAdminAPI struct {
-	hpb *Node
+	shx *Node
 }
 
 // NewPrivateAdminAPI creates a new API definition for the full node private
 // admin methods of the Shx service.
-func NewPrivateAdminAPI(hpb *Node) *PrivateAdminAPI {
-	return &PrivateAdminAPI{hpb: hpb}
+func NewPrivateAdminAPI(shx *Node) *PrivateAdminAPI {
+	return &PrivateAdminAPI{shx: shx}
 }
 
 // ExportChain exports the current blockchain into a local file.
@@ -166,7 +166,7 @@ func (api *PrivateAdminAPI) ExportChain(file string) (bool, error) {
 	}
 
 	// Export the blockchain
-	if err := api.hpb.BlockChain().Export(writer); err != nil {
+	if err := api.shx.BlockChain().Export(writer); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -218,12 +218,12 @@ func (api *PrivateAdminAPI) ImportChain(file string) (bool, error) {
 			break
 		}
 
-		if hasAllBlocks(api.hpb.BlockChain(), blocks) {
+		if hasAllBlocks(api.shx.BlockChain(), blocks) {
 			blocks = blocks[:0]
 			continue
 		}
 		// Import the batch and reset the buffer
-		if _, err := api.hpb.BlockChain().InsertChain(blocks); err != nil {
+		if _, err := api.shx.BlockChain().InsertChain(blocks); err != nil {
 			return false, fmt.Errorf("batch %d: failed to insert: %v", batch, err)
 		}
 		blocks = blocks[:0]

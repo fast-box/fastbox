@@ -17,31 +17,27 @@
 package db
 
 import (
-	"sync/atomic"
 	"github.com/shx-project/sphinx/blockchain/storage"
-	"github.com/shx-project/sphinx/config"
 	"github.com/shx-project/sphinx/common/log"
+	"github.com/shx-project/sphinx/config"
+	"sync/atomic"
 )
-
-
 
 // config instance
 var DBINSTANCE = atomic.Value{}
 
-
-
 // CreateDB creates the chain database.
-func  CreateDB(config *config.Nodeconfig, name string) (shxdb.Database, error) {
+func CreateDB(config *config.Nodeconfig, name string) (shxdb.Database, error) {
 
 	if DBINSTANCE.Load() != nil {
-		return DBINSTANCE.Load().(*shxdb.LDBDatabase),nil
+		return DBINSTANCE.Load().(*shxdb.LDBDatabase), nil
 	}
 	db, err := OpenDatabase(name, config.DatabaseCache, config.DatabaseHandles)
 	if err != nil {
 		return nil, err
 	}
 	if db, ok := db.(*shxdb.LDBDatabase); ok {
-		db.Meter("hpb/db/chaindata/")
+		db.Meter("shx/db/chaindata/")
 	}
 	DBINSTANCE.Store(db)
 	return db, nil
@@ -53,11 +49,11 @@ func  CreateDB(config *config.Nodeconfig, name string) (shxdb.Database, error) {
 func OpenDatabase(name string, cache int, handles int) (shxdb.Database, error) {
 
 	if DBINSTANCE.Load() != nil {
-		return DBINSTANCE.Load().(*shxdb.LDBDatabase),nil
+		return DBINSTANCE.Load().(*shxdb.LDBDatabase), nil
 	}
 
 	var cfg = config.GetShxConfigInstance()
-	if cfg.Node.DataDir == ""{
+	if cfg.Node.DataDir == "" {
 		return shxdb.NewMemDatabase()
 	}
 	db, err := shxdb.NewLDBDatabase(cfg.Node.ResolvePath(name), cache, handles)
@@ -69,7 +65,7 @@ func OpenDatabase(name string, cache int, handles int) (shxdb.Database, error) {
 	return db, nil
 }
 
-func GetShxDbInstance() (*shxdb.LDBDatabase) {
+func GetShxDbInstance() *shxdb.LDBDatabase {
 	if DBINSTANCE.Load() != nil {
 		return DBINSTANCE.Load().(*shxdb.LDBDatabase)
 	}

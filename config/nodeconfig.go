@@ -22,13 +22,12 @@ import (
 type SyncMode int
 
 const (
-	FullSync  SyncMode = iota // Synchronise the entire blockchain history from full blocks
-	FastSync                  // Quickly download the headers, full sync only at the chain head
-	LightSync                 // Download only the headers and terminate afterwards
+	FullSync SyncMode = iota // Synchronise the entire blockchain history from full blocks
+	FastSync                 // Quickly download the headers, full sync only at the chain head
 )
 
 func (mode SyncMode) IsValid() bool {
-	return mode >= FullSync && mode <= LightSync
+	return mode >= FullSync && mode <= FastSync
 }
 
 // String implements the stringer interface.
@@ -38,8 +37,6 @@ func (mode SyncMode) String() string {
 		return "full"
 	case FastSync:
 		return "fast"
-	case LightSync:
-		return "light"
 	default:
 		return "unknown"
 	}
@@ -51,8 +48,6 @@ func (mode SyncMode) MarshalText() ([]byte, error) {
 		return []byte("full"), nil
 	case FastSync:
 		return []byte("fast"), nil
-	case LightSync:
-		return []byte("light"), nil
 	default:
 		return nil, fmt.Errorf("unknown sync mode %d", mode)
 	}
@@ -64,8 +59,6 @@ func (mode *SyncMode) UnmarshalText(text []byte) error {
 		*mode = FullSync
 	case "fast":
 		*mode = FastSync
-	case "light":
-		*mode = LightSync
 	default:
 		return fmt.Errorf(`unknown sync mode %q, want "full", "fast" or "light"`, text)
 	}
@@ -73,13 +66,12 @@ func (mode *SyncMode) UnmarshalText(text []byte) error {
 }
 
 var DefaultConfig = Nodeconfig{
-	SyncMode: FastSync,
-	DataDir:  DefaultDataDir(),
-	NetworkId:     1,
-	LightPeers:    20,
-	DatabaseCache: 128,
-	GasPrice:      big.NewInt(18 * Shannon),
-	IPCPath:       "shx.ipc",
+	SyncMode:        FastSync,
+	DataDir:         DefaultDataDir(),
+	NetworkId:       1,
+	LightPeers:      20,
+	DatabaseCache:   128,
+	IPCPath:         "shx.ipc",
 	MaxTrieCacheGen: uint16(120),
 }
 
@@ -130,7 +122,6 @@ type Nodeconfig struct {
 	Shxerbase    common.Address `toml:",omitempty"`
 	MinerThreads int            `toml:",omitempty"`
 	ExtraData    []byte         `toml:",omitempty"`
-	GasPrice     *big.Int
 
 	// Gas Price Oracle options,SHX don't need dynamic gas price
 	GPO GpoConfig
@@ -166,12 +157,6 @@ type Nodeconfig struct {
 	IPCPath string `toml:",omitempty"`
 
 	DefaultAddress common.Address
-
-	//1:testmode and don't nedd boe  0:standard mode and need boe
-	TestMode uint8
-
-	//1:test code  0:release code
-	TestCodeParam uint8
 
 	//consensus config file name
 	FNameConsensusCfg string

@@ -211,8 +211,6 @@ func NewSyncer(mode config.SyncMode, stateDb shxdb.Database, mux *sub.TypeMux, l
 		syn.strategy = newFullsync(syn)
 	case config.FastSync:
 		syn.strategy = newFastsync(syn)
-	case config.LightSync:
-		syn.strategy = newLightsync(syn)
 	default:
 		syn.strategy = nil
 	}

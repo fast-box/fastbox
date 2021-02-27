@@ -75,7 +75,6 @@ func (prm *PeerManager) Start(coinbase common.Address) error {
 	prm.server.Config = Config{
 		NAT:        config.Network.NAT,
 		Name:       config.Network.Name,
-		TestMode:   config.Node.TestMode == 1,
 		PrivateKey: config.Node.PrivateKey,
 		NetworkId:  config.Node.NetworkId,
 		ListenAddr: config.Network.ListenAddr,
@@ -304,13 +303,13 @@ func (prm *PeerManager) Protocol() []Protocol {
 ////////////////////////////////////////////////////////////////////
 
 type PeerInfo struct {
-	ID      string `json:"id"`      // Unique node identifier (also the encryption key)
-	Name    string `json:"name"`    // Name of the node, including client type, version, OS, custom data
-	Version string `json:"version"` // Ghpb version
-	Remote  string `json:"remote"`  // Remote node type
+	ID       string `json:"id"`       // Unique node identifier (also the encryption key)
+	Name     string `json:"name"`     // Name of the node, including client type, version, OS, custom data
+	Version  string `json:"version"`  // Ghpb version
+	Remote   string `json:"remote"`   // Remote node type
 	CoinBase string `json:"coinbase"` //Remote Node's CoinBase
-	Cap     string `json:"cap"`     // Sum-protocols advertised by this particular peer
-	Network struct {
+	Cap      string `json:"cap"`      // Sum-protocols advertised by this particular peer
+	Network  struct {
 		Local  string `json:"local"`  // Local endpoint of the TCP data connection
 		Remote string `json:"remote"` // Remote endpoint of the TCP data connection
 	} `json:"network"`
@@ -329,7 +328,7 @@ func (prm *PeerManager) PeerWithAddr(addr common.Address) *Peer {
 	prm.lock.RLock()
 	defer prm.lock.RUnlock()
 	for _, p := range prm.peers {
-		if p.remoteType == discover.MineNode && bytes.Compare(p.Address().Bytes(),addr.Bytes()) == 0{
+		if p.remoteType == discover.MineNode && bytes.Compare(p.Address().Bytes(), addr.Bytes()) == 0 {
 			return p
 		}
 	}
@@ -352,16 +351,16 @@ func (prm *PeerManager) PeersInfo() []*PeerInfo {
 	allinfos := make([]*PeerInfo, 0, len(prm.boots)+len(prm.peers))
 	for _, p := range prm.boots {
 		info := &PeerInfo{
-			ID:      p.ID().TerminalString(),
-			Name:    p.Name(),
-			Version: p.Version(),
-			Remote:  p.remoteType.ToString(),
-			CoinBase:p.Address().String(),
-			Cap:     p.Caps()[0].String(),
-			Start:   p.beatStart.String(),
-			Beat:    strconv.FormatUint(p.count, 10),
-			Mining:  p.statMining,
-			SHX:     "",
+			ID:       p.ID().TerminalString(),
+			Name:     p.Name(),
+			Version:  p.Version(),
+			Remote:   p.remoteType.ToString(),
+			CoinBase: p.Address().String(),
+			Cap:      p.Caps()[0].String(),
+			Start:    p.beatStart.String(),
+			Beat:     strconv.FormatUint(p.count, 10),
+			Mining:   p.statMining,
+			SHX:      "",
 		}
 		info.Network.Local = p.LocalAddr().String()
 		info.Network.Remote = p.RemoteAddr().String()
@@ -460,4 +459,3 @@ func (prm *PeerManager) RegStatMining(cb StatMining) {
 	log.Debug("StatMining has been register")
 	return
 }
-

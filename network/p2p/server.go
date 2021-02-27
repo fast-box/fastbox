@@ -69,8 +69,6 @@ type Config struct {
 	EnableMsgEvents bool
 	NetworkId       uint64
 	CoinBase        common.Address
-
-	TestMode bool
 }
 
 // Server manages all peer connections.
@@ -351,11 +349,6 @@ func (srv *Server) Start() (err error) {
 		return err
 	}
 
-	//////////////////////////////////////////////////////////////////////////////////////////////
-	if srv.TestMode {
-	}
-	//////////////////////////////////////////////////////////////////////////////////////////////
-
 	log.Info("Server start with type.", "NodeType", srv.localType.ToString())
 
 	dialer := newDialState(srv.StaticNodes, srv.BootstrapNodes, srv.ntab, srv.NetRestrict)
@@ -570,8 +563,8 @@ func (srv *Server) protoHandshakeChecks(peers map[discover.NodeID]*PeerBase, c *
 func (srv *Server) encHandshakeChecks(peers map[discover.NodeID]*PeerBase, c *conn) error {
 	switch {
 	case peers[c.id] != nil:
-        p := peers[c.id]
-        go p.Disconnect(DiscAlreadyConnected)
+		p := peers[c.id]
+		go p.Disconnect(DiscAlreadyConnected)
 		return DiscAlreadyConnected
 	case c.id == srv.Self().ID:
 		return DiscSelf
