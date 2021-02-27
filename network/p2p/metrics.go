@@ -19,8 +19,8 @@
 package p2p
 
 import (
-	"net"
 	"github.com/shx-project/sphinx/common/metrics"
+	"net"
 )
 
 var (
@@ -63,43 +63,43 @@ func (c *meteredConn) Write(b []byte) (n int, err error) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 var (
-	propTxnInPacketsMeter     = metrics.NewMeter("hpb/prop/txns/in/packets")
-	propTxnInTrafficMeter     = metrics.NewMeter("hpb/prop/txns/in/traffic")
-	propTxnOutPacketsMeter    = metrics.NewMeter("hpb/prop/txns/out/packets")
-	propTxnOutTrafficMeter    = metrics.NewMeter("hpb/prop/txns/out/traffic")
-	propHashInPacketsMeter    = metrics.NewMeter("hpb/prop/hashes/in/packets")
-	propHashInTrafficMeter    = metrics.NewMeter("hpb/prop/hashes/in/traffic")
-	propHashOutPacketsMeter   = metrics.NewMeter("hpb/prop/hashes/out/packets")
-	propHashOutTrafficMeter   = metrics.NewMeter("hpb/prop/hashes/out/traffic")
-	propBlockInPacketsMeter   = metrics.NewMeter("hpb/prop/blocks/in/packets")
-	propBlockInTrafficMeter   = metrics.NewMeter("hpb/prop/blocks/in/traffic")
-	propBlockOutPacketsMeter  = metrics.NewMeter("hpb/prop/blocks/out/packets")
-	propBlockOutTrafficMeter  = metrics.NewMeter("hpb/prop/blocks/out/traffic")
-	reqHeaderInPacketsMeter   = metrics.NewMeter("hpb/req/headers/in/packets")
-	reqHeaderInTrafficMeter   = metrics.NewMeter("hpb/req/headers/in/traffic")
-	reqHeaderOutPacketsMeter  = metrics.NewMeter("hpb/req/headers/out/packets")
-	reqHeaderOutTrafficMeter  = metrics.NewMeter("hpb/req/headers/out/traffic")
-	reqBodyInPacketsMeter     = metrics.NewMeter("hpb/req/bodies/in/packets")
-	reqBodyInTrafficMeter     = metrics.NewMeter("hpb/req/bodies/in/traffic")
-	reqBodyOutPacketsMeter    = metrics.NewMeter("hpb/req/bodies/out/packets")
-	reqBodyOutTrafficMeter    = metrics.NewMeter("hpb/req/bodies/out/traffic")
-	reqStateInPacketsMeter    = metrics.NewMeter("hpb/req/states/in/packets")
-	reqStateInTrafficMeter    = metrics.NewMeter("hpb/req/states/in/traffic")
-	reqStateOutPacketsMeter   = metrics.NewMeter("hpb/req/states/out/packets")
-	reqStateOutTrafficMeter   = metrics.NewMeter("hpb/req/states/out/traffic")
-	reqReceiptInPacketsMeter  = metrics.NewMeter("hpb/req/receipts/in/packets")
-	reqReceiptInTrafficMeter  = metrics.NewMeter("hpb/req/receipts/in/traffic")
-	reqReceiptOutPacketsMeter = metrics.NewMeter("hpb/req/receipts/out/packets")
-	reqReceiptOutTrafficMeter = metrics.NewMeter("hpb/req/receipts/out/traffic")
-	miscInPacketsMeter        = metrics.NewMeter("hpb/misc/in/packets")
-	miscInTrafficMeter        = metrics.NewMeter("hpb/misc/in/traffic")
-	miscOutPacketsMeter       = metrics.NewMeter("hpb/misc/out/packets")
-	miscOutTrafficMeter       = metrics.NewMeter("hpb/misc/out/traffic")
+	propTxnInPacketsMeter     = metrics.NewMeter("shx/prop/txns/in/packets")
+	propTxnInTrafficMeter     = metrics.NewMeter("shx/prop/txns/in/traffic")
+	propTxnOutPacketsMeter    = metrics.NewMeter("shx/prop/txns/out/packets")
+	propTxnOutTrafficMeter    = metrics.NewMeter("shx/prop/txns/out/traffic")
+	propHashInPacketsMeter    = metrics.NewMeter("shx/prop/hashes/in/packets")
+	propHashInTrafficMeter    = metrics.NewMeter("shx/prop/hashes/in/traffic")
+	propHashOutPacketsMeter   = metrics.NewMeter("shx/prop/hashes/out/packets")
+	propHashOutTrafficMeter   = metrics.NewMeter("shx/prop/hashes/out/traffic")
+	propBlockInPacketsMeter   = metrics.NewMeter("shx/prop/blocks/in/packets")
+	propBlockInTrafficMeter   = metrics.NewMeter("shx/prop/blocks/in/traffic")
+	propBlockOutPacketsMeter  = metrics.NewMeter("shx/prop/blocks/out/packets")
+	propBlockOutTrafficMeter  = metrics.NewMeter("shx/prop/blocks/out/traffic")
+	reqHeaderInPacketsMeter   = metrics.NewMeter("shx/req/headers/in/packets")
+	reqHeaderInTrafficMeter   = metrics.NewMeter("shx/req/headers/in/traffic")
+	reqHeaderOutPacketsMeter  = metrics.NewMeter("shx/req/headers/out/packets")
+	reqHeaderOutTrafficMeter  = metrics.NewMeter("shx/req/headers/out/traffic")
+	reqBodyInPacketsMeter     = metrics.NewMeter("shx/req/bodies/in/packets")
+	reqBodyInTrafficMeter     = metrics.NewMeter("shx/req/bodies/in/traffic")
+	reqBodyOutPacketsMeter    = metrics.NewMeter("shx/req/bodies/out/packets")
+	reqBodyOutTrafficMeter    = metrics.NewMeter("shx/req/bodies/out/traffic")
+	reqStateInPacketsMeter    = metrics.NewMeter("shx/req/states/in/packets")
+	reqStateInTrafficMeter    = metrics.NewMeter("shx/req/states/in/traffic")
+	reqStateOutPacketsMeter   = metrics.NewMeter("shx/req/states/out/packets")
+	reqStateOutTrafficMeter   = metrics.NewMeter("shx/req/states/out/traffic")
+	reqReceiptInPacketsMeter  = metrics.NewMeter("shx/req/receipts/in/packets")
+	reqReceiptInTrafficMeter  = metrics.NewMeter("shx/req/receipts/in/traffic")
+	reqReceiptOutPacketsMeter = metrics.NewMeter("shx/req/receipts/out/packets")
+	reqReceiptOutTrafficMeter = metrics.NewMeter("shx/req/receipts/out/traffic")
+	miscInPacketsMeter        = metrics.NewMeter("shx/misc/in/packets")
+	miscInTrafficMeter        = metrics.NewMeter("shx/misc/in/traffic")
+	miscOutPacketsMeter       = metrics.NewMeter("shx/misc/out/packets")
+	miscOutTrafficMeter       = metrics.NewMeter("shx/misc/out/traffic")
 )
 
 type meteredMsgReadWriter struct {
 	MsgReadWriter
-	version           uint
+	version uint
 }
 
 func newMeteredMsgWriter(rw MsgReadWriter) MsgReadWriter {

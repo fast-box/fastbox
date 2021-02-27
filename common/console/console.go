@@ -27,12 +27,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/shx-project/sphinx/internal/jsre"
-	"github.com/shx-project/sphinx/internal/web3ext"
-	"github.com/shx-project/sphinx/network/rpc"
 	"github.com/mattn/go-colorable"
 	"github.com/peterh/liner"
 	"github.com/robertkrimen/otto"
+	"github.com/shx-project/sphinx/internal/jsre"
+	"github.com/shx-project/sphinx/internal/web3ext"
+	"github.com/shx-project/sphinx/network/rpc"
 )
 
 var (
@@ -132,7 +132,7 @@ func (c *Console) init(preload []string) error {
 		return fmt.Errorf("api modules: %v", err)
 	}
 
-	flatten := "var hpb = web3.hpb; var personal = web3.personal; "
+	flatten := "var shx = web3.shx; var personal = web3.personal; "
 	for api := range apis {
 		if api == "web3" {
 			continue // manually mapped or ignore
@@ -262,11 +262,11 @@ func (c *Console) AutoCompleteInput(line string, pos int) (string, []string, str
 // console's available modules.
 func (c *Console) Welcome() {
 	// Print some generic SHX metadata
-	fmt.Fprintf(c.printer, "Welcome to the GSHX JavaScript console!\n\n")
+	fmt.Fprintf(c.printer, "Welcome to the SHX JavaScript console!\n\n")
 	c.jsre.Run(`
 		console.log("instance: " + web3.version.node);
-		console.log("coinbase: " + hpb.coinbase);
-		console.log("at block: " + hpb.blockNumber + " (" + new Date(1000 * hpb.getBlock(hpb.blockNumber).
+		console.log("coinbase: " + shx.coinbase);
+		console.log("at block: " + shx.blockNumber + " (" + new Date(1000 * shx.getBlock(shx.blockNumber).
 timestamp) + ")");
 		console.log(" datadir: " + admin.datadir);
 	`)

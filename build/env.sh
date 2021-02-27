@@ -10,10 +10,10 @@ fi
 # Create fake Go workspace if it doesn't exist yet.
 workspace="$PWD/build/workspace"
 root="$PWD"
-hpbdir="$workspace/src/github.com/shx-project"
-if [ ! -L "$hpbdir/sphinx" ]; then
-    mkdir -p "$hpbdir"
-    cd "$hpbdir"
+shxdir="$workspace/src/github.com/shx-project"
+if [ ! -L "$shxdir/sphinx" ]; then
+    mkdir -p "$shxdir"
+    cd "$shxdir"
     ln -s ../../../../../. sphinx
     cd "$root"
 fi
@@ -23,8 +23,8 @@ GOPATH="$workspace"
 export GOPATH
 
 # Run the command inside the workspace.
-cd "$hpbdir/sphinx"
-PWD="$hpbdir/sphinx"
+cd "$shxdir/sphinx"
+PWD="$shxdir/sphinx"
 
 # Launch the arguments with the configured environment.
 exec "$@"

@@ -53,17 +53,17 @@ import (
 )
 
 var (
-	// Files that end up in the geth*.zip archive.
-	gethArchiveFiles = []string{
+	// Files that end up in the shx*.zip archive.
+	shxArchiveFiles = []string{
 		"COPYING",
-		executablePath("ghpb"),
+		executablePath("shx"),
 	}
 
-	// Files that end up in the geth-alltools*.zip archive.
+	// Files that end up in the shx-alltools*.zip archive.
 	allToolsArchiveFiles = []string{
 		"COPYING",
 		executablePath("bootnode"),
-		executablePath("ghpb"),
+		executablePath("shx"),
 		executablePath("promfile"),
 	}
 
@@ -74,7 +74,7 @@ var (
 			Description: "sphinx bootnode.",
 		},
 		{
-			Name:        "ghpb",
+			Name:        "shx",
 			Description: "sphinx CLI client.",
 		},
 		{
@@ -138,7 +138,7 @@ func doInstall(cmdline []string) {
 	var minor int
 	fmt.Sscanf(strings.TrimPrefix(runtime.Version(), "go1."), "%d", &minor)
 
-	if minor < 7 && !strings.Contains(runtime.Version(), "devel"){
+	if minor < 7 && !strings.Contains(runtime.Version(), "devel") {
 		log.Println("You have Go version", runtime.Version())
 		log.Println("sphinx requires at least Go version 1.7 and cannot")
 		log.Println("be compiled with an earlier version. Please upgrade your Go installation.")
@@ -325,17 +325,17 @@ func doArchive(cmdline []string) {
 	var (
 		env      = build.Env()
 		base     = archiveBasename(*arch, env)
-		geth     = "ghpb-" + base + ext
-		alltools = "ghpb-alltools-" + base + ext
+		shx      = "shx-" + base + ext
+		alltools = "shx-alltools-" + base + ext
 	)
 	maybeSkipArchive(env)
-	if err := build.WriteArchive(geth, gethArchiveFiles); err != nil {
+	if err := build.WriteArchive(shx, shxArchiveFiles); err != nil {
 		log.Fatal(err)
 	}
 	if err := build.WriteArchive(alltools, allToolsArchiveFiles); err != nil {
 		log.Fatal(err)
 	}
-	for _, archive := range []string{geth, alltools} {
+	for _, archive := range []string{shx, alltools} {
 		if err := archiveUpload(archive, *upload, *signer); err != nil {
 			log.Fatal(err)
 		}
@@ -402,7 +402,7 @@ func makeWorkdir(wdflag string) string {
 	if wdflag != "" {
 		err = os.MkdirAll(wdflag, 0744)
 	} else {
-		wdflag, err = ioutil.TempDir("", "ghpb-build-")
+		wdflag, err = ioutil.TempDir("", "shx-build-")
 	}
 	if err != nil {
 		log.Fatal(err)
@@ -437,7 +437,7 @@ type debExecutable struct {
 func newDebMetadata(distro, author string, env build.Environment, t time.Time) debMetadata {
 	if author == "" {
 		// No signing key, use default author.
-		author = "GHPB Builds "
+		author = "Sphinx Builds "
 	}
 	return debMetadata{
 		Env:         env,
@@ -453,9 +453,9 @@ func newDebMetadata(distro, author string, env build.Environment, t time.Time) d
 // on all executable packages.
 func (meta debMetadata) Name() string {
 	if isUnstableBuild(meta.Env) {
-		return "ghpb-unstable"
+		return "shx-unstable"
 	}
-	return "ghpb"
+	return "shx"
 }
 
 // VersionString returns the debian version of the packages.
@@ -499,11 +499,10 @@ func (meta debMetadata) ExeConflicts(exe debExecutable) string {
 		// be preferred and the conflicting files should be handled via
 		// alternates. We might do this eventually but using a conflict is
 		// easier now.
-		return "hpb, " + exe.Name
+		return "shx, " + exe.Name
 	}
 	return ""
 }
-
 
 // Windows installer
 
@@ -524,28 +523,28 @@ func doWindowsInstaller(cmdline []string) {
 	var (
 		devTools []string
 		allTools []string
-		gethTool string
+		shxTool  string
 	)
 	for _, file := range allToolsArchiveFiles {
 		if file == "COPYING" { // license, copied later
 			continue
 		}
 		allTools = append(allTools, filepath.Base(file))
-		if filepath.Base(file) == "ghpb.exe" {
-			gethTool = file
+		if filepath.Base(file) == "shx.exe" {
+			shxTool = file
 		} else {
 			devTools = append(devTools, file)
 		}
 	}
 
 	// Render NSIS scripts: Installer NSIS contains two installer sections,
-	// first section contains the geth binary, second section holds the dev tools.
+	// first section contains the shx binary, second section holds the dev tools.
 	templateData := map[string]interface{}{
 		"License":  "COPYING",
-		"Ghpb":     gethTool,
+		"Shx":      shxTool,
 		"DevTools": devTools,
 	}
-	build.Render("build/nsis.ghpb.nsi", filepath.Join(*workdir, "ghpb.nsi"), 0644, nil)
+	build.Render("build/nsis.shx.nsi", filepath.Join(*workdir, "shx.nsi"), 0644, nil)
 	build.Render("build/nsis.install.nsh", filepath.Join(*workdir, "install.nsh"), 0644, templateData)
 	build.Render("build/nsis.uninstall.nsh", filepath.Join(*workdir, "uninstall.nsh"), 0644, allTools)
 	build.Render("build/nsis.pathupdate.nsh", filepath.Join(*workdir, "PathUpdate.nsh"), 0644, nil)
@@ -560,14 +559,14 @@ func doWindowsInstaller(cmdline []string) {
 	if env.Commit != "" {
 		version[2] += "-" + env.Commit[:8]
 	}
-	installer, _ := filepath.Abs("ghpb-" + archiveBasename(*arch, env) + ".exe")
+	installer, _ := filepath.Abs("shx-" + archiveBasename(*arch, env) + ".exe")
 	build.MustRunCommand("makensis.exe",
 		"/DOUTPUTFILE="+installer,
 		"/DMAJORVERSION="+version[0],
 		"/DMINORVERSION="+version[1],
 		"/DBUILDVERSION="+version[2],
 		"/DARCH="+*arch,
-		filepath.Join(*workdir, "ghpb.nsi"),
+		filepath.Join(*workdir, "shx.nsi"),
 	)
 
 	// Sign and publish installer.
@@ -575,6 +574,7 @@ func doWindowsInstaller(cmdline []string) {
 		log.Fatal(err)
 	}
 }
+
 // Cross compilation
 
 func doXgo(cmdline []string) {

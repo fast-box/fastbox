@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
 
-// Package hpb defines interfaces for interacting with Shx.
-package hpb_project
+// Package shx defines interfaces for interacting with Shx.
+package shx_project
 
 import (
 	"context"
 	"errors"
 	"math/big"
 
-	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/blockchain/types"
+	"github.com/shx-project/sphinx/common"
 )
 
 // NotFound is returned by API methods if the requested item does not exist.
