@@ -146,10 +146,6 @@ var (
 		Usage: "Document Root for HTTPClient file scheme",
 		Value: DirectoryString{homeDir()},
 	}
-	FastSyncFlag = cli.BoolFlag{
-		Name:  "fast",
-		Usage: "Enable fast syncing through state downloads",
-	}
 	defaultSyncMode = config.DefaultConfig.SyncMode
 	SyncModeFlag    = TextMarshalerFlag{
 		Name:  "syncmode",
@@ -257,11 +253,6 @@ var (
 		Usage: "Password file to use for non-interactive password input",
 		Value: "",
 	}
-
-	VMEnableDebugFlag = cli.BoolFlag{
-		Name:  "vmdebug",
-		Usage: "Record information useful for VM and contract debugging",
-	}
 	// Logging and debug settings
 	ShxStatsURLFlag = cli.StringFlag{
 		Name:  "ethstats",
@@ -270,10 +261,6 @@ var (
 	MetricsEnabledFlag = cli.BoolFlag{
 		Name:  metrics.MetricsEnabledFlag,
 		Usage: "Enable metrics collection and reporting",
-	}
-	FakePoWFlag = cli.BoolFlag{
-		Name:  "fakepow",
-		Usage: "Disables proof-of-work verification",
 	}
 	NoCompactionFlag = cli.BoolFlag{
 		Name:  "nocompaction",
@@ -420,16 +407,6 @@ var (
 	}
 
 	// Gas price oracle settings
-	GpoBlocksFlag = cli.IntFlag{
-		Name:  "gpoblocks",
-		Usage: "Number of recent blocks to check for gas prices",
-		Value: config.DefaultConfig.GPO.Blocks,
-	}
-	GpoPercentileFlag = cli.IntFlag{
-		Name:  "gpopercentile",
-		Usage: "Suggested gas price is the given percentile of a set of recent transaction gas prices",
-		Value: config.DefaultConfig.GPO.Percentile,
-	}
 	TestModeFlag = cli.IntFlag{
 		Name:  "testmode",
 		Usage: "Run shx with testmode. 0: not in testmode, 1 is normal test, 2 is single miner, pass confirm.",
@@ -439,16 +416,6 @@ var (
 		Name:  "testparam",
 		Usage: "Run shx with test code stage and boe need",
 		Value: nil,
-	}
-	HpNumFlag = cli.IntFlag{
-		Name:  "hpnum",
-		Usage: "Run shx having hpnodes not better than HpNum, just for testing",
-		Value: 31,
-	}
-	HpVoteRndSelScpFlag = cli.IntFlag{
-		Name:  "hpvoterndselscp",
-		Usage: "Set hpnodes voting random select scope, just for testing",
-		Value: 20,
 	}
 	IgnRewardRetErrFlag = cli.BoolFlag{
 		Name:  "ignrewardreterr",
@@ -821,8 +788,6 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 	switch {
 	case ctx.GlobalIsSet(SyncModeFlag.Name):
 		cfg.Node.SyncMode = *GlobalTextMarshaler(ctx, SyncModeFlag.Name).(*config.SyncMode)
-	case ctx.GlobalBool(FastSyncFlag.Name):
-		cfg.Node.SyncMode = config.FastSync
 	}
 	if ctx.GlobalIsSet(LightServFlag.Name) {
 		cfg.Node.LightServ = ctx.GlobalInt(LightServFlag.Name)
@@ -847,9 +812,6 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 	}
 	if ctx.GlobalIsSet(ExtraDataFlag.Name) {
 		cfg.Node.ExtraData = []byte(ctx.GlobalString(ExtraDataFlag.Name))
-	}
-	if ctx.GlobalIsSet(VMEnableDebugFlag.Name) {
-		cfg.Node.EnablePreimageRecording = ctx.GlobalBool(VMEnableDebugFlag.Name)
 	}
 	if ctx.GlobalIsSet(ConfigFileFlag.Name) {
 		res := ctx.GlobalString(ConfigFileFlag.Name)
@@ -891,15 +853,6 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 	setIPC(ctx, &cfg.Node)
 	setNodeKey(ctx, &cfg.Node)
 	cfg.Node.NodeKey()
-}
-
-func setGPO(ctx *cli.Context, cfg *config.GpoConfig) {
-	if ctx.GlobalIsSet(GpoBlocksFlag.Name) {
-		cfg.Blocks = ctx.GlobalInt(GpoBlocksFlag.Name)
-	}
-	if ctx.GlobalIsSet(GpoPercentileFlag.Name) {
-		cfg.Percentile = ctx.GlobalInt(GpoPercentileFlag.Name)
-	}
 }
 
 func SetTxPool(ctx *cli.Context, cfg *config.TxPoolConfiguration) {

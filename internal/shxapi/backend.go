@@ -30,14 +30,12 @@ import (
 	"github.com/shx-project/sphinx/config"
 	"github.com/shx-project/sphinx/event/sub"
 	"github.com/shx-project/sphinx/network/rpc"
-	"github.com/shx-project/sphinx/synctrl"
 )
 
 // Backend interface provides the common API services (that are provided by
 // both full and light clients) with access to necessary functions.
 type Backend interface {
 	// general Shx API
-	Downloader() *synctrl.Syncer
 	ProtocolVersion() int
 	ChainDb() shxdb.Database
 	EventMux() *sub.TypeMux

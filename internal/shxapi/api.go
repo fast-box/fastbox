@@ -64,19 +64,12 @@ func (s *PublicShxAPI) ProtocolVersion() hexutil.Uint {
 // - pulledStates:  number of state entries processed until now
 // - knownStates:   number of known state entries that still need to be pulled
 func (s *PublicShxAPI) Syncing() (interface{}, error) {
-	progress := s.b.Downloader().Progress()
-
-	// Return not syncing if the synchronisation already completed
-	if progress.CurrentBlock >= progress.HighestBlock {
-		return false, nil
-	}
-	// Otherwise gather the block sync stats
 	return map[string]interface{}{
-		"startingBlock": hexutil.Uint64(progress.StartingBlock),
-		"currentBlock":  hexutil.Uint64(progress.CurrentBlock),
-		"highestBlock":  hexutil.Uint64(progress.HighestBlock),
-		"pulledStates":  hexutil.Uint64(progress.PulledStates),
-		"knownStates":   hexutil.Uint64(progress.KnownStates),
+		"startingBlock": hexutil.Uint64(0),
+		"currentBlock":  hexutil.Uint64(0),
+		"highestBlock":  hexutil.Uint64(0),
+		"pulledStates":  hexutil.Uint64(0),
+		"knownStates":   hexutil.Uint64(0),
 	}, nil
 }
 

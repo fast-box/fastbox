@@ -23,7 +23,6 @@ import (
 	"sort"
 
 	"github.com/shx-project/sphinx/cmd/utils"
-	"github.com/shx-project/sphinx/internal/debug"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -147,8 +146,6 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.TestModeFlag,
 			utils.RPCVirtualHostsFlag,
 			utils.TestCodeStageFlag,
-			utils.HpNumFlag,
-			utils.HpVoteRndSelScpFlag,
 			utils.IgnRewardRetErrFlag,
 			utils.GenBlkSecsFlag,
 			utils.BNodeidsFlag,
@@ -162,33 +159,6 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.ShxerbaseFlag,
 			utils.TargetGasLimitFlag,
 			utils.ExtraDataFlag,
-		},
-	},
-	{
-		Name: "GAS PRICE ORACLE",
-		Flags: []cli.Flag{
-			utils.GpoBlocksFlag,
-			utils.GpoPercentileFlag,
-		},
-	},
-	{
-		Name: "VIRTUAL MACHINE",
-		Flags: []cli.Flag{
-			utils.VMEnableDebugFlag,
-		},
-	},
-	{
-		Name: "LOGGING AND DEBUGGING",
-		Flags: append([]cli.Flag{
-			utils.MetricsEnabledFlag,
-			utils.FakePoWFlag,
-			utils.NoCompactionFlag,
-		}, debug.Flags...),
-	},
-	{
-		Name: "DEPRECATED",
-		Flags: []cli.Flag{
-			utils.FastSyncFlag,
 		},
 	},
 	{
