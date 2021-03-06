@@ -5,6 +5,7 @@
 Welcome to the official Go implementation of the [Sphinx](https://hpb.io) blockchain!
 
 English | [中文](README_CN.md)
+
 Sphinx is a high-performance blockchain project and distributed trust collaboration platform.
 
 New features are still being rapidly developed, therefore the master branch may be unstable. Stable versions can be found in the [releases section](https://github.com/hpb-project/sphinx/releases).
