@@ -66,7 +66,7 @@ func (p *prometh) makeGenesis() {
 	if len(extra) > 32 {
 		extra = extra[:32]
 	}
-	genesis.ExtraData = append([]byte(extra), genesis.ExtraData[len(extra):]...)
+	genesis.ExtraData = append(genesis.ExtraData, extra...)
 
 	p.conf.genesis = genesis
 }

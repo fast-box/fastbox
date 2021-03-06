@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	"github.com/shx-project/sphinx/common/log"
-	"sync/atomic"
 	"github.com/shx-project/sphinx/config"
 	"strings"
+	"sync/atomic"
 )
 
 ////////////////////////////////////////////////////////////////////////////
@@ -16,12 +16,11 @@ type RpcManager struct {
 	rpcmgr *RpcMgr
 }
 
-
 var INSTANCE = atomic.Value{}
 
 func RpcMgrInst() *RpcManager {
 	if INSTANCE.Load() == nil {
-		pm :=&RpcManager{
+		pm := &RpcManager{
 			rpcmgr: &RpcMgr{},
 		}
 		INSTANCE.Store(pm)
@@ -30,46 +29,42 @@ func RpcMgrInst() *RpcManager {
 	return INSTANCE.Load().(*RpcManager)
 }
 
-func (prm *RpcManager)Start(apis []API ) error {
+func (prm *RpcManager) Start(apis []API) error {
 
-	config :=config.GetShxConfigInstance()
+	config := config.GetShxConfigInstance()
 	// for-test
-	log.Debug("Para from config.","IpcEndpoint",config.Network.IpcEndpoint,"HttpEndpoint",config.Network.HttpEndpoint,"WsEndpoint",config.Network.WsEndpoint)
+	log.Debug("Para from config.", "IpcEndpoint", config.Network.IpcEndpoint, "HttpEndpoint", config.Network.HttpEndpoint, "WsEndpoint", config.Network.WsEndpoint)
 
-	prm.rpcmgr    = &RpcMgr{
+	prm.rpcmgr = &RpcMgr{
 		ipcEndpoint:  config.Network.IpcEndpoint,
 		httpEndpoint: config.Network.HttpEndpoint,
 		wsEndpoint:   config.Network.WsEndpoint,
 
-		httpCors:     config.Network.HTTPCors,
-		httpModules:  config.Network.HTTPModules,
+		httpCors:    config.Network.HTTPCors,
+		httpModules: config.Network.HTTPModules,
 
-		httpVirtualHosts:config.Network.HTTPVirtualHosts,
-		httpTimeouts:    config.Network.HTTPTimeouts,
+		httpVirtualHosts: config.Network.HTTPVirtualHosts,
+		httpTimeouts:     config.Network.HTTPTimeouts,
 
-		wsOrigins:    config.Network.WSOrigins,
-		wsModules:    config.Network.WSModules,
-		wsExposeAll:  config.Network.WSExposeAll,
+		wsOrigins:   config.Network.WSOrigins,
+		wsModules:   config.Network.WSModules,
+		wsExposeAll: config.Network.WSExposeAll,
 	}
 	if err := prm.rpcmgr.startRPC(apis); err != nil {
-		log.Error("start rpc error","reason",err)
+		log.Error("start rpc error", "reason", err)
 	}
-
 
 	return nil
 }
 
-
-
-func (prm *RpcManager)Stop(){
+func (prm *RpcManager) Stop() {
 	prm.rpcmgr.stopRPC()
+	log.Info("Shx RpcManager stoped")
 }
 
-
-func (prm *RpcManager)IpcHandle() * Server {
+func (prm *RpcManager) IpcHandle() *Server {
 	return prm.rpcmgr.inprocHandler
 }
-
 
 ////////////////////////////////////////////////////////////////////////////
 // Node is a container on which services can be registered.
@@ -77,36 +72,30 @@ type RpcMgr struct {
 	rpcAPIs       []API   // List of APIs currently provided by the node
 	inprocHandler *Server // In-process RPC request handler to process the API requests
 
-
 	ipcListener net.Listener // IPC RPC listener socket to serve API requests
-	ipcHandler  *Server  // IPC RPC request handler to process the API requests
-
+	ipcHandler  *Server      // IPC RPC request handler to process the API requests
 
 	httpWhitelist []string     // HTTP RPC modules to allow through this endpoint
 	httpListener  net.Listener // HTTP RPC listener socket to server API requests
-	httpHandler   *Server  // HTTP RPC request handler to process the API requests
-
+	httpHandler   *Server      // HTTP RPC request handler to process the API requests
 
 	wsListener net.Listener // Websocket RPC listener socket to server API requests
-	wsHandler  *Server  // Websocket RPC request handler to process the API requests
+	wsHandler  *Server      // Websocket RPC request handler to process the API requests
 
 	lock sync.RWMutex
 
+	ipcEndpoint  string // IPC endpoint to listen at (empty = IPC disabled)
+	httpEndpoint string // HTTP endpoint (interface + port) to listen at (empty = HTTP disabled)
+	wsEndpoint   string // Websocket endpoint (interface + port) to listen at (empty = websocket disabled)
 
-	ipcEndpoint string       // IPC endpoint to listen at (empty = IPC disabled)
-	httpEndpoint  string     // HTTP endpoint (interface + port) to listen at (empty = HTTP disabled)
-	wsEndpoint string        // Websocket endpoint (interface + port) to listen at (empty = websocket disabled)
-
-	httpCors    []string
-	httpModules []string
+	httpCors         []string
+	httpModules      []string
 	httpVirtualHosts []string
 	httpTimeouts     config.HTTPTimeouts
 
 	wsOrigins   []string
 	wsModules   []string
 	wsExposeAll bool
-
-
 }
 
 // startRPC is a helper method to start all the various RPC endpoint during node
@@ -121,8 +110,7 @@ func (n *RpcMgr) startRPC(apis []API) error {
 		return err
 	}
 	if err := n.startIPC(apis); err != nil {
-		n.stopInProc()
-		return err
+		log.Warn("start IPC failed", "err", err)
 	}
 	if err := n.startHTTP(n.httpEndpoint, apis, n.httpModules, n.httpCors, n.httpVirtualHosts, n.httpTimeouts); err != nil {
 		n.stopIPC()
@@ -144,7 +132,6 @@ func (n *RpcMgr) stopRPC() {
 	n.stopHTTP()
 	n.stopIPC()
 }
-
 
 // startInProc initializes an in-process RPC endpoint.
 func (n *RpcMgr) startInProc(apis []API) error {
@@ -344,5 +331,3 @@ func StartIPCEndpoint(ipcEndpoint string, apis []API) (net.Listener, *Server, er
 	go handler.ServeListener(listener)
 	return listener, handler, nil
 }
-
-

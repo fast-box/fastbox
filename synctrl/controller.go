@@ -152,8 +152,6 @@ func (this *SynCtrl) minedRoutingLoop() {
 }
 
 func (this *SynCtrl) Stop() {
-	log.Debug("Stopping Shx data sync")
-
 	this.txSub.Unsubscribe()         // quits txRoutingLoop
 	this.minedBlockSub.Unsubscribe() // quits minedRoutingLoop
 

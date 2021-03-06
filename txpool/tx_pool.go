@@ -40,8 +40,8 @@ var (
 	chanHeadBuffer       = 10
 	maxTransactionSize   = common.StorageSize(32 * 1024)
 	tmpQEvictionInterval = 3 * time.Minute // Time interval to check for evictable tmpQueue transactions
-	maxHandleKnownTxs	 = 2000000
-	maxThreadNumber = 4
+	maxHandleKnownTxs    = 2000000
+	maxThreadNumber      = 4
 )
 
 var INSTANCE = atomic.Value{}
@@ -81,7 +81,7 @@ type TxPool struct {
 	queue          sync.Map //map[txhash]*types.Transaction
 	pending        sync.Map //map[txhash]*types.Transaction
 	onChain        sync.Map //map[txhash]uint64				tx has been inserted to chain
-	working 		sync.Map //map[workid]types.transactions
+	working        sync.Map //map[workid]types.transactions
 	poolBlockCount uint64   //block count pooled in onChain.
 
 	smu sync.RWMutex // mutex for below.
@@ -102,13 +102,13 @@ func NewTxPool(config config.TxPoolConfiguration, chainConfig *config.ChainConfi
 		signer:         types.NewQSSigner(chainConfig.ChainId),
 		chainHeadCh:    make(chan bc.ChainHeadEvent, chanHeadBuffer),
 		stopCh:         make(chan struct{}),
-		threadsNum: 	maxThreadNumber ,
-		fullCh:         make([]chan *types.Transaction, maxThreadNumber ),
-		verifyCh:       make([]chan *types.Transaction, maxThreadNumber ),
+		threadsNum:     maxThreadNumber,
+		fullCh:         make([]chan *types.Transaction, maxThreadNumber),
+		verifyCh:       make([]chan *types.Transaction, maxThreadNumber),
 		invalidTxCh:    make(chan *types.Transaction, 100000),
 		poolBlockCount: 100,
 	}
-	for i:=0;i<pool.threadsNum;i++{
+	for i := 0; i < pool.threadsNum; i++ {
 		pool.fullCh[i] = make(chan *types.Transaction, 2000000)
 		pool.verifyCh[i] = make(chan *types.Transaction, 2000000)
 	}
@@ -117,14 +117,14 @@ func NewTxPool(config config.TxPoolConfiguration, chainConfig *config.ChainConfi
 	return pool
 }
 
-func (pool *TxPool)KnownTxAdd(hash common.Hash) {
+func (pool *TxPool) KnownTxAdd(hash common.Hash) {
 	if handleKnownTx.Size() >= maxHandleKnownTxs {
 		handleKnownTx.Clear()
 	}
 	handleKnownTx.Add(hash)
 }
 
-func (pool *TxPool)Signer() types.Signer {
+func (pool *TxPool) Signer() types.Signer {
 	return pool.signer
 }
 
@@ -138,7 +138,7 @@ func (pool *TxPool) Start() {
 	// start main process loop
 	go pool.loop()
 	for i := 0; i < pool.threadsNum; i++ {
-		go pool.DealTxRoutine(pool.fullCh[i],pool.verifyCh[i])
+		go pool.DealTxRoutine(pool.fullCh[i], pool.verifyCh[i])
 	}
 	go pool.dealInvalid()
 
@@ -182,14 +182,14 @@ func (pool *TxPool) loop() {
 		//		pool.JustPending(ev.Block)
 		//	}
 
-
 		// Handle onChain tx over block count.
 		case <-evict.C:
 			go pool.FitOnChain()
 
 		//stop signal
 		case <-pool.stopCh:
-			for i:=0; i < pool.threadsNum; i++ {
+			close(pool.invalidTxCh)
+			for i := 0; i < pool.threadsNum; i++ {
 				close(pool.fullCh[i])
 				close(pool.verifyCh[i])
 			}
@@ -199,7 +199,7 @@ func (pool *TxPool) loop() {
 	}
 }
 
-func (pool *TxPool)dealInvalid() {
+func (pool *TxPool) dealInvalid() {
 	pool.wg.Add(1)
 	defer pool.wg.Done()
 	for {
@@ -260,7 +260,7 @@ func (pool *TxPool) verifyTx(tx *types.Transaction) bool {
 	return true
 }
 
-func (pool *TxPool) sendToVerify(tx *types.Transaction,verifyCh chan *types.Transaction) error {
+func (pool *TxPool) sendToVerify(tx *types.Transaction, verifyCh chan *types.Transaction) error {
 	select {
 	case verifyCh <- tx:
 		log.Trace("tx pool send to verify", "tx.Hash", tx.Hash())
@@ -270,7 +270,7 @@ func (pool *TxPool) sendToVerify(tx *types.Transaction,verifyCh chan *types.Tran
 	return nil
 }
 
-func (pool *TxPool) DealTxRoutine(fullCh,verifyCh chan *types.Transaction) {
+func (pool *TxPool) DealTxRoutine(fullCh, verifyCh chan *types.Transaction) {
 	pool.dealwg.Add(1)
 	go func() {
 		defer pool.dealwg.Done()
@@ -282,7 +282,7 @@ func (pool *TxPool) DealTxRoutine(fullCh,verifyCh chan *types.Transaction) {
 					return
 				}
 				pool.queue.Store(tx.Hash(), tx)
-				pool.sendToVerify(tx,verifyCh)
+				pool.sendToVerify(tx, verifyCh)
 			}
 		}
 	}()
@@ -328,10 +328,10 @@ func (pool *TxPool) AddTx(tx *types.Transaction) error {
 	//if err := pool.validateTx(tx); err != nil {
 	//	return err
 	//}
-	start:=rand.Intn(pool.threadsNum)
-	for try:=0; try < pool.threadsNum; try++{
-		index := (start+try)%pool.threadsNum
-		full := pool.sendToFull(tx,pool.fullCh[index])
+	start := rand.Intn(pool.threadsNum)
+	for try := 0; try < pool.threadsNum; try++ {
+		index := (start + try) % pool.threadsNum
+		full := pool.sendToFull(tx, pool.fullCh[index])
 		if !full {
 			log.Trace("AddTx", "tx.Hash", tx.Hash())
 			return nil
@@ -414,22 +414,22 @@ func (pool *TxPool) Pending(workid int64, maxtxs int) (pending types.Transaction
 		return true
 	})
 	if i > 0 {
-		pool.working.Store(workid,pending)
+		pool.working.Store(workid, pending)
 	}
 	return
 }
 
-func (pool *TxPool)WorkEnded(workid int64, blocknumber uint64, succeed bool) {
-	mining,ok := pool.working.Load(workid)
+func (pool *TxPool) WorkEnded(workid int64, blocknumber uint64, succeed bool) {
+	mining, ok := pool.working.Load(workid)
 	if ok {
-		if txs,yes := mining.(types.Transactions); yes {
+		if txs, yes := mining.(types.Transactions); yes {
 			for _, tx := range txs {
 				if succeed {
 					// append to onChain
-					pool.onChain.Store(tx.Hash(),blocknumber)
+					pool.onChain.Store(tx.Hash(), blocknumber)
 				} else {
 					// append to pending
-					pool.pending.Store(tx.Hash(),tx)
+					pool.pending.Store(tx.Hash(), tx)
 				}
 			}
 			pool.working.Delete(workid)
@@ -454,10 +454,10 @@ func (pool *TxPool) State() *state.ManagedState {
 	return pool.pendingState
 }
 
-func (pool *TxPool) Content() (pending,queue types.Transactions) {
+func (pool *TxPool) Content() (pending, queue types.Transactions) {
 	pool.pending.Range(func(k, v interface{}) bool {
 		tx := v.(*types.Transaction)
-		pending = append(pending,tx)
+		pending = append(pending, tx)
 		return true
 	})
 	pool.queue.Range(func(k, v interface{}) bool {

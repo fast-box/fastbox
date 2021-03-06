@@ -32,29 +32,28 @@ import (
 	"github.com/shx-project/sphinx/synctrl"
 )
 
-
 // Miner creates blocks and searches for proof-of-work values.
 type Miner struct {
 	mux *sub.TypeMux
 
 	worker *worker
 
-	coinbase common.Address
+	coinbase       common.Address
 	controlStarted bool
-	mining   int32
-	engine   consensus.Engine
+	mining         int32
+	engine         consensus.Engine
 
 	canStart    int32 // can start indicates whether we can start the mining operation
 	shouldStart int32 // should start indicates whether we should start after sync
 }
 
-func New(config *config.ChainConfig, mux *sub.TypeMux, engine consensus.Engine,coinbase common.Address,db shxdb.Database) *Miner {
+func New(config *config.ChainConfig, mux *sub.TypeMux, engine consensus.Engine, coinbase common.Address, db shxdb.Database) *Miner {
 	miner := &Miner{
-		mux:      mux,
-		engine:   engine,
-		worker:   newWorker(config, engine, coinbase, mux, db),
-		canStart: 1,
-		controlStarted:false,
+		mux:            mux,
+		engine:         engine,
+		worker:         newWorker(config, engine, coinbase, mux, db),
+		canStart:       1,
+		controlStarted: false,
 	}
 	return miner
 }
@@ -111,10 +110,11 @@ func (self *Miner) Stop() {
 	self.worker.stop()
 	atomic.StoreInt32(&self.mining, 0)
 	atomic.StoreInt32(&self.shouldStart, 0)
+	log.Info("Shx miner stoped")
 }
 
-func (self *Miner)SetOpt(maxtxs, peorid int) {
-	self.worker.Setopt(maxtxs,peorid)
+func (self *Miner) SetOpt(maxtxs, peorid int) {
+	self.worker.Setopt(maxtxs, peorid)
 }
 
 func (self *Miner) Mining() bool {

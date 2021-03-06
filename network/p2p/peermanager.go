@@ -133,6 +133,7 @@ func (prm *PeerManager) Stop() {
 	prm.server = nil
 
 	prm.close()
+	log.Info("Shx PeerManager stoped")
 
 }
 
