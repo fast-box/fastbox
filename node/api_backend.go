@@ -32,7 +32,6 @@ import (
 	"github.com/shx-project/sphinx/config"
 	"github.com/shx-project/sphinx/event/sub"
 	"github.com/shx-project/sphinx/network/rpc"
-	"github.com/shx-project/sphinx/synctrl"
 )
 
 // ShxApiBackend implements ethapi.Backend for full nodes
@@ -49,8 +48,7 @@ func (b *ShxApiBackend) CurrentBlock() *types.Block {
 }
 
 func (b *ShxApiBackend) SetHead(number uint64) {
-	b.shx.Shxsyncctr.Syncer().Cancel()
-	b.shx.Shxbc.SetHead(number)
+
 }
 
 func (b *ShxApiBackend) HeaderByNumber(ctx context.Context, blockNr rpc.BlockNumber) (*types.Header, error) {
@@ -154,10 +152,6 @@ func (b *ShxApiBackend) TxPoolContent() (types.Transactions, types.Transactions)
 
 func (b *ShxApiBackend) SubscribeTxPreEvent(ch chan<- bc.TxPreEvent) sub.Subscription {
 	return b.shx.TxPool().SubscribeTxPreEvent(ch)
-}
-
-func (b *ShxApiBackend) Downloader() *synctrl.Syncer {
-	return b.shx.Shxsyncctr.Syncer()
 }
 
 func (b *ShxApiBackend) ProtocolVersion() int {

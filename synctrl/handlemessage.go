@@ -18,16 +18,11 @@ package synctrl
 
 import (
 	"github.com/hashicorp/golang-lru"
-	"github.com/shx-project/sphinx/blockchain"
 	"github.com/shx-project/sphinx/blockchain/types"
-	"github.com/shx-project/sphinx/common"
 	"github.com/shx-project/sphinx/common/log"
-	"github.com/shx-project/sphinx/common/rlp"
 	"github.com/shx-project/sphinx/network/p2p"
-	"github.com/shx-project/sphinx/node/db"
 	"github.com/shx-project/sphinx/txpool"
 	"gopkg.in/fatih/set.v0"
-	"math/big"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -36,356 +31,24 @@ import (
 var handleKnownBlocks = set.New()
 
 var defaultRoutCount = int32(3)
+
 type mulr struct {
 	cache *lru.Cache
-	mu sync.Mutex
+	mu    sync.Mutex
 }
+
 var (
-	handleKnownProof mulr
+	handleKnownProof        mulr
 	handleKnownProofConfirm mulr
-	handleResponseState mulr
-	handleQueryState mulr
+	handleResponseState     mulr
+	handleQueryState        mulr
 )
 
 func init() {
-	handleKnownProof.cache,_ = lru.New(100000)
-	handleKnownProofConfirm.cache,_ = lru.New(100000)
-	handleResponseState.cache,_ = lru.New(100000)
-	handleQueryState.cache,_ = lru.New(100000)
-}
-
-// HandleGetBlockHeadersMsg deal received GetBlockHeadersMsg
-func HandleGetBlockHeadersMsg(p *p2p.Peer, msg p2p.Msg) error {
-	// Decode the complex header query
-	var query getBlockHeadersData
-	if err := msg.Decode(&query); err != nil {
-		return p2p.ErrResp(p2p.ErrDecode, "%v: %v", msg, err)
-	}
-	hashMode := query.Origin.Hash != (common.Hash{})
-
-	// Gather headers until the fetch or network limits is reached
-	var (
-		bytes   common.StorageSize
-		headers []*types.Header
-		unknown bool
-	)
-	for !unknown && len(headers) < int(query.Amount) && bytes < softResponseLimit && len(headers) < MaxHeaderFetch {
-		// Retrieve the next header satisfying the query
-		var origin *types.Header
-		if hashMode {
-			origin = bc.InstanceBlockChain().GetHeaderByHash(query.Origin.Hash)
-		} else {
-			origin = bc.InstanceBlockChain().GetHeaderByNumber(query.Origin.Number)
-		}
-		if origin == nil {
-			break
-		}
-		number := origin.Number.Uint64()
-		headers = append(headers, origin)
-		bytes += estHeaderRlpSize
-
-		// Advance to the next header of the query
-		switch {
-		case query.Origin.Hash != (common.Hash{}) && query.Reverse:
-			// Hash based traversal towards the genesis block
-			for i := 0; i < int(query.Skip)+1; i++ {
-				if header := bc.InstanceBlockChain().GetHeader(query.Origin.Hash, number); header != nil {
-					query.Origin.Hash = header.ParentHash
-					number--
-				} else {
-					unknown = true
-					break
-				}
-			}
-		case query.Origin.Hash != (common.Hash{}) && !query.Reverse:
-			// Hash based traversal towards the leaf block
-			var (
-				current = origin.Number.Uint64()
-				next    = current + query.Skip + 1
-			)
-			if next <= current {
-				log.Warn("GetBlockHeaders skip overflow attack", "current", current, "skip", query.Skip, "next", next, "attacker", p.ID())
-				unknown = true
-			} else {
-				if header := bc.InstanceBlockChain().GetHeaderByNumber(next); header != nil {
-					if bc.InstanceBlockChain().GetBlockHashesFromHash(header.Hash(), query.Skip+1)[query.Skip] == query.Origin.Hash {
-						query.Origin.Hash = header.Hash()
-					} else {
-						unknown = true
-					}
-				} else {
-					unknown = true
-				}
-			}
-		case query.Reverse:
-			// Number based traversal towards the genesis block
-			if query.Origin.Number >= query.Skip+1 {
-				query.Origin.Number -= (query.Skip + 1)
-			} else {
-				unknown = true
-			}
-
-		case !query.Reverse:
-			// Number based traversal towards the leaf block
-			query.Origin.Number += (query.Skip + 1)
-		}
-	}
-	return sendBlockHeaders(p, headers)
-}
-
-// HandleBlockHeadersMsg deal received BlockHeadersMsg
-func HandleBlockHeadersMsg(p *p2p.Peer, msg p2p.Msg) error {
-	// A batch of headers arrived to one of our previous requests
-	var headers []*types.Header
-	if err := msg.Decode(&headers); err != nil {
-		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
-	}
-
-	// Filter out any explicitly requested headers, deliver the rest to the downloader
-	filter := len(headers) == 1
-	if filter {
-		// Irrelevant of the fork checks, send the header to the fetcher just in case
-		headers = InstanceSynCtrl().puller.FilterHeaders(p.GetID(), headers, time.Now())
-	}
-	if len(headers) > 0 || !filter {
-		err := InstanceSynCtrl().syner.DeliverHeaders(p.GetID(), headers)
-		if err != nil {
-			log.Debug("Failed to deliver headers", "err", err)
-		}
-	}
-	return nil
-}
-
-// HandleGetBlockBodiesMsg deal received GetBlockBodiesMsg
-func HandleGetBlockBodiesMsg(p *p2p.Peer, msg p2p.Msg) error {
-	// Decode the retrieval message
-	msgStream := rlp.NewStream(msg.Payload, uint64(msg.Size))
-	if _, err := msgStream.List(); err != nil {
-		return err
-	}
-	// Gather blocks until the fetch or network limits is reached
-	var (
-		hash   common.Hash
-		bytes  int
-		bodies []rlp.RawValue
-	)
-	for bytes < softResponseLimit && len(bodies) < MaxBlockFetch {
-		// Retrieve the hash of the next block
-		if err := msgStream.Decode(&hash); err == rlp.EOL {
-			break
-		} else if err != nil {
-			return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
-		}
-		// Retrieve the requested block body, stopping if enough was found
-		if data := bc.InstanceBlockChain().GetBodyRLP(hash); len(data) != 0 {
-			bodies = append(bodies, data)
-			bytes += len(data)
-		}
-	}
-	return sendBlockBodiesRLP(p, bodies)
-}
-
-// HandleBlockBodiesMsg deal received BlockBodiesMsg
-func HandleBlockBodiesMsg(p *p2p.Peer, msg p2p.Msg) error {
-	// A batch of block bodies arrived to one of our previous requests
-	var request blockBodiesData
-	if err := msg.Decode(&request); err != nil {
-		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
-	}
-	// Deliver them all to the downloader for queuing
-	trasactions := make([][]*types.Transaction, len(request))
-	uncles := make([][]*types.Header, len(request))
-
-	for i, body := range request {
-		trasactions[i] = body.Transactions
-		uncles[i] = body.Uncles
-	}
-	// Filter out any explicitly requested bodies, deliver the rest to the downloader
-	filter := len(trasactions) > 0 || len(uncles) > 0
-	if filter {
-		trasactions, uncles = InstanceSynCtrl().puller.FilterBodies(p.GetID(), trasactions, uncles, time.Now())
-	}
-	if len(trasactions) > 0 || len(uncles) > 0 || !filter {
-		err := InstanceSynCtrl().syner.DeliverBodies(p.GetID(), trasactions)
-		if err != nil {
-			log.Debug("Failed to deliver bodies", "err", err)
-		}
-	}
-	return nil
-}
-
-// HandleGetNodeDataMsg deal received GetNodeDataMsg
-func HandleGetNodeDataMsg(p *p2p.Peer, msg p2p.Msg) error {
-	// Decode the retrieval message
-	msgStream := rlp.NewStream(msg.Payload, uint64(msg.Size))
-	if _, err := msgStream.List(); err != nil {
-		return err
-	}
-	// Gather state data until the fetch or network limits is reached
-	var (
-		hash  common.Hash
-		bytes int
-		data  [][]byte
-	)
-	for bytes < softResponseLimit && len(data) < MaxStateFetch {
-		// Retrieve the hash of the next state entry
-		if err := msgStream.Decode(&hash); err == rlp.EOL {
-			break
-		} else if err != nil {
-			return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
-		}
-		// Retrieve the requested state entry, stopping if enough was found
-		if entry, err := db.GetShxDbInstance().Get(hash.Bytes()); err == nil {
-			data = append(data, entry)
-			bytes += len(entry)
-		}
-	}
-	return sendNodeData(p, data)
-}
-
-// HandleNodeDataMsg deal received NodeDataMsg
-func HandleNodeDataMsg(p *p2p.Peer, msg p2p.Msg) error {
-	// A batch of node state data arrived to one of our previous requests
-	var data [][]byte
-	if err := msg.Decode(&data); err != nil {
-		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
-	}
-	// Deliver all to the downloader
-	if err := InstanceSynCtrl().syner.DeliverNodeData(p.GetID(), data); err != nil {
-		log.Debug("Failed to deliver node state data", "err", err)
-	}
-	return nil
-}
-
-// HandleGetReceiptsMsg deal received GetReceiptsMsg
-func HandleGetReceiptsMsg(p *p2p.Peer, msg p2p.Msg) error {
-	// Decode the retrieval message
-	msgStream := rlp.NewStream(msg.Payload, uint64(msg.Size))
-	if _, err := msgStream.List(); err != nil {
-		return err
-	}
-	// Gather state data until the fetch or network limits is reached
-	var (
-		hash     common.Hash
-		bytes    int
-		receipts []rlp.RawValue
-	)
-	for bytes < softResponseLimit && len(receipts) < MaxReceiptFetch {
-		// Retrieve the hash of the next block
-		if err := msgStream.Decode(&hash); err == rlp.EOL {
-			break
-		} else if err != nil {
-			return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
-		}
-		// Retrieve the requested block's receipts, skipping if unknown to us
-		results := bc.GetBlockReceipts(db.GetShxDbInstance(), hash, bc.GetBlockNumber(db.GetShxDbInstance(), hash))
-		if results == nil {
-			if header := bc.InstanceBlockChain().GetHeaderByHash(hash); header == nil || header.ReceiptHash != types.EmptyRootHash {
-				continue
-			}
-		}
-		// If known, encode and queue for response packet
-		if encoded, err := rlp.EncodeToBytes(results); err != nil {
-			log.Error("Failed to encode receipt", "err", err)
-		} else {
-			receipts = append(receipts, encoded)
-			bytes += len(encoded)
-		}
-	}
-	return sendReceiptsRLP(p, receipts)
-}
-
-// HandleReceiptsMsg deal received ReceiptsMsg
-func HandleReceiptsMsg(p *p2p.Peer, msg p2p.Msg) error {
-	// A batch of receipts arrived to one of our previous requests
-	var receipts [][]*types.Receipt
-	if err := msg.Decode(&receipts); err != nil {
-		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
-	}
-	// Deliver all to the downloader
-	if err := InstanceSynCtrl().syner.DeliverReceipts(p.GetID(), receipts); err != nil {
-		log.Debug("Failed to deliver receipts", "err", err)
-	}
-	return nil
-}
-
-// HandleNewBlockHashesMsg deal received NewBlockHashesMsg
-func HandleNewBlockHashesMsg(p *p2p.Peer, msg p2p.Msg) error {
-	var announces newBlockHashesData
-	if err := msg.Decode(&announces); err != nil {
-		return p2p.ErrResp(p2p.ErrDecode, "%v: %v", msg, err)
-	}
-	// Mark the hashes as present at the remote node
-	for _, block := range announces {
-		p.KnownBlockAdd(block.Hash)
-	}
-	// Schedule all the unknown hashes for retrieval
-	unknown := make(newBlockHashesData, 0, len(announces))
-	for _, block := range announces {
-		if !bc.InstanceBlockChain().HasBlock(block.Hash, block.Number) {
-			unknown = append(unknown, block)
-		}
-	}
-	for _, block := range unknown {
-		InstanceSynCtrl().puller.Notify(p.GetID(), block.Hash, block.Number, time.Now(), requestOneHeader, requestBodies)
-	}
-
-	return nil
-}
-
-// HandleNewBlockMsg deal received NewBlockMsg
-func HandleNewBlockMsg(p *p2p.Peer, msg p2p.Msg) error {
-	// Retrieve and decode the propagated block
-	var request newBlockData
-	if err := msg.Decode(&request); err != nil {
-		return p2p.ErrResp(p2p.ErrDecode, "%v: %v", msg, err)
-	}
-	request.Block.ReceivedAt = msg.ReceivedAt
-	request.Block.ReceivedFrom = p
-
-	// Mark the peer as owning the block and schedule it for import
-	p.KnownBlockAdd(request.Block.Hash())
-	if handleKnownBlocks.Has(request.Block.Hash()) {
-		log.Debug("handleKnownBlocks~~~~~~", "msgsize", msg.Size)
-		return nil
-	} else {
-		handleKnownBlocksAdd(request.Block.Hash())
-	}
-	InstanceSynCtrl().puller.Enqueue(p.GetID(), request.Block)
-
-	// Assuming the block is importable by the peer, but possibly not yet done so,
-	// calculate the head hash and TD that the peer truly must have.
-	var (
-		trueHead = request.Block.ParentHash()
-		trueTD   = new(big.Int).Sub(request.TD, request.Block.Difficulty())
-	)
-	// Update the peers total difficulty if better than the previous
-	if _, td := p.Head(); trueTD.Cmp(td) > 0 {
-		p.SetHead(trueHead, trueTD)
-
-		// Schedule a sync if above ours. Note, this will not fire a sync for a gap of
-		// a singe block (as the true TD is below the propagated block), however this
-		// scenario should easily be covered by the fetcher.
-		currentBlock := bc.InstanceBlockChain().CurrentBlock()
-		if trueTD.Cmp(bc.InstanceBlockChain().GetTd(currentBlock.Hash(), currentBlock.NumberU64())) > 0 {
-		}
-	}
-	return nil
-}
-
-func handleKnownBlocksAdd(hash common.Hash) {
-	if handleKnownBlocks.Size() >= 1000000 {
-		handleKnownBlocks.Clear()
-	}
-	handleKnownBlocks.Add(hash)
-}
-
-
-
-// HandleNewBlockMsg deal received NewBlockMsg
-func HandleNewHashBlockMsg(p *p2p.Peer, msg p2p.Msg) error {
-	// unused current.
-	return nil
+	handleKnownProof.cache, _ = lru.New(100000)
+	handleKnownProofConfirm.cache, _ = lru.New(100000)
+	handleResponseState.cache, _ = lru.New(100000)
+	handleQueryState.cache, _ = lru.New(100000)
 }
 
 var poolTxsCh chan *types.Transaction
@@ -443,7 +106,7 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 		p.KnownTxsAdd(tx.Hash())
 
 		log.Debug("SHX profile", "Receive tx ", tx.Hash(), "at time ", time.Now().UnixNano()/1000/1000)
-		if false {//txpool.GetTxPool().DupTx(tx) != nil {
+		if false { //txpool.GetTxPool().DupTx(tx) != nil {
 			continue
 		} else {
 			go func() {
@@ -456,11 +119,10 @@ func HandleTxMsg(p *p2p.Peer, msg p2p.Msg) error {
 	return nil
 }
 
-
 func HandleWorkProofMsg(p *p2p.Peer, msg p2p.Msg) error {
 	var proof types.WorkProofMsg
 	if err := msg.Decode(&proof); err != nil {
-		log.Error("Decode workproofmsg failed","err", err)
+		log.Error("Decode workproofmsg failed", "err", err)
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
 	{
@@ -543,7 +205,7 @@ func HandleResStateMsg(p *p2p.Peer, msg p2p.Msg) error {
 func HandleGetStateMsg(p *p2p.Peer, msg p2p.Msg) error {
 	var query types.QueryStateMsg
 	if err := msg.Decode(&query); err != nil {
-		log.Error("handlemsg QueryStateMsg decode failed","err",err)
+		log.Error("handlemsg QueryStateMsg decode failed", "err", err)
 		return p2p.ErrResp(p2p.ErrDecode, "msg %v: %v", msg, err)
 	}
 	{
@@ -566,5 +228,3 @@ func HandleGetStateMsg(p *p2p.Peer, msg p2p.Msg) error {
 	}
 	return nil
 }
-
-

@@ -26,7 +26,6 @@ import (
 	"github.com/shx-project/sphinx/network/p2p"
 	"github.com/shx-project/sphinx/network/rpc"
 	"github.com/shx-project/sphinx/node/filters"
-	"github.com/shx-project/sphinx/synctrl"
 	"github.com/shx-project/sphinx/txpool"
 	"github.com/shx-project/sphinx/worker"
 )
@@ -83,14 +82,6 @@ func (s *Node) APIs() []rpc.API {
 	// Append any APIs exposed explicitly by the consensus engine
 	if s.Shxengine != nil {
 		apis = append(apis, s.Shxengine.APIs(s.BlockChain())...)
-		apis = append(apis, []rpc.API{
-			{Namespace: "shx",
-				Version: "1.0",
-				Service: synctrl.NewPublicSyncerAPI(s.Shxsyncctr.Syncer(), s.newBlockMux),
-				Public:  true,
-			},
-		}...)
-
 	}
 	return apis
 }
