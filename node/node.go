@@ -37,7 +37,6 @@ import (
 	"github.com/shx-project/sphinx/blockchain/storage"
 	"github.com/shx-project/sphinx/blockchain/types"
 	"github.com/shx-project/sphinx/common"
-	"github.com/shx-project/sphinx/common/constant"
 	"github.com/shx-project/sphinx/common/hexutil"
 	"github.com/shx-project/sphinx/common/log"
 	"github.com/shx-project/sphinx/common/rlp"
@@ -180,7 +179,7 @@ func New(conf *config.ShxConfig) (*Node, error) {
 	hpbnode.Shxtxpool = hpbtxpool
 	hpbnode.ApiBackend = &ShxApiBackend{hpbnode}
 
-	hpbnode.bloomIndexer = NewBloomIndexer(hpbdatabase, params.BloomBitsBlocks)
+	hpbnode.bloomIndexer = NewBloomIndexer(hpbdatabase, 4096)
 	return hpbnode, nil
 }
 func (hpbnode *Node) WorkerInit(conf *config.ShxConfig) error {

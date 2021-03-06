@@ -21,7 +21,6 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"io/ioutil"
-	"math/big"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -34,7 +33,6 @@ import (
 	"github.com/shx-project/sphinx/blockchain/state"
 	"github.com/shx-project/sphinx/blockchain/storage"
 	"github.com/shx-project/sphinx/common"
-	"github.com/shx-project/sphinx/common/constant"
 	"github.com/shx-project/sphinx/common/crypto"
 	"github.com/shx-project/sphinx/common/log"
 	"github.com/shx-project/sphinx/common/metrics"
@@ -85,7 +83,7 @@ func NewApp(gitCommit, usage string) *cli.App {
 	app.Name = filepath.Base(os.Args[0])
 	app.Author = ""
 	app.Email = ""
-	app.Version = params.Version
+	app.Version = config.Version
 	if gitCommit != "" {
 		app.Version += "-" + gitCommit[:8]
 	}
@@ -129,10 +127,6 @@ var (
 		Name:  "testnet",
 		Usage: "Ropsten network: pre-configured proof-of-work test network",
 	}
-	RinkebyFlag = cli.BoolFlag{
-		Name:  "rinkeby",
-		Usage: "Rinkeby network: pre-configured proof-of-authority test network",
-	}
 	DevModeFlag = cli.BoolFlag{
 		Name:  "dev",
 		Usage: "Developer mode: pre-configured private network with several debugging flags",
@@ -140,17 +134,6 @@ var (
 	IdentityFlag = cli.StringFlag{
 		Name:  "identity",
 		Usage: "Custom node name",
-	}
-	DocRootFlag = DirectoryFlag{
-		Name:  "docroot",
-		Usage: "Document Root for HTTPClient file scheme",
-		Value: DirectoryString{homeDir()},
-	}
-	defaultSyncMode = config.DefaultConfig.SyncMode
-	SyncModeFlag    = TextMarshalerFlag{
-		Name:  "syncmode",
-		Usage: `Blockchain sync mode ("fast", "full", or "light")`,
-		Value: &defaultSyncMode,
 	}
 
 	LightServFlag = cli.IntFlag{
@@ -182,20 +165,10 @@ var (
 		Usage: "Time interval to regenerate the local transaction journal",
 		Value: config.DefaultTxPoolConfig.Rejournal,
 	}
-	TxPoolAccountSlotsFlag = cli.Uint64Flag{
-		Name:  "txpool.accountslots",
-		Usage: "Minimum number of executable transaction slots guaranteed per account",
-		Value: config.DefaultTxPoolConfig.AccountSlots,
-	}
 	TxPoolGlobalSlotsFlag = cli.Uint64Flag{
 		Name:  "txpool.globalslots",
 		Usage: "Maximum number of executable transaction slots for all accounts",
 		Value: config.DefaultTxPoolConfig.GlobalSlots,
-	}
-	TxPoolAccountQueueFlag = cli.Uint64Flag{
-		Name:  "txpool.accountqueue",
-		Usage: "Maximum number of non-executable transaction slots permitted per account",
-		Value: config.DefaultTxPoolConfig.AccountQueue,
 	}
 	TxPoolGlobalQueueFlag = cli.Uint64Flag{
 		Name:  "txpool.globalqueue",
@@ -227,11 +200,6 @@ var (
 		Name:  "minerthreads",
 		Usage: "Number of CPU threads to use for mining",
 		Value: runtime.NumCPU(),
-	}
-	TargetGasLimitFlag = cli.Uint64Flag{
-		Name:  "targetgaslimit",
-		Usage: "Target gas limit sets the artificial target gas floor for the blocks to mine",
-		Value: params.GenesisGasLimit.Uint64(),
 	}
 	ShxerbaseFlag = cli.StringFlag{
 		Name:  "shxerbase",
@@ -440,9 +408,6 @@ func MakeDataDir(ctx *cli.Context) string {
 	if path := ctx.GlobalString(DataDirFlag.Name); path != "" {
 		if ctx.GlobalBool(TestnetFlag.Name) {
 			return filepath.Join(path, "testnet")
-		}
-		if ctx.GlobalBool(RinkebyFlag.Name) {
-			return filepath.Join(path, "rinkeby")
 		}
 		return path
 	}
@@ -785,10 +750,6 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 		cfg.Node.UseLightweightKDF = ctx.GlobalBool(LightKDFFlag.Name)
 	}
 
-	switch {
-	case ctx.GlobalIsSet(SyncModeFlag.Name):
-		cfg.Node.SyncMode = *GlobalTextMarshaler(ctx, SyncModeFlag.Name).(*config.SyncMode)
-	}
 	if ctx.GlobalIsSet(LightServFlag.Name) {
 		cfg.Node.LightServ = ctx.GlobalInt(LightServFlag.Name)
 	}
@@ -806,9 +767,6 @@ func SetNodeConfig(ctx *cli.Context, cfg *config.ShxConfig) {
 
 	if ctx.GlobalIsSet(MinerThreadsFlag.Name) {
 		cfg.Node.MinerThreads = ctx.GlobalInt(MinerThreadsFlag.Name)
-	}
-	if ctx.GlobalIsSet(DocRootFlag.Name) {
-		cfg.Node.DocRoot = ctx.GlobalString(DocRootFlag.Name)
 	}
 	if ctx.GlobalIsSet(ExtraDataFlag.Name) {
 		cfg.Node.ExtraData = []byte(ctx.GlobalString(ExtraDataFlag.Name))
@@ -865,14 +823,8 @@ func SetTxPool(ctx *cli.Context, cfg *config.TxPoolConfiguration) {
 	if ctx.GlobalIsSet(TxPoolRejournalFlag.Name) {
 		cfg.Rejournal = ctx.GlobalDuration(TxPoolRejournalFlag.Name)
 	}
-	if ctx.GlobalIsSet(TxPoolAccountSlotsFlag.Name) {
-		cfg.AccountSlots = ctx.GlobalUint64(TxPoolAccountSlotsFlag.Name)
-	}
 	if ctx.GlobalIsSet(TxPoolGlobalSlotsFlag.Name) {
 		cfg.GlobalSlots = ctx.GlobalUint64(TxPoolGlobalSlotsFlag.Name)
-	}
-	if ctx.GlobalIsSet(TxPoolAccountQueueFlag.Name) {
-		cfg.AccountQueue = ctx.GlobalUint64(TxPoolAccountQueueFlag.Name)
 	}
 	if ctx.GlobalIsSet(TxPoolGlobalQueueFlag.Name) {
 		cfg.GlobalQueue = ctx.GlobalUint64(TxPoolGlobalQueueFlag.Name)
@@ -896,7 +848,7 @@ func checkExclusive(ctx *cli.Context, flags ...cli.Flag) {
 
 // SetupNetwork configures the system for either the main net or some test network.
 func SetupNetwork(ctx *cli.Context) {
-	params.TargetGasLimit = new(big.Int).SetUint64(ctx.GlobalUint64(TargetGasLimitFlag.Name))
+
 }
 
 // MakeChainDatabase open an LevelDB using the flags passed to the client and will hard crash if it fails.
@@ -963,11 +915,11 @@ func MakeConsolePreloads(ctx *cli.Context) []string {
 // This is a temporary function used for migrating old command/flags to the
 // new format.
 //
-// e.g. geth account new --keystore /tmp/mykeystore --lightkdf
+// e.g. shx account new --keystore /tmp/mykeystore --lightkdf
 //
 // is equivalent after calling this method with:
 //
-// geth --keystore /tmp/mykeystore --lightkdf account new
+// shx --keystore /tmp/mykeystore --lightkdf account new
 //
 // This allows the use of the existing configuration functionality.
 // When all flags are migrated this function can be removed and the existing
