@@ -1,41 +1,41 @@
-Name "ghpb ${MAJORVERSION}.${MINORVERSION}.${BUILDVERSION}" # VERSION variables set through command line arguments
+Name "sphinx ${MAJORVERSION}.${MINORVERSION}.${BUILDVERSION}" # VERSION variables set through command line arguments
 InstallDir "$InstDir"
 OutFile "${OUTPUTFILE}" # set through command line arguments
 
 # Links for "Add/Remove Programs"
-!define HELPURL "https://github.com/shx-project/ghpb/issues"
-!define UPDATEURL "https://github.com/shx-project/ghpb/releases"
-!define ABOUTURL "github.com/shx-project/ghpb"
+!define HELPURL "https://github.com/shx-project/sphinx/issues"
+!define UPDATEURL "https://github.com/shx-project/sphinx/releases"
+!define ABOUTURL "github.com/shx-project/sphinx"
 !define /date NOW "%Y%m%d"
 
 PageEx license
   LicenseData {{.License}}
 PageExEnd
 
-# Install geth binary
-Section "Ghpb" GHPB_IDX
+# Install shx binary
+Section "Shx" SHX_IDX
   SetOutPath $INSTDIR
-  file {{.Ghpb}}
+  file {{.Shx}}
 
   # Create start menu launcher
   createDirectory "$SMPROGRAMS\${APPNAME}"
-  createShortCut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "$INSTDIR\ghpb.exe" "--fast" "--cache=512"
-  createShortCut "$SMPROGRAMS\${APPNAME}\Attach.lnk" "$INSTDIR\ghpb.exe" "attach" "" ""
+  createShortCut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "$INSTDIR\shx.exe" "--fast" "--cache=512"
+  createShortCut "$SMPROGRAMS\${APPNAME}\Attach.lnk" "$INSTDIR\shx.exe" "attach" "" ""
   createShortCut "$SMPROGRAMS\${APPNAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "" ""
 
   # Firewall - remove rules (if exists)
-  SimpleFC::AdvRemoveRule "Ghpb incoming peers (TCP:30303)"
-  SimpleFC::AdvRemoveRule "Ghpb outgoing peers (TCP:30303)"
-  SimpleFC::AdvRemoveRule "Ghpb UDP discovery (UDP:30303)"
+  SimpleFC::AdvRemoveRule "Shx incoming peers (TCP:27000)"
+  SimpleFC::AdvRemoveRule "Shx outgoing peers (TCP:27000)"
+  SimpleFC::AdvRemoveRule "Shx UDP discovery (UDP:27000)"
 
   # Firewall - add rules
-  SimpleFC::AdvAddRule "Ghpb incoming peers (TCP:30303)" ""  6 1 1 2147483647 1 "$INSTDIR\ghpb.exe" "" "" "Shx" 30303 "" "" ""
-  SimpleFC::AdvAddRule "Ghpb outgoing peers (TCP:30303)" ""  6 2 1 2147483647 1 "$INSTDIR\ghpb.exe" "" "" "Shx" "" 30303 "" ""
-  SimpleFC::AdvAddRule "Ghpb UDP discovery (UDP:30303)" "" 17 2 1 2147483647 1 "$INSTDIR\ghpb.exe" "" "" "Shx" "" 30303 "" ""
+  SimpleFC::AdvAddRule "Shx incoming peers (TCP:27000)" ""  6 1 1 2147483647 1 "$INSTDIR\shx.exe" "" "" "Shx" 27000 "" "" ""
+  SimpleFC::AdvAddRule "Shx outgoing peers (TCP:27000)" ""  6 2 1 2147483647 1 "$INSTDIR\shx.exe" "" "" "Shx" "" 27000 "" ""
+  SimpleFC::AdvAddRule "Shx UDP discovery (UDP:27000)" "" 17 2 1 2147483647 1 "$INSTDIR\shx.exe" "" "" "Shx" "" 27000 "" ""
 
   # Set default IPC endpoint
-  ${EnvVarUpdate} $0 "HPB_SOCKET" "R" "HKLM" "\\.\pipe\ghpb.ipc"
-  ${EnvVarUpdate} $0 "HPB_SOCKET" "A" "HKLM" "\\.\pipe\ghpb.ipc"
+  ${EnvVarUpdate} $0 "SHX_SOCKET" "R" "HKLM" "\\.\pipe\shx.ipc"
+  ${EnvVarUpdate} $0 "SHX_SOCKET" "A" "HKLM" "\\.\pipe\shx.ipc"
 
   # Add instdir to PATH
   Push "$INSTDIR"
@@ -54,8 +54,8 @@ Var GetInstalledSize.total
 Function GetInstalledSize
   StrCpy $GetInstalledSize.total 0
 
-  ${if} ${SectionIsSelected} ${GETH_IDX}
-    SectionGetSize ${GETH_IDX} $0
+  ${if} ${SectionIsSelected} ${SHX_IDX}
+    SectionGetSize ${SHX_IDX} $0
     IntOp $GetInstalledSize.total $GetInstalledSize.total + $0
   ${endif}
 

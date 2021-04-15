@@ -30,9 +30,9 @@ import (
 
 const (
 	DefaultHTTPHost = "localhost" // Default host interface for the HTTP RPC server
-	DefaultHTTPPort = 8545        // Default TCP port for the HTTP RPC server
+	DefaultHTTPPort = 8600        // Default TCP port for the HTTP RPC server
 	DefaultWSHost   = "localhost" // Default host interface for the websocket RPC server
-	DefaultWSPort   = 8546        // Default TCP port for the websocket RPC server
+	DefaultWSPort   = 8601        // Default TCP port for the websocket RPC server
 )
 
 const (
@@ -52,7 +52,7 @@ var DefaultNTConfig = NetworkConfig{
 	WSModules:        []string{"net", "web3", "prometheus"},
 	HTTPVirtualHosts: []string{"localhost"},
 	HTTPTimeouts:     DefaultHTTPTimeouts,
-	ListenAddr:       ":30303",
+	ListenAddr:       ":27000",
 	MaxPeers:         50,
 	NAT:              nat.Any(),
 	IpcEndpoint:      DefaultIPCEndpoint(clientIdentifier),
@@ -61,7 +61,7 @@ var DefaultNTConfig = NetworkConfig{
 }
 
 var MainnetBootnodes = []string{
-	"hnode://9b455989a14921d589978c8ee22f205a7ae2ec80567c772d05e0d70d14eba923659006d8387faf284e72283403ef3b2547f8cd2c11ce78bcc58117ab59109c91@127.0.0.1:30303",
+	"hnode://9b455989a14921d589978c8ee22f205a7ae2ec80567c772d05e0d70d14eba923659006d8387faf284e72283403ef3b2547f8cd2c11ce78bcc58117ab59109c91@127.0.0.1:27000",
 }
 
 // TestnetBootnodes are the hnode URLs of the P2P bootstrap nodes running on the
