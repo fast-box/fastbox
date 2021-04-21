@@ -17,12 +17,12 @@ Section "Uninstall"
   rmDir "$SMPROGRAMS\${APPNAME}"
 
   # Firewall - remove rules if exists
-  SimpleFC::AdvRemoveRule "Shx incoming peers (TCP:27000)"
-  SimpleFC::AdvRemoveRule "Shx outgoing peers (TCP:27000)"
-  SimpleFC::AdvRemoveRule "Shx UDP discovery (UDP:27000)"
+  SimpleFC::AdvRemoveRule "Fbox incoming peers (TCP:27000)"
+  SimpleFC::AdvRemoveRule "Fbox outgoing peers (TCP:27000)"
+  SimpleFC::AdvRemoveRule "Fbox UDP discovery (UDP:27000)"
 
   # Remove IPC endpoint
-  ${un.EnvVarUpdate} $0 "SHX_SOCKET" "R" "HKLM" "\\.\pipe\shx.ipc"
+  ${un.EnvVarUpdate} $0 "FBOX_SOCKET" "R" "HKLM" "\\.\pipe\fbox.ipc"
 
   # Remove install directory from PATH
   Push "$INSTDIR"

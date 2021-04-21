@@ -1,41 +1,41 @@
-Name "sphinx ${MAJORVERSION}.${MINORVERSION}.${BUILDVERSION}" # VERSION variables set through command line arguments
+Name "fastbox ${MAJORVERSION}.${MINORVERSION}.${BUILDVERSION}" # VERSION variables set through command line arguments
 InstallDir "$InstDir"
 OutFile "${OUTPUTFILE}" # set through command line arguments
 
 # Links for "Add/Remove Programs"
-!define HELPURL "https://github.com/shx-project/sphinx/issues"
-!define UPDATEURL "https://github.com/shx-project/sphinx/releases"
-!define ABOUTURL "github.com/shx-project/sphinx"
+!define HELPURL "https://github.com/fast-box/fastbox/issues"
+!define UPDATEURL "https://github.com/fast-box/fastbox/releases"
+!define ABOUTURL "github.com/fast-box/fastbox"
 !define /date NOW "%Y%m%d"
 
 PageEx license
   LicenseData {{.License}}
 PageExEnd
 
-# Install shx binary
-Section "Shx" SHX_IDX
+# Install fbox binary
+Section "Fbox" FBOX_IDX
   SetOutPath $INSTDIR
-  file {{.Shx}}
+  file {{.Fbox}}
 
   # Create start menu launcher
   createDirectory "$SMPROGRAMS\${APPNAME}"
-  createShortCut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "$INSTDIR\shx.exe" "--fast" "--cache=512"
-  createShortCut "$SMPROGRAMS\${APPNAME}\Attach.lnk" "$INSTDIR\shx.exe" "attach" "" ""
+  createShortCut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "$INSTDIR\fbox.exe" "--fast" "--cache=512"
+  createShortCut "$SMPROGRAMS\${APPNAME}\Attach.lnk" "$INSTDIR\fbox.exe" "attach" "" ""
   createShortCut "$SMPROGRAMS\${APPNAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "" ""
 
   # Firewall - remove rules (if exists)
-  SimpleFC::AdvRemoveRule "Shx incoming peers (TCP:27000)"
-  SimpleFC::AdvRemoveRule "Shx outgoing peers (TCP:27000)"
-  SimpleFC::AdvRemoveRule "Shx UDP discovery (UDP:27000)"
+  SimpleFC::AdvRemoveRule "Fbox incoming peers (TCP:27000)"
+  SimpleFC::AdvRemoveRule "Fbox outgoing peers (TCP:27000)"
+  SimpleFC::AdvRemoveRule "Fbox UDP discovery (UDP:27000)"
 
   # Firewall - add rules
-  SimpleFC::AdvAddRule "Shx incoming peers (TCP:27000)" ""  6 1 1 2147483647 1 "$INSTDIR\shx.exe" "" "" "Shx" 27000 "" "" ""
-  SimpleFC::AdvAddRule "Shx outgoing peers (TCP:27000)" ""  6 2 1 2147483647 1 "$INSTDIR\shx.exe" "" "" "Shx" "" 27000 "" ""
-  SimpleFC::AdvAddRule "Shx UDP discovery (UDP:27000)" "" 17 2 1 2147483647 1 "$INSTDIR\shx.exe" "" "" "Shx" "" 27000 "" ""
+  SimpleFC::AdvAddRule "Fbox incoming peers (TCP:27000)" ""  6 1 1 2147483647 1 "$INSTDIR\fbox.exe" "" "" "Fbox" 27000 "" "" ""
+  SimpleFC::AdvAddRule "Fbox outgoing peers (TCP:27000)" ""  6 2 1 2147483647 1 "$INSTDIR\fbox.exe" "" "" "Fbox" "" 27000 "" ""
+  SimpleFC::AdvAddRule "Fbox UDP discovery (UDP:27000)" "" 17 2 1 2147483647 1 "$INSTDIR\fbox.exe" "" "" "Fbox" "" 27000 "" ""
 
   # Set default IPC endpoint
-  ${EnvVarUpdate} $0 "SHX_SOCKET" "R" "HKLM" "\\.\pipe\shx.ipc"
-  ${EnvVarUpdate} $0 "SHX_SOCKET" "A" "HKLM" "\\.\pipe\shx.ipc"
+  ${EnvVarUpdate} $0 "FBOX_SOCKET" "R" "HKLM" "\\.\pipe\fbox.ipc"
+  ${EnvVarUpdate} $0 "FBOX_SOCKET" "A" "HKLM" "\\.\pipe\fbox.ipc"
 
   # Add instdir to PATH
   Push "$INSTDIR"
@@ -54,8 +54,8 @@ Var GetInstalledSize.total
 Function GetInstalledSize
   StrCpy $GetInstalledSize.total 0
 
-  ${if} ${SectionIsSelected} ${SHX_IDX}
-    SectionGetSize ${SHX_IDX} $0
+  ${if} ${SectionIsSelected} ${FBOX_IDX}
+    SectionGetSize ${FBOX_IDX} $0
     IntOp $GetInstalledSize.total $GetInstalledSize.total + $0
   ${endif}
 

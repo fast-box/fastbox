@@ -1,8 +1,8 @@
 CRCCheck on
 
-!define GROUPNAME "Sphinx"
-!define APPNAME "Shx"
-!define DESCRIPTION "Official Go implementation of the HPB protocol"
+!define GROUPNAME "FastBox"
+!define APPNAME "Fbox"
+!define DESCRIPTION "Official Go implementation of the FastBox protocol"
 !addplugindir .\
 
 # Require admin rights on NT6+ (When UAC is turned on)
@@ -26,7 +26,7 @@ ${EndIf}
 !macroend
 
 function .onInit
-  # make vars are global for all users since shx is installed global
+  # make vars are global for all users since fbox is installed global
   setShellVarContext all
   !insertmacro VerifyUserIsAdmin
 

@@ -2,21 +2,21 @@
 # with Go source code. If you know what GOPATH is then you probably
 # don't need to bother with make.
 
-.PHONY: shx android ios shx-cross swarm evm all test clean
-.PHONY: shx-linux shx-linux-386 shx-linux-amd64 shx-linux-mips64 shx-linux-mips64le
-.PHONY: shx-linux-arm shx-linux-arm-5 shx-linux-arm-6 shx-linux-arm-7 shx-linux-arm64
-.PHONY: shx-darwin shx-darwin-386 shx-darwin-amd64
-.PHONY: shx-windows shx-windows-386 shx-windows-amd64
+.PHONY: fbox android ios fbox-cross swarm evm all test clean
+.PHONY: fbox-linux fbox-linux-386 fbox-linux-amd64 fbox-linux-mips64 fbox-linux-mips64le
+.PHONY: fbox-linux-arm fbox-linux-arm-5 fbox-linux-arm-6 fbox-linux-arm-7 fbox-linux-arm64
+.PHONY: fbox-darwin fbox-darwin-386 fbox-darwin-amd64
+.PHONY: fbox-windows fbox-windows-386 fbox-windows-amd64
 .PHONY: docker
 
 GOBIN = $(shell pwd)/build/bin
 GOSHX = $(shell pwd)
 GO ?= latest
 
-shx:
-	build/env.sh go run build/ci.go install ./cmd/shx
+fbox:
+	build/env.sh go run build/ci.go install ./cmd/fbox
 	@echo "Done building."
-	@echo "Run \"$(GOBIN)/shx\" to launch shx."
+	@echo "Run \"$(GOBIN)/fbox\" to launch fbox."
 
 promfile:
 	build/env.sh go run build/ci.go install ./consensus/promfile
@@ -24,9 +24,9 @@ promfile:
 	@echo "Run \"$(GOBIN)/promfile\" to launch promfile."
 
 all:
-	build/env.sh go run build/ci.go install ./cmd/shx
+	build/env.sh go run build/ci.go install ./cmd/fbox
 	@echo "Done building."
-	@echo "Run \"$(GOBIN)/shx\" to launch shx."
+	@echo "Run \"$(GOBIN)/fbox\" to launch fbox."
 	
 	build/env.sh go run build/ci.go install ./consensus/promfile
 	@echo "Done building."
@@ -35,12 +35,12 @@ all:
 android:
 	build/env.sh go run build/ci.go aar --local
 	@echo "Done building."
-	@echo "Import \"$(GOBIN)/shx.aar\" to use the library."
+	@echo "Import \"$(GOBIN)/fbox.aar\" to use the library."
 
 ios:
 	build/env.sh go run build/ci.go xcode --local
 	@echo "Done building."
-	@echo "Import \"$(GOBIN)/shx.framework\" to use the library."
+	@echo "Import \"$(GOBIN)/fbox.framework\" to use the library."
 
 test: all
 	build/env.sh go run build/ci.go test
@@ -59,95 +59,95 @@ devtools:
 
 # Cross Compilation Targets (xgo)
 
-shx-cross: shx-linux shx-darwin shx-windows shx-android shx-ios
+fbox-cross: fbox-linux fbox-darwin fbox-windows fbox-android fbox-ios
 	@echo "Full cross compilation done:"
-	@ls -ld $(GOBIN)/shx-*
+	@ls -ld $(GOBIN)/fbox-*
 
-shx-linux: shx-linux-386 shx-linux-amd64 shx-linux-arm shx-linux-mips64 shx-linux-mips64le
+fbox-linux: fbox-linux-386 fbox-linux-amd64 fbox-linux-arm fbox-linux-mips64 fbox-linux-mips64le
 	@echo "Linux cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-*
+	@ls -ld $(GOBIN)/fbox-linux-*
 
-shx-linux-386:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/386 -v ./cmd/shx
+fbox-linux-386:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/386 -v ./cmd/fbox
 	@echo "Linux 386 cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-* | grep 386
+	@ls -ld $(GOBIN)/fbox-linux-* | grep 386
 
-shx-linux-amd64:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/amd64 -v ./cmd/shx
+fbox-linux-amd64:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/amd64 -v ./cmd/fbox
 	@echo "Linux amd64 cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-* | grep amd64
+	@ls -ld $(GOBIN)/fbox-linux-* | grep amd64
 
-shx-linux-arm: shx-linux-arm-5 shx-linux-arm-6 shx-linux-arm-7 shx-linux-arm64
+fbox-linux-arm: fbox-linux-arm-5 fbox-linux-arm-6 fbox-linux-arm-7 fbox-linux-arm64
 	@echo "Linux ARM cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-* | grep arm
+	@ls -ld $(GOBIN)/fbox-linux-* | grep arm
 
-shx-linux-arm-5:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/arm-5 -v ./cmd/shx
+fbox-linux-arm-5:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/arm-5 -v ./cmd/fbox
 	@echo "Linux ARMv5 cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-* | grep arm-5
+	@ls -ld $(GOBIN)/fbox-linux-* | grep arm-5
 
-shx-linux-arm-6:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/arm-6 -v ./cmd/shx
+fbox-linux-arm-6:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/arm-6 -v ./cmd/fbox
 	@echo "Linux ARMv6 cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-* | grep arm-6
+	@ls -ld $(GOBIN)/fbox-linux-* | grep arm-6
 
-shx-linux-arm-7:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/arm-7 -v ./cmd/shx
+fbox-linux-arm-7:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/arm-7 -v ./cmd/fbox
 	@echo "Linux ARMv7 cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-* | grep arm-7
+	@ls -ld $(GOBIN)/fbox-linux-* | grep arm-7
 
-shx-linux-arm64:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/arm64 -v ./cmd/shx
+fbox-linux-arm64:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/arm64 -v ./cmd/fbox
 	@echo "Linux ARM64 cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-* | grep arm64
+	@ls -ld $(GOBIN)/fbox-linux-* | grep arm64
 
-shx-linux-mips:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/mips --ldflags '-extldflags "-static"' -v ./cmd/shx
+fbox-linux-mips:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/mips --ldflags '-extldflags "-static"' -v ./cmd/fbox
 	@echo "Linux MIPS cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-* | grep mips
+	@ls -ld $(GOBIN)/fbox-linux-* | grep mips
 
-shx-linux-mipsle:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/mipsle --ldflags '-extldflags "-static"' -v ./cmd/shx
+fbox-linux-mipsle:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/mipsle --ldflags '-extldflags "-static"' -v ./cmd/fbox
 	@echo "Linux MIPSle cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-* | grep mipsle
+	@ls -ld $(GOBIN)/fbox-linux-* | grep mipsle
 
-shx-linux-mips64:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/mips64 --ldflags '-extldflags "-static"' -v ./cmd/shx
+fbox-linux-mips64:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/mips64 --ldflags '-extldflags "-static"' -v ./cmd/fbox
 	@echo "Linux MIPS64 cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-* | grep mips64
+	@ls -ld $(GOBIN)/fbox-linux-* | grep mips64
 
-shx-linux-mips64le:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/mips64le --ldflags '-extldflags "-static"' -v ./cmd/shx
+fbox-linux-mips64le:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=linux/mips64le --ldflags '-extldflags "-static"' -v ./cmd/fbox
 	@echo "Linux MIPS64le cross compilation done:"
-	@ls -ld $(GOBIN)/shx-linux-* | grep mips64le
+	@ls -ld $(GOBIN)/fbox-linux-* | grep mips64le
 
-shx-darwin: shx-darwin-386 shx-darwin-amd64
+fbox-darwin: fbox-darwin-386 fbox-darwin-amd64
 	@echo "Darwin cross compilation done:"
-	@ls -ld $(GOBIN)/shx-darwin-*
+	@ls -ld $(GOBIN)/fbox-darwin-*
 
-shx-darwin-386:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=darwin/386 -v ./cmd/shx
+fbox-darwin-386:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=darwin/386 -v ./cmd/fbox
 	@echo "Darwin 386 cross compilation done:"
-	@ls -ld $(GOBIN)/shx-darwin-* | grep 386
+	@ls -ld $(GOBIN)/fbox-darwin-* | grep 386
 
-shx-darwin-amd64:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=darwin/amd64 -v ./cmd/shx
+fbox-darwin-amd64:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=darwin/amd64 -v ./cmd/fbox
 	@echo "Darwin amd64 cross compilation done:"
-	@ls -ld $(GOBIN)/shx-darwin-* | grep amd64
+	@ls -ld $(GOBIN)/fbox-darwin-* | grep amd64
 
-shx-windows: shx-windows-386 shx-windows-amd64
+fbox-windows: fbox-windows-386 fbox-windows-amd64
 	@echo "Windows cross compilation done:"
-	@ls -ld $(GOBIN)/shx-windows-*
+	@ls -ld $(GOBIN)/fbox-windows-*
 
-shx-windows-386:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=windows/386 -v ./cmd/shx
+fbox-windows-386:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=windows/386 -v ./cmd/fbox
 	@echo "Windows 386 cross compilation done:"
-	@ls -ld $(GOBIN)/shx-windows-* | grep 386
+	@ls -ld $(GOBIN)/fbox-windows-* | grep 386
 
-shx-windows-amd64:
-	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=windows/amd64 -v ./cmd/shx
+fbox-windows-amd64:
+	build/env.sh go run build/ci.go xgo -- --go=$(GO) --targets=windows/amd64 -v ./cmd/fbox
 	@echo "Windows amd64 cross compilation done:"
-	@ls -ld $(GOBIN)/shx-windows-* | grep amd64
+	@ls -ld $(GOBIN)/fbox-windows-* | grep amd64
 
 docker:
-	docker build -t sphinx/shx:latest .
+	docker build -t fastbox/fbox:latest .
