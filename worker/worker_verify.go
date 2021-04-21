@@ -14,8 +14,8 @@ import (
 	"time"
 )
 
-var handleLocalProof,_ = lru.New(100000)
-var queryCache,_ = lru.New(100000)
+var handleLocalProof, _ = lru.New(100000)
+var queryCache, _ = lru.New(100000)
 
 var cap_block_count uint64 = 5
 
@@ -25,10 +25,10 @@ func (self *worker) updateTxConfirm() {
 	self.updating = true
 	batch := self.chainDb.NewBatch()
 	cnt := 0
-	for hash,_ := range self.txConfirmPool {
+	for hash, _ := range self.txConfirmPool {
 		if receipts, blockHash, blockNumber, err := bc.GetBlockReceiptsByTx(self.chainDb, hash); err == nil {
 			for _, receipt := range receipts {
-				if confirm,ok := self.txConfirmPool[receipt.TxHash]; ok {
+				if confirm, ok := self.txConfirmPool[receipt.TxHash]; ok {
 					cnt++
 					receipt.ConfirmCount += confirm
 					delete(self.txConfirmPool, receipt.TxHash)
@@ -48,11 +48,11 @@ func (self *worker) updateTxConfirm() {
 	self.updating = false
 }
 
-func (self *worker) queryRemoteState(miner common.Address, number *big.Int, timeout int) error{
+func (self *worker) queryRemoteState(miner common.Address, number *big.Int, timeout int) error {
 	var err error
 	// request BatchProofsData from peer
 	msg := types.QueryStateMsg{
-		Qs:types.QueryState{Miner:miner, Number:*number},
+		Qs: types.QueryState{Miner: miner, Number: *number},
 	}
 	msg.Sign, err = self.engine.SignData(msg.Qs.Data())
 	if err != nil {
@@ -66,7 +66,7 @@ func (self *worker) queryRemoteState(miner common.Address, number *big.Int, time
 
 	var peerlock chan struct{}
 	self.mu.Lock()
-	if l,ok := self.peerLockMap[miner]; !ok {
+	if l, ok := self.peerLockMap[miner]; !ok {
 		peerlock = make(chan struct{})
 		self.peerLockMap[miner] = peerlock
 	} else {
@@ -78,10 +78,10 @@ func (self *worker) queryRemoteState(miner common.Address, number *big.Int, time
 	defer timer.Stop()
 	select {
 	case <-peerlock:
-		log.Debug("getBatchProofs after <-peerlock","peer is ", miner)
+		log.Debug("getBatchProofs after <-peerlock", "peer is ", miner)
 		return nil
 	case <-timer.C:
-		log.Debug("getBatchProofs timeout ","peer is ", miner)
+		log.Debug("getBatchProofs timeout ", "peer is ", miner)
 		self.peerLockMap[miner] = nil
 		return errors.New("timeout")
 	}
@@ -104,13 +104,13 @@ func (self *worker) dealProofEvent(ev *types.WorkProofMsg, sender common.Address
 	}
 
 	confirm := types.ConfirmMsg{
-		Confirm:types.ProofConfirm{Signature:ev.Proof.Sign, Confirm:false},
+		Confirm: types.ProofConfirm{Signature: ev.Proof.Sign, Confirm: false},
 	}
 	routEv := bc.RoutConfirmEvent{confirm}
 
 	if !self.engine.VerifyState(self.coinbase, pastLocalRoot, &ev.Proof) {
-		if routEv.ConfirmMsg.Sign,err = self.engine.SignData(routEv.ConfirmMsg.Confirm.Data()); err != nil {
-			log.Debug("worker deal proof event, sign confirm failed","err", err)
+		if routEv.ConfirmMsg.Sign, err = self.engine.SignData(routEv.ConfirmMsg.Confirm.Data()); err != nil {
+			log.Debug("worker deal proof event, sign confirm failed", "err", err)
 			return
 		}
 		self.mux.Post(routEv)
@@ -124,16 +124,16 @@ func (self *worker) dealProofEvent(ev *types.WorkProofMsg, sender common.Address
 		if evnum == 1 {
 			// the first block from peer, lastHash is genesis.ProofHash
 			genesis := self.chain.GetHeaderByNumber(0)
-			peerProofState = &types.ProofState{Addr:sender, Num:0, Root:genesis.ProofHash}
+			peerProofState = &types.ProofState{Addr: sender, Num: 0, Root: genesis.ProofHash}
 		} else {
 			// request BatchProofsData from peer
-			log.Debug("worker goto queryRemoteState", "from ", sender, "number",evnum - 1)
+			log.Debug("worker goto queryRemoteState", "from ", sender, "number", evnum-1)
 
 			if err := self.queryRemoteState(sender, big.NewInt(0).Sub(&ev.Proof.Number, big.NewInt(1)), 30); err == nil {
 				peerProofState = bc.GetPeerProof(self.chainDb, sender)
 			} else {
-				if routEv.ConfirmMsg.Sign,err = self.engine.SignData(routEv.ConfirmMsg.Confirm.Data()); err != nil {
-					log.Debug("worker deal proof event, sign confirm failed","err", err)
+				if routEv.ConfirmMsg.Sign, err = self.engine.SignData(routEv.ConfirmMsg.Confirm.Data()); err != nil {
+					log.Debug("worker deal proof event, sign confirm failed", "err", err)
 					return
 				}
 				self.mux.Post(routEv)
@@ -148,15 +148,15 @@ func (self *worker) dealProofEvent(ev *types.WorkProofMsg, sender common.Address
 			snum := peerProofState.Num + 1
 			if snum == evnum {
 				log.Debug("worker verify proof proofhash failed")
-				if routEv.ConfirmMsg.Sign,err = self.engine.SignData(routEv.ConfirmMsg.Confirm.Data()); err != nil {
-					log.Debug("worker deal proof event, sign confirm failed","err", err)
+				if routEv.ConfirmMsg.Sign, err = self.engine.SignData(routEv.ConfirmMsg.Confirm.Data()); err != nil {
+					log.Debug("worker deal proof event, sign confirm failed", "err", err)
 					return
 				}
 				self.mux.Post(routEv)
 				return
 			} else {
 
-				log.Debug("worker verify proof", "query remote state from", sender, "number",evnum-1)
+				log.Debug("worker verify proof", "query remote state from", sender, "number", evnum-1)
 				// request missed proof.
 				err := self.queryRemoteState(sender, big.NewInt(int64(evnum-1)), 30)
 				if err != nil {
@@ -166,7 +166,7 @@ func (self *worker) dealProofEvent(ev *types.WorkProofMsg, sender common.Address
 			}
 		} else {
 			// update peer's proof in local.
-			updateProof := types.ProofState{Addr:sender, Num:ev.Proof.Number.Uint64(), Root:newroot}
+			updateProof := types.ProofState{Addr: sender, Num: ev.Proof.Number.Uint64(), Root: newroot}
 			bc.WritePeerProof(self.chainDb, sender, updateProof)
 
 			routEv.ConfirmMsg.Confirm.Confirm = true
@@ -174,11 +174,11 @@ func (self *worker) dealProofEvent(ev *types.WorkProofMsg, sender common.Address
 		}
 	}
 
-	if routEv.ConfirmMsg.Sign,err = self.engine.SignData(routEv.ConfirmMsg.Confirm.Data()); err != nil {
-		log.Debug("worker deal proof event, sign confirm failed","err", err)
+	if routEv.ConfirmMsg.Sign, err = self.engine.SignData(routEv.ConfirmMsg.Confirm.Data()); err != nil {
+		log.Debug("worker deal proof event, sign confirm failed", "err", err)
 		return
 	}
-	log.Debug("worker post proof confirm ","confirm is ", routEv.ConfirmMsg.Confirm.Confirm)
+	log.Debug("worker post proof confirm ", "confirm is ", routEv.ConfirmMsg.Confirm.Confirm)
 	self.mux.Post(routEv)
 
 	if routEv.ConfirmMsg.Confirm.Confirm == false {
@@ -191,7 +191,7 @@ func (self *worker) dealProofEvent(ev *types.WorkProofMsg, sender common.Address
 	self.txMu.Lock()
 	for _, tx := range ev.Proof.Txs {
 		// add to unconfirmed tx.
-		if v,ok := self.txConfirmPool[tx.Hash()]; ok {
+		if v, ok := self.txConfirmPool[tx.Hash()]; ok {
 			v += 1
 			self.txConfirmPool[tx.Hash()] = v
 			//log.Debug("worker update tx map", "hash", tx.Hash(), "count", v)
@@ -208,8 +208,8 @@ func (self *worker) dealConfirm(ev *types.ConfirmMsg, sender common.Address) {
 	// 2. calc response count
 	// 3. if count > peers/2 , final mined.
 
-	if _,ok := handleLocalProof.Get(ev.Confirm.Signature.Hash()); ok {
-		log.Debug("SHX profile","get confirm for Proof ", ev.Confirm.Signature.Hash(),"from minenode", sender, "at time ",time.Now().UnixNano()/1000/1000)
+	if _, ok := handleLocalProof.Get(ev.Confirm.Signature.Hash()); ok {
+		log.Debug("SHX profile", "get confirm for Proof ", ev.Confirm.Signature.Hash(), "from minenode", sender, "at time ", time.Now().UnixNano()/1000/1000)
 		self.unconfirm_mine.Confirm(sender, &ev.Confirm)
 	}
 }
@@ -219,7 +219,7 @@ func (self *worker) dealQueryState(ev *types.QueryStateMsg, sender common.Addres
 	var root common.Hash
 	if ev.Qs.Miner != self.coinbase {
 		pstate := bc.GetPeerProof(self.chainDb, ev.Qs.Miner)
-		if pstate.Num == ev.Qs.Number.Uint64() {
+		if pstate != nil && pstate.Num == ev.Qs.Number.Uint64() {
 			root = pstate.Root
 		} else {
 			return
@@ -227,18 +227,18 @@ func (self *worker) dealQueryState(ev *types.QueryStateMsg, sender common.Addres
 	} else {
 		h := self.chain.GetHeaderByNumber(ev.Qs.Number.Uint64())
 		if h == nil {
-			log.Debug("worker deal query state, get header is nil","number", ev.Qs.Number)
+			log.Debug("worker deal query state, get header is nil", "number", ev.Qs.Number)
 			return
 		} else {
-			log.Debug("dealQueryState ", "from", sender,"num",ev.Qs.Number.Uint64())
+			log.Debug("dealQueryState ", "from", sender, "num", ev.Qs.Number.Uint64())
 			root = h.ProofHash
 		}
 	}
 	msg := types.ResponseStateMsg{
-		Rs:types.ResponseState{
-			Querier:sender,
-			Number:ev.Qs.Number,
-			Root:root,
+		Rs: types.ResponseState{
+			Querier: sender,
+			Number:  ev.Qs.Number,
+			Root:    root,
 		},
 	}
 
@@ -255,13 +255,13 @@ func (self *worker) dealResponseState(ev *types.ResponseStateMsg, sender common.
 		// the message is not for me, just broadcast to other.
 		return
 	}
-	q,exist := queryCache.Get(sender)
+	q, exist := queryCache.Get(sender)
 	if !exist {
 		return
 	}
 	qs := q.(types.QueryStateMsg)
 	if ev.Rs.Number.Uint64() != qs.Qs.Number.Uint64() {
-		log.Debug("worker got number unmatched response state","from ", sender, "number",ev.Rs.Number)
+		log.Debug("worker got number unmatched response state", "from ", sender, "number", ev.Rs.Number)
 		return
 	}
 
@@ -272,13 +272,13 @@ func (self *worker) dealResponseState(ev *types.ResponseStateMsg, sender common.
 	//}
 	//
 	peerstate := types.ProofState{
-		Addr:sender,
-		Num:ev.Rs.Number.Uint64(),
-		Root:ev.Rs.Root,
+		Addr: sender,
+		Num:  ev.Rs.Number.Uint64(),
+		Root: ev.Rs.Root,
 	}
 
 	bc.WritePeerProof(self.chainDb, sender, peerstate)
-	log.Debug("PeerProof update","addr", sender,"to",peerstate.Num)
+	log.Debug("PeerProof update", "addr", sender, "to", peerstate.Num)
 
 	self.mu.Lock()
 	ch := self.peerLockMap[sender]
@@ -287,8 +287,3 @@ func (self *worker) dealResponseState(ev *types.ResponseStateMsg, sender common.
 		ch <- struct{}{}
 	}
 }
-
-
-
-
-

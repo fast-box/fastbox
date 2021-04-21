@@ -429,6 +429,7 @@ func GetPeerProof(db DatabaseReader, addr common.Address) *types.ProofState {
 
 	data, _ := db.Get(key)
 	if len(data) == 0 {
+		log.Debug("not found peerProof with ", "addrHash", hash)
 		return nil
 	}
 	var proof types.ProofState
