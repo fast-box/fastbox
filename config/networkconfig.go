@@ -61,7 +61,7 @@ var DefaultNTConfig = NetworkConfig{
 }
 
 var MainnetBootnodes = []string{
-	"hnode://9b455989a14921d589978c8ee22f205a7ae2ec80567c772d05e0d70d14eba923659006d8387faf284e72283403ef3b2547f8cd2c11ce78bcc58117ab59109c91@127.0.0.1:27000",
+	"hnode://7644221a9e46dab6439e001ed2b2a6b30cc98eff7ff398cadf64d5ab0552bcc0d58e0391b90775c7f3c87e81e17b9482290df79f4f7c95047830ac64bfb6d65e@221.194.47.245:27000",
 }
 
 // TestnetBootnodes are the hnode URLs of the P2P bootstrap nodes running on the
