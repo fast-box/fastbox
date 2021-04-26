@@ -82,7 +82,9 @@ func (self *worker) queryRemoteState(miner common.Address, number *big.Int, time
 		return nil
 	case <-timer.C:
 		log.Debug("getBatchProofs timeout ", "peer is ", miner)
+		self.mu.Lock()
 		self.peerLockMap[miner] = nil
+		self.mu.Unlock()
 		return errors.New("timeout")
 	}
 }
