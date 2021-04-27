@@ -19,4 +19,4 @@ RUN apk update \
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /fastbox/build/bin/fbox /usr/local/bin/
 EXPOSE 8600 8601 27000 27000/udp
-ENTRYPOINT ["shx"]
+ENTRYPOINT ["fbox"]
