@@ -1,18 +1,18 @@
-// Copyright 2018 The sphinx Authors
-// Modified based on go-ethereum, which Copyright (C) 2014 The go-ethereum Authors.
+// Copyright 2016 The go-ethereum Authors
+// This file is part of the go-ethereum library.
 //
-// The sphinx is free software: you can redistribute it and/or modify
+// The go-ethereum library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The sphinx is distributed in the hope that it will be useful,
+// The go-ethereum library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
 // Package debug interfaces Go runtime debugging facilities.
 // This package is mostly glue code making these facilities available
@@ -21,6 +21,7 @@
 package debug
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"os"
@@ -33,7 +34,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shx-project/sphinx/common/log"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 // Handler is the global debugging handler.
@@ -140,10 +141,9 @@ func (h *HandlerT) GoTrace(file string, nsec uint) error {
 	return nil
 }
 
-// BlockProfile turns on CPU profiling for nsec seconds and writes
-// profile data to file. It uses a profile rate of 1 for most accurate
-// information. If a different rate is desired, set the rate
-// and write the profile manually.
+// BlockProfile turns on goroutine profiling for nsec seconds and writes profile data to
+// file. It uses a profile rate of 1 for most accurate information. If a different rate is
+// desired, set the rate and write the profile manually.
 func (*HandlerT) BlockProfile(file string, nsec uint) error {
 	runtime.SetBlockProfileRate(1)
 	time.Sleep(time.Duration(nsec) * time.Second)
@@ -162,6 +162,26 @@ func (*HandlerT) WriteBlockProfile(file string) error {
 	return writeProfile("block", file)
 }
 
+// MutexProfile turns on mutex profiling for nsec seconds and writes profile data to file.
+// It uses a profile rate of 1 for most accurate information. If a different rate is
+// desired, set the rate and write the profile manually.
+func (*HandlerT) MutexProfile(file string, nsec uint) error {
+	runtime.SetMutexProfileFraction(1)
+	time.Sleep(time.Duration(nsec) * time.Second)
+	defer runtime.SetMutexProfileFraction(0)
+	return writeProfile("mutex", file)
+}
+
+// SetMutexProfileFraction sets the rate of mutex profiling.
+func (*HandlerT) SetMutexProfileFraction(rate int) {
+	runtime.SetMutexProfileFraction(rate)
+}
+
+// WriteMutexProfile writes a goroutine blocking profile to the given file.
+func (*HandlerT) WriteMutexProfile(file string) error {
+	return writeProfile("mutex", file)
+}
+
 // WriteMemProfile writes an allocation profile to the given file.
 // Note that the profiling rate cannot be set through the API,
 // it must be set on the command line.
@@ -171,12 +191,12 @@ func (*HandlerT) WriteMemProfile(file string) error {
 
 // Stacks returns a printed representation of the stacks of all goroutines.
 func (*HandlerT) Stacks() string {
-	buf := make([]byte, 1024*1024)
-	buf = buf[:runtime.Stack(buf, true)]
-	return string(buf)
+	buf := new(bytes.Buffer)
+	pprof.Lookup("goroutine").WriteTo(buf, 2)
+	return buf.String()
 }
 
-// FreeOSMemory returns unused memory to the OS.
+// FreeOSMemory forces a garbage collection.
 func (*HandlerT) FreeOSMemory() {
 	debug.FreeOSMemory()
 }

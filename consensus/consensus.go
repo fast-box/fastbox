@@ -1,38 +1,41 @@
-// Copyright 2018 The sphinx Authors
-// Modified based on go-ethereum, which Copyright (C) 2014 The go-ethereum Authors.
+// Copyright 2017 The go-ethereum Authors
+// This file is part of the go-ethereum library.
 //
-// The sphinx is free software: you can redistribute it and/or modify
+// The go-ethereum library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The sphinx is distributed in the hope that it will be useful,
+// The go-ethereum library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package consensus implements different Shx consensus engines.
+// Package consensus implements different Ethereum consensus engines.
 package consensus
 
 import (
-	"github.com/shx-project/sphinx/blockchain/state"
-	"github.com/shx-project/sphinx/blockchain/types"
-	"github.com/shx-project/sphinx/common"
-	"gopkg.in/fatih/set.v0"
+	"math/big"
 
-	//"github.com/shx-project/sphinx/common/constant"
-	"github.com/shx-project/sphinx/config"
-	"github.com/shx-project/sphinx/network/rpc"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/params"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
-// ChainReader defines a small collection of methods needed to access the local
-// blockchain during header and/or uncle verification.
-type ChainReader interface {
+var (
+	FeeRecoder = common.HexToAddress("0xffffffffffffffffffffffffffffffffffffffff")
+)
+
+// ChainHeaderReader defines a small collection of methods needed to access the local
+// blockchain during header verification.
+type ChainHeaderReader interface {
 	// Config retrieves the blockchain's chain configuration.
-	Config() *config.ChainConfig
+	Config() *params.ChainConfig
 
 	// CurrentHeader retrieves the current header from the local chain.
 	CurrentHeader() *types.Header
@@ -43,42 +46,22 @@ type ChainReader interface {
 	// GetHeaderByNumber retrieves a block header from the database by number.
 	GetHeaderByNumber(number uint64) *types.Header
 
-	// GetHeaderByash retrieves a block header from the database by its hash.
+	// GetHeaderByHash retrieves a block header from the database by its hash.
 	GetHeaderByHash(hash common.Hash) *types.Header
+}
+
+// ChainReader defines a small collection of methods needed to access the local
+// blockchain during header and/or uncle verification.
+type ChainReader interface {
+	ChainHeaderReader
 
 	// GetBlock retrieves a block from the database by hash and number.
 	GetBlock(hash common.Hash, number uint64) *types.Block
-
-	StateAt(root common.Hash) (*state.StateDB, error)
 }
 
 // Engine is an algorithm agnostic consensus engine.
 type Engine interface {
-	// generate
-	PrepareBlockHeader(chain ChainReader, header *types.Header, state *state.StateDB) error
-
-	// GerateProof return a workproof
-	GenerateProof(chain ChainReader, header *types.Header, parent *types.Header, txs types.Transactions, proofs types.ProofStates) (*types.WorkProof, error)
-	SignData(data []byte) ([]byte, error)
-	RecoverSender(data []byte, signature []byte) (common.Address, error)
-
-	// VerifyProof check the proof from peer is correct, and return new hash.
-	VerifyProof(addr common.Address, lastHash common.Hash, proof *types.WorkProof) (common.Hash, error)
-	VerifyState(coinbase common.Address, history *set.Set, proof *types.WorkProof) bool
-	VerifyProofQuick(lasthash common.Hash, txroot common.Hash, newHash common.Hash) error
-
-	// Finalize runs any post-transaction state modifications
-	// and assembles the final block.
-	// Note: The block header and state database might be updated to reflect any
-	// consensus rules that happen at finalization.
-	Finalize(chain ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction,
-		proofs []*types.ProofState, receipts []*types.Receipt) (*types.Block, error)
-
-	// Seal generates a new block for the given input block with the local miner's
-	// seal place on top.
-	GenBlockWithSig(chain ChainReader, block *types.Block) (*types.Block, error)
-
-	// Author retrieves the Shx address of the account that minted the given
+	// Author retrieves the Ethereum address of the account that minted the given
 	// block, which may be different from the header's coinbase if a consensus
 	// engine is based on signatures.
 	Author(header *types.Header) (common.Address, error)
@@ -86,14 +69,91 @@ type Engine interface {
 	// VerifyHeader checks whether a header conforms to the consensus rules of a
 	// given engine. Verifying the seal may be done optionally here, or explicitly
 	// via the VerifySeal method.
-	VerifyHeader(chain ChainReader, header *types.Header, seal bool, mode config.SyncMode) error
+	VerifyHeader(chain ChainHeaderReader, header *types.Header, seal bool) error
 
 	// VerifyHeaders is similar to VerifyHeader, but verifies a batch of headers
 	// concurrently. The method returns a quit channel to abort the operations and
 	// a results channel to retrieve the async verifications (the order is that of
 	// the input slice).
-	VerifyHeaders(chain ChainReader, headers []*types.Header, seals []bool, mode config.SyncMode) (chan<- struct{}, <-chan error)
+	VerifyHeaders(chain ChainHeaderReader, headers []*types.Header, seals []bool) (chan<- struct{}, <-chan error)
+
+	// VerifyUncles verifies that the given block's uncles conform to the consensus
+	// rules of a given engine.
+	VerifyUncles(chain ChainReader, block *types.Block) error
+
+	// VerifySeal checks whether the crypto seal on a header is valid according to
+	// the consensus rules of the given engine.
+	VerifySeal(chain ChainHeaderReader, header *types.Header) error
+
+	// Prepare initializes the consensus fields of a block header according to the
+	// rules of a particular engine. The changes are executed inline.
+	Prepare(chain ChainHeaderReader, header *types.Header) error
+
+	// Finalize runs any post-transaction state modifications (e.g. block rewards)
+	// but does not assemble the block.
+	//
+	// Note: The block header and state database might be updated to reflect any
+	// consensus rules that happen at finalization (e.g. block rewards).
+	Finalize(chain ChainHeaderReader, header *types.Header, state *state.StateDB, txs *[]*types.Transaction,
+		uncles []*types.Header, receipts *[]*types.Receipt, systemTxs []*types.Transaction) error
+
+	// FinalizeAndAssemble runs any post-transaction state modifications (e.g. block
+	// rewards) and assembles the final block.
+	//
+	// Note: The block header and state database might be updated to reflect any
+	// consensus rules that happen at finalization (e.g. block rewards).
+	FinalizeAndAssemble(chain ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction,
+		uncles []*types.Header, receipts []*types.Receipt) (*types.Block, []*types.Receipt, error)
+
+	// Seal generates a new sealing request for the given input block and pushes
+	// the result into the given channel.
+	//
+	// Note, the method returns immediately and will send the result async. More
+	// than one result may also be returned depending on the consensus algorithm.
+	Seal(chain ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error
+
+	// SealHash returns the hash of a block prior to it being sealed.
+	SealHash(header *types.Header) common.Hash
+
+	// CalcDifficulty is the difficulty adjustment algorithm. It returns the difficulty
+	// that a new block should have.
+	CalcDifficulty(chain ChainHeaderReader, time uint64, parent *types.Header) *big.Int
 
 	// APIs returns the RPC APIs this consensus engine provides.
-	APIs(chain ChainReader) []rpc.API
+	APIs(chain ChainHeaderReader) []rpc.API
+
+	// Close terminates any background threads maintained by the consensus engine.
+	Close() error
+}
+
+// PoW is a consensus engine based on proof-of-work.
+type PoW interface {
+	Engine
+
+	// Hashrate returns the current mining hashrate of a PoW consensus engine.
+	Hashrate() float64
+}
+
+// PoSA is a consensus engine based on proof-of-stake-authority.
+type PoSA interface {
+	Engine
+
+	// PreHandle runs any pre-transaction state modifications (e.g. apply hard fork rules).
+	//
+	// Note: The block header and state database might be updated to reflect any
+	// consensus rules that happen at pre-handling.
+	PreHandle(chain ChainHeaderReader, header *types.Header, state *state.StateDB) error
+
+	// IsSysTransaction checks whether a specific transaction is a system transaction.
+	IsSysTransaction(tx *types.Transaction, header *types.Header) (bool, error)
+
+	// CanCreate determines where a given address can create a new contract.
+	CanCreate(state StateReader, addr common.Address, height *big.Int) bool
+
+	// ValidateTx do a consensus-related validation on the given transaction at the given header and state.
+	ValidateTx(tx *types.Transaction, header *types.Header, parentState *state.StateDB) error
+}
+
+type StateReader interface {
+	GetState(addr common.Address, hash common.Hash) common.Hash
 }

@@ -603,14 +603,17 @@ module.exports = SolidityTypeBytes;
 },{"./formatters":9,"./type":14}],7:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -887,14 +890,17 @@ module.exports = SolidityTypeDynamicBytes;
 },{"./formatters":9,"./type":14}],9:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -1015,7 +1021,7 @@ var formatOutputInt = function (param) {
     var value = param.staticPart() || "0";
 
     // check if it's negative number
-    // it it is, return two's complement
+    // it is, return two's complement
     if (signedIsNegative(value)) {
         return new BigNumber(value, 16).minus(new BigNumber('ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 16)).minus(1);
     }
@@ -1172,14 +1178,17 @@ module.exports = SolidityTypeInt;
 },{"./formatters":9,"./type":14}],11:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -1715,14 +1724,17 @@ if (typeof XMLHttpRequest === 'undefined') {
 },{}],18:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -1756,27 +1768,27 @@ var ETH_UNITS = [
     'Gwei',
     'szabo',
     'finney',
-    'femtohpb',
-    'picohpb',
-    'nanohpb',
-    'microhpb',
-    'millihpb',
+    'femtoether',
+    'picoether',
+    'nanoether',
+    'microether',
+    'milliether',
     'nano',
     'micro',
     'milli',
-    'hpb',
+    'ether',
     'grand',
-    'Mhpb',
-    'Ghpb',
-    'Thpb',
-    'Phpb',
-    'Ehpb',
-    'Zhpb',
-    'Yhpb',
-    'Nhpb',
-    'Dhpb',
-    'Vhpb',
-    'Uhpb'
+    'Mether',
+    'Gether',
+    'Tether',
+    'Pether',
+    'Eether',
+    'Zether',
+    'Yether',
+    'Nether',
+    'Dether',
+    'Vether',
+    'Uether'
 ];
 
 module.exports = {
@@ -1793,14 +1805,17 @@ module.exports = {
 },{"bignumber.js":"bignumber.js"}],19:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -1830,14 +1845,17 @@ module.exports = function (value, options) {
 },{"crypto-js":59,"crypto-js/sha3":80}],20:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -1866,33 +1884,33 @@ var sha3 = require('./sha3.js');
 var utf8 = require('utf8');
 
 var unitMap = {
-    'nohpb':      '0',
+    'noether':      '0',
     'wei':          '1',
     'kwei':         '1000',
     'Kwei':         '1000',
     'babbage':      '1000',
-    'femtohpb':   '1000',
+    'femtoether':   '1000',
     'mwei':         '1000000',
     'Mwei':         '1000000',
     'lovelace':     '1000000',
-    'picohpb':    '1000000',
+    'picoether':    '1000000',
     'gwei':         '1000000000',
     'Gwei':         '1000000000',
     'shannon':      '1000000000',
-    'nanohpb':    '1000000000',
+    'nanoether':    '1000000000',
     'nano':         '1000000000',
     'szabo':        '1000000000000',
-    'microhpb':   '1000000000000',
+    'microether':   '1000000000000',
     'micro':        '1000000000000',
     'finney':       '1000000000000000',
-    'millihpb':    '1000000000000000',
+    'milliether':    '1000000000000000',
     'milli':         '1000000000000000',
-    'hpb':        '1000000000000000000',
-    'khpb':       '1000000000000000000000',
+    'ether':        '1000000000000000000',
+    'kether':       '1000000000000000000000',
     'grand':        '1000000000000000000000',
-    'mhpb':       '1000000000000000000000000',
-    'shx':       '1000000000000000000000000000',
-    'thpb':       '1000000000000000000000000000000'
+    'mether':       '1000000000000000000000000',
+    'gether':       '1000000000000000000000000000',
+    'tether':       '1000000000000000000000000000000'
 };
 
 /**
@@ -2106,12 +2124,12 @@ var toHex = function (val) {
  * Returns value of unit in Wei
  *
  * @method getValueOfUnit
- * @param {String} unit the unit to convert to, default shx
+ * @param {String} unit the unit to convert to, default ether
  * @returns {BigNumber} value of the unit (in Wei)
  * @throws error if the unit is not correct:w
  */
 var getValueOfUnit = function (unit) {
-    unit = unit ? unit.toLowerCase() : 'shx';
+    unit = unit ? unit.toLowerCase() : 'ether';
     var unitValue = unitMap[unit];
     if (unitValue === undefined) {
         throw new Error('This unit doesn\'t exists, please use the one of the following units' + JSON.stringify(unitMap, null, 2));
@@ -2120,24 +2138,24 @@ var getValueOfUnit = function (unit) {
 };
 
 /**
- * Takes a number of wei and converts it to any other shx unit.
+ * Takes a number of wei and converts it to any other ether unit.
  *
  * Possible units are:
  *   SI Short   SI Full        Effigy       Other
- * - kwei       femtohpb     babbage
- * - mwei       picohpb      lovelace
- * - gwei       nanohpb      shannon      nano
- * - --         microhpb     szabo        micro
- * - --         millihpb     finney       milli
- * - shx      --             --
- * - khpb                    --           grand
- * - mhpb
- * - shx
- * - thpb
+ * - kwei       femtoether     babbage
+ * - mwei       picoether      lovelace
+ * - gwei       nanoether      shannon      nano
+ * - --         microether     szabo        micro
+ * - --         milliether     finney       milli
+ * - ether      --             --
+ * - kether                    --           grand
+ * - mether
+ * - gether
+ * - tether
  *
  * @method fromWei
  * @param {Number|String} number can be a number, number string or a HEX of a decimal
- * @param {String} unit the unit to convert to, default shx
+ * @param {String} unit the unit to convert to, default ether
  * @return {String|Object} When given a BigNumber object it returns one as well, otherwise a number
 */
 var fromWei = function(number, unit) {
@@ -2151,21 +2169,21 @@ var fromWei = function(number, unit) {
  *
  * Possible units are:
  *   SI Short   SI Full        Effigy       Other
- * - kwei       femtohpb     babbage
- * - mwei       picohpb      lovelace
- * - gwei       nanohpb      shannon      nano
- * - --         microhpb     szabo        micro
- * - --         microhpb     szabo        micro
- * - --         millihpb     finney       milli
- * - shx      --             --
- * - khpb                    --           grand
- * - mhpb
- * - shx
- * - thpb
+ * - kwei       femtoether     babbage
+ * - mwei       picoether      lovelace
+ * - gwei       nanoether      shannon      nano
+ * - --         microether     szabo        micro
+ * - --         microether     szabo        micro
+ * - --         milliether     finney       milli
+ * - ether      --             --
+ * - kether                    --           grand
+ * - mether
+ * - gether
+ * - tether
  *
  * @method toWei
  * @param {Number|String|BigNumber} number can be a number, number string or a HEX of a decimal
- * @param {String} unit the unit to convert from, default shx
+ * @param {String} unit the unit to convert from, default ether
  * @return {String|Object} When given a BigNumber object it returns one as well, otherwise a number
 */
 var toWei = function(number, unit) {
@@ -2175,7 +2193,7 @@ var toWei = function(number, unit) {
 };
 
 /**
- * Takes an input and transforms it into an bignumber
+ * Takes an input and transforms it into a bignumber
  *
  * @method toBigNumber
  * @param {Number|String|BigNumber} a number, string, HEX string or BigNumber
@@ -2213,7 +2231,7 @@ var toTwosComplement = function (number) {
  * Checks if the given string is strictly an address
  *
  * @method isStrictAddress
- * @param {String} address the given HEX adress
+ * @param {String} address the given HEX address
  * @return {Boolean}
 */
 var isStrictAddress = function (address) {
@@ -2224,7 +2242,7 @@ var isStrictAddress = function (address) {
  * Checks if the given string is an address
  *
  * @method isAddress
- * @param {String} address the given HEX adress
+ * @param {String} address the given HEX address
  * @return {Boolean}
 */
 var isAddress = function (address) {
@@ -2232,7 +2250,7 @@ var isAddress = function (address) {
         // check if it has the basic requirements of an address
         return false;
     } else if (/^(0x)?[0-9a-f]{40}$/.test(address) || /^(0x)?[0-9A-F]{40}$/.test(address)) {
-        // If it's all small caps or all all caps, return true
+        // If it's all small caps or all caps, return true
         return true;
     } else {
         // Otherwise check each case
@@ -2244,7 +2262,7 @@ var isAddress = function (address) {
  * Checks if the given string is a checksummed address
  *
  * @method isChecksumAddress
- * @param {String} address the given HEX adress
+ * @param {String} address the given HEX address
  * @return {Boolean}
 */
 var isChecksumAddress = function (address) {
@@ -2267,7 +2285,7 @@ var isChecksumAddress = function (address) {
  * Makes a checksum address
  *
  * @method toChecksumAddress
- * @param {String} address the given HEX adress
+ * @param {String} address the given HEX address
  * @return {String}
 */
 var toChecksumAddress = function (address) {
@@ -2391,7 +2409,7 @@ var isJson = function (str) {
 };
 
 /**
- * Returns true if given string is a valid shx block header bloom.
+ * Returns true if given string is a valid Ethereum block header bloom.
  *
  * @method isBloom
  * @param {String} hex encoded bloom filter
@@ -2463,14 +2481,17 @@ module.exports={
 },{}],22:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -2487,7 +2508,7 @@ module.exports={
 
 var RequestManager = require('./web3/requestmanager');
 var Iban = require('./web3/iban');
-var Shx = require('./web3/methods/shx');
+var Eth = require('./web3/methods/eth');
 var DB = require('./web3/methods/db');
 var Shh = require('./web3/methods/shh');
 var Net = require('./web3/methods/net');
@@ -2509,7 +2530,7 @@ var BigNumber = require('bignumber.js');
 function Web3 (provider) {
     this._requestManager = new RequestManager(provider);
     this.currentProvider = provider;
-    this.shx = new Shx(this);
+    this.eth = new Eth(this);
     this.db = new DB(this);
     this.shh = new Shh(this);
     this.net = new Net(this);
@@ -2588,8 +2609,8 @@ var properties = function () {
             inputFormatter: utils.toDecimal
         }),
         new Property({
-            name: 'version.shx',
-            getter: 'shx_protocolVersion',
+            name: 'version.ethereum',
+            getter: 'eth_protocolVersion',
             inputFormatter: utils.toDecimal
         }),
         new Property({
@@ -2611,17 +2632,20 @@ Web3.prototype.createBatch = function () {
 module.exports = Web3;
 
 
-},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/shx":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
+},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/eth":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -2687,7 +2711,7 @@ AllSolidityEvents.prototype.execute = function (options, callback) {
 
     var o = this.encode(options);
     var formatter = this.decode.bind(this);
-    return new Filter(o, 'shx', this._requestManager, watches.shx(), formatter, callback);
+    return new Filter(o, 'eth', this._requestManager, watches.eth(), formatter, callback);
 };
 
 AllSolidityEvents.prototype.attachToContract = function (contract) {
@@ -2701,14 +2725,17 @@ module.exports = AllSolidityEvents;
 },{"../utils/sha3":19,"../utils/utils":20,"./event":27,"./filter":29,"./formatters":30,"./methods/watches":43}],24:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -2766,14 +2793,17 @@ module.exports = Batch;
 },{"./errors":26,"./jsonrpc":35}],25:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -2819,7 +2849,7 @@ var addFunctionsToContract = function (contract) {
     contract.abi.filter(function (json) {
         return json.type === 'function';
     }).map(function (json) {
-        return new SolidityFunction(contract._shx, json, contract.address);
+        return new SolidityFunction(contract._eth, json, contract.address);
     }).forEach(function (f) {
         f.attachToContract(contract);
     });
@@ -2837,11 +2867,11 @@ var addEventsToContract = function (contract) {
         return json.type === 'event';
     });
 
-    var All = new AllEvents(contract._shx._requestManager, events, contract.address);
+    var All = new AllEvents(contract._eth._requestManager, events, contract.address);
     All.attachToContract(contract);
 
     events.map(function (json) {
-        return new SolidityEvent(contract._shx._requestManager, json, contract.address);
+        return new SolidityEvent(contract._eth._requestManager, json, contract.address);
     }).forEach(function (e) {
         e.attachToContract(contract);
     });
@@ -2861,7 +2891,7 @@ var checkForContractAddress = function(contract, callback){
         callbackFired = false;
 
     // wait for receipt
-    var filter = contract._shx.filter('latest', function(e){
+    var filter = contract._eth.filter('latest', function(e){
         if (!e && !callbackFired) {
             count++;
 
@@ -2879,10 +2909,10 @@ var checkForContractAddress = function(contract, callback){
 
             } else {
 
-                contract._shx.getTransactionReceipt(contract.transactionHash, function(e, receipt){
+                contract._eth.getTransactionReceipt(contract.transactionHash, function(e, receipt){
                     if(receipt && !callbackFired) {
 
-                        contract._shx.getCode(receipt.contractAddress, function(e, code){
+                        contract._eth.getCode(receipt.contractAddress, function(e, code){
                             /*jshint maxcomplexity: 6 */
 
                             if(callbackFired || !code)
@@ -2925,8 +2955,8 @@ var checkForContractAddress = function(contract, callback){
  * @method ContractFactory
  * @param {Array} abi
  */
-var ContractFactory = function (shx, abi) {
-    this.shx = shx;
+var ContractFactory = function (eth, abi) {
+    this.eth = eth;
     this.abi = abi;
 
     /**
@@ -2942,7 +2972,7 @@ var ContractFactory = function (shx, abi) {
     this.new = function () {
         /*jshint maxcomplexity: 7 */
         
-        var contract = new Contract(this.shx, this.abi);
+        var contract = new Contract(this.eth, this.abi);
 
         // parse arguments
         var options = {}; // required!
@@ -2973,8 +3003,8 @@ var ContractFactory = function (shx, abi) {
 
         if (callback) {
 
-            // wait for the contract address adn check if the code was deployed
-            this.shx.sendTransaction(options, function (err, hash) {
+            // wait for the contract address and check if the code was deployed
+            this.eth.sendTransaction(options, function (err, hash) {
                 if (err) {
                     callback(err);
                 } else {
@@ -2988,7 +3018,7 @@ var ContractFactory = function (shx, abi) {
                 }
             });
         } else {
-            var hash = this.shx.sendTransaction(options);
+            var hash = this.eth.sendTransaction(options);
             // add the transaction hash
             contract.transactionHash = hash;
             checkForContractAddress(contract);
@@ -3023,10 +3053,10 @@ var ContractFactory = function (shx, abi) {
  * otherwise calls callback function (err, contract)
  */
 ContractFactory.prototype.at = function (address, callback) {
-    var contract = new Contract(this.shx, this.abi, address);
+    var contract = new Contract(this.eth, this.abi, address);
 
     // this functions are not part of prototype,
-    // because we dont want to spoil the interface
+    // because we don't want to spoil the interface
     addFunctionsToContract(contract);
     addEventsToContract(contract);
 
@@ -3063,8 +3093,8 @@ ContractFactory.prototype.getData = function () {
  * @param {Array} abi
  * @param {Address} contract address
  */
-var Contract = function (shx, abi, address) {
-    this._shx = shx;
+var Contract = function (eth, abi, address) {
+    this._eth = eth;
     this.transactionHash = null;
     this.address = address;
     this.abi = abi;
@@ -3075,14 +3105,17 @@ module.exports = ContractFactory;
 },{"../solidity/coder":7,"../utils/utils":20,"./allevents":23,"./event":27,"./function":31}],26:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -3117,14 +3150,17 @@ module.exports = {
 },{}],27:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -3300,7 +3336,7 @@ SolidityEvent.prototype.execute = function (indexed, options, callback) {
 
     var o = this.encode(indexed, options);
     var formatter = this.decode.bind(this);
-    return new Filter(o, 'shx', this._requestManager, watches.shx(), formatter, callback);
+    return new Filter(o, 'eth', this._requestManager, watches.eth(), formatter, callback);
 };
 
 /**
@@ -3374,14 +3410,17 @@ module.exports = extend;
 },{"./../utils/utils":20,"./formatters":30,"./method":36,"./property":45}],29:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -3431,7 +3470,7 @@ var getOptions = function (options, type) {
 
 
     switch(type) {
-        case 'shx':
+        case 'eth':
 
             // make sure topics, get converted to hex
             options.topics = options.topics || [];
@@ -3454,6 +3493,7 @@ var getOptions = function (options, type) {
 
 /**
 Adds the callback and sets up the methods, to iterate over the results.
+
 @method getLogsAtStart
 @param {Object} self
 @param {function} callback
@@ -3478,6 +3518,7 @@ var getLogsAtStart = function(self, callback){
 
 /**
 Adds the callback and sets up the methods, to iterate over the results.
+
 @method pollFilter
 @param {Object} self
 */
@@ -3618,14 +3659,17 @@ module.exports = Filter;
 
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -3923,14 +3967,17 @@ module.exports = {
 },{"../utils/config":18,"../utils/utils":20,"./iban":33}],31:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -3949,8 +3996,8 @@ var sha3 = require('../utils/sha3');
 /**
  * This prototype should be used to call/sendTransaction to solidity functions
  */
-var SolidityFunction = function (shx, json, address) {
-    this._shx = shx;
+var SolidityFunction = function (eth, json, address) {
+    this._eth = eth;
     this._inputTypes = json.inputs.map(function (i) {
         return i.type;
     });
@@ -4052,12 +4099,12 @@ SolidityFunction.prototype.call = function () {
 
 
     if (!callback) {
-        var output = this._shx.call(payload, defaultBlock);
+        var output = this._eth.call(payload, defaultBlock);
         return this.unpackOutput(output);
     }
 
     var self = this;
-    this._shx.call(payload, defaultBlock, function (error, output) {
+    this._eth.call(payload, defaultBlock, function (error, output) {
         if (error) return callback(error, null);
 
         var unpacked = null;
@@ -4087,10 +4134,10 @@ SolidityFunction.prototype.sendTransaction = function () {
     }
 
     if (!callback) {
-        return this._shx.sendTransaction(payload);
+        return this._eth.sendTransaction(payload);
     }
 
-    this._shx.sendTransaction(payload, callback);
+    this._eth.sendTransaction(payload, callback);
 };
 
 /**
@@ -4104,10 +4151,10 @@ SolidityFunction.prototype.estimateGas = function () {
     var payload = this.toPayload(args);
 
     if (!callback) {
-        return this._shx.estimateGas(payload);
+        return this._eth.estimateGas(payload);
     }
 
-    this._shx.estimateGas(payload, callback);
+    this._eth.estimateGas(payload, callback);
 };
 
 /**
@@ -4156,7 +4203,7 @@ SolidityFunction.prototype.request = function () {
     var format = this.unpackOutput.bind(this);
 
     return {
-        method: this._constant ? 'shx_call' : 'shx_sendTransaction',
+        method: this._constant ? 'eth_call' : 'eth_sendTransaction',
         callback: callback,
         params: [payload],
         format: format
@@ -4205,14 +4252,17 @@ module.exports = SolidityFunction;
 },{"../solidity/coder":7,"../utils/sha3":19,"../utils/utils":20,"./errors":26,"./formatters":30}],32:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -4242,7 +4292,7 @@ var XHR2 = require('xhr2'); // jshint ignore: line
  * HttpProvider should be used to send rpc calls over http
  */
 var HttpProvider = function (host, timeout, user, password) {
-  this.host = host || 'http://localhost:8600';
+  this.host = host || 'http://localhost:8545';
   this.timeout = timeout || 0;
   this.user = user;
   this.password = password;
@@ -4361,14 +4411,17 @@ module.exports = HttpProvider;
 },{"./errors":26,"xhr2":86,"xmlhttprequest":17}],33:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -4443,7 +4496,7 @@ var Iban = function (iban) {
 };
 
 /**
- * This method should be used to create iban object from shx address
+ * This method should be used to create iban object from ethereum address
  *
  * @method fromAddress
  * @param {String} address
@@ -4482,7 +4535,7 @@ Iban.fromBban = function (bban) {
  * @return {Iban} the IBAN object
  */
 Iban.createIndirect = function (options) {
-    return Iban.fromBban('SHX' + options.institution + options.identifier);
+    return Iban.fromBban('ETH' + options.institution + options.identifier);
 };
 
 /**
@@ -4587,14 +4640,17 @@ module.exports = Iban;
 },{"bignumber.js":"bignumber.js"}],34:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -4656,6 +4712,7 @@ var IpcProvider = function (path, net) {
 
 /**
 Will parse the response and make an array out of it.
+
 @method _parseResponse
 @param {String} data
 */
@@ -4711,6 +4768,7 @@ IpcProvider.prototype._parseResponse = function(data) {
 /**
 Get the adds a callback to the responseCallbacks object,
 which will be called if a response matching the response Id will arrive.
+
 @method _addResponseCallback
 */
 IpcProvider.prototype._addResponseCallback = function(payload, callback) {
@@ -4723,6 +4781,7 @@ IpcProvider.prototype._addResponseCallback = function(payload, callback) {
 
 /**
 Timeout all requests when the end/error event is fired
+
 @method _timeout
 */
 IpcProvider.prototype._timeout = function() {
@@ -4737,6 +4796,7 @@ IpcProvider.prototype._timeout = function() {
 
 /**
 Check if the current connection is still valid.
+
 @method isConnected
 */
 IpcProvider.prototype.isConnected = function() {
@@ -4789,14 +4849,17 @@ module.exports = IpcProvider;
 },{"../utils/utils":20,"./errors":26}],35:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -4873,14 +4936,17 @@ module.exports = Jsonrpc;
 },{}],36:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -5036,14 +5102,17 @@ module.exports = Method;
 },{"../utils/utils":20,"./errors":26}],37:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -5101,19 +5170,22 @@ module.exports = DB;
 },{"../method":36}],38:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
 /**
- * @file shx.js
+ * @file eth.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @author Fabian Vogelsteller <fabian@ethdev.com>
  * @date 2015
@@ -5135,26 +5207,26 @@ var Iban = require('../iban');
 var transfer = require('../transfer');
 
 var blockCall = function (args) {
-    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? "shx_getBlockByHash" : "shx_getBlockByNumber";
+    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? "eth_getBlockByHash" : "eth_getBlockByNumber";
 };
 
 var transactionFromBlockCall = function (args) {
-    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'shx_getTransactionByBlockHashAndIndex' : 'shx_getTransactionByBlockNumberAndIndex';
+    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'eth_getTransactionByBlockHashAndIndex' : 'eth_getTransactionByBlockNumberAndIndex';
 };
 
 var uncleCall = function (args) {
-    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'shx_getUncleByBlockHashAndIndex' : 'shx_getUncleByBlockNumberAndIndex';
+    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'eth_getUncleByBlockHashAndIndex' : 'eth_getUncleByBlockNumberAndIndex';
 };
 
 var getBlockTransactionCountCall = function (args) {
-    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'shx_getBlockTransactionCountByHash' : 'shx_getBlockTransactionCountByNumber';
+    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'eth_getBlockTransactionCountByHash' : 'eth_getBlockTransactionCountByNumber';
 };
 
 var uncleCountCall = function (args) {
-    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'shx_getUncleCountByBlockHash' : 'shx_getUncleCountByBlockNumber';
+    return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'eth_getUncleCountByBlockHash' : 'eth_getUncleCountByBlockNumber';
 };
 
-function Shx(web3) {
+function Eth(web3) {
     this._requestManager = web3._requestManager;
 
     var self = this;
@@ -5174,7 +5246,7 @@ function Shx(web3) {
     this.sendIBANTransaction = transfer.bind(null, this);
 }
 
-Object.defineProperty(Shx.prototype, 'defaultBlock', {
+Object.defineProperty(Eth.prototype, 'defaultBlock', {
     get: function () {
         return c.defaultBlock;
     },
@@ -5184,7 +5256,7 @@ Object.defineProperty(Shx.prototype, 'defaultBlock', {
     }
 });
 
-Object.defineProperty(Shx.prototype, 'defaultAccount', {
+Object.defineProperty(Eth.prototype, 'defaultAccount', {
     get: function () {
         return c.defaultAccount;
     },
@@ -5197,7 +5269,7 @@ Object.defineProperty(Shx.prototype, 'defaultAccount', {
 var methods = function () {
     var getBalance = new Method({
         name: 'getBalance',
-        call: 'shx_getBalance',
+        call: 'eth_getBalance',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter],
         outputFormatter: formatters.outputBigNumberFormatter
@@ -5205,14 +5277,14 @@ var methods = function () {
 
     var getStorageAt = new Method({
         name: 'getStorageAt',
-        call: 'shx_getStorageAt',
+        call: 'eth_getStorageAt',
         params: 3,
         inputFormatter: [null, utils.toHex, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getCode = new Method({
         name: 'getCode',
-        call: 'shx_getCode',
+        call: 'eth_getCode',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
@@ -5236,7 +5308,7 @@ var methods = function () {
 
     var getCompilers = new Method({
         name: 'getCompilers',
-        call: 'shx_getCompilers',
+        call: 'eth_getCompilers',
         params: 0
     });
 
@@ -5258,7 +5330,7 @@ var methods = function () {
 
     var getTransaction = new Method({
         name: 'getTransaction',
-        call: 'shx_getTransactionByHash',
+        call: 'eth_getTransactionByHash',
         params: 1,
         outputFormatter: formatters.outputTransactionFormatter
     });
@@ -5273,14 +5345,14 @@ var methods = function () {
 
     var getTransactionReceipt = new Method({
         name: 'getTransactionReceipt',
-        call: 'shx_getTransactionReceipt',
+        call: 'eth_getTransactionReceipt',
         params: 1,
         outputFormatter: formatters.outputTransactionReceiptFormatter
     });
 
     var getTransactionCount = new Method({
         name: 'getTransactionCount',
-        call: 'shx_getTransactionCount',
+        call: 'eth_getTransactionCount',
         params: 2,
         inputFormatter: [null, formatters.inputDefaultBlockNumberFormatter],
         outputFormatter: utils.toDecimal
@@ -5288,42 +5360,42 @@ var methods = function () {
 
     var sendRawTransaction = new Method({
         name: 'sendRawTransaction',
-        call: 'shx_sendRawTransaction',
+        call: 'eth_sendRawTransaction',
         params: 1,
         inputFormatter: [null]
     });
 
     var sendTransaction = new Method({
         name: 'sendTransaction',
-        call: 'shx_sendTransaction',
+        call: 'eth_sendTransaction',
         params: 1,
         inputFormatter: [formatters.inputTransactionFormatter]
     });
 
     var signTransaction = new Method({
         name: 'signTransaction',
-        call: 'shx_signTransaction',
+        call: 'eth_signTransaction',
         params: 1,
         inputFormatter: [formatters.inputTransactionFormatter]
     });
 
     var sign = new Method({
         name: 'sign',
-        call: 'shx_sign',
+        call: 'eth_sign',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, null]
     });
 
     var call = new Method({
         name: 'call',
-        call: 'shx_call',
+        call: 'eth_call',
         params: 2,
         inputFormatter: [formatters.inputCallFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var estimateGas = new Method({
         name: 'estimateGas',
-        call: 'shx_estimateGas',
+        call: 'eth_estimateGas',
         params: 1,
         inputFormatter: [formatters.inputCallFormatter],
         outputFormatter: utils.toDecimal
@@ -5331,72 +5403,32 @@ var methods = function () {
 
     var compileSolidity = new Method({
         name: 'compile.solidity',
-        call: 'shx_compileSolidity',
+        call: 'eth_compileSolidity',
         params: 1
     });
 
     var compileLLL = new Method({
         name: 'compile.lll',
-        call: 'shx_compileLLL',
+        call: 'eth_compileLLL',
         params: 1
     });
 
     var compileSerpent = new Method({
         name: 'compile.serpent',
-        call: 'shx_compileSerpent',
+        call: 'eth_compileSerpent',
         params: 1
     });
 
     var submitWork = new Method({
         name: 'submitWork',
-        call: 'shx_submitWork',
+        call: 'eth_submitWork',
         params: 3
     });
 
     var getWork = new Method({
         name: 'getWork',
-        call: 'shx_getWork',
+        call: 'eth_getWork',
         params: 0
-    });
-    var newFilterCall = function (args) {
-        var type = args[0];
-
-        switch(type) {
-            case 'latest':
-                args.shift();
-                this.params = 0;
-                return 'shx_newBlockFilter';
-            case 'pending':
-                args.shift();
-                this.params = 0;
-                return 'shx_newPendingTransactionFilter';
-            default:
-                return 'shx_newFilter';
-        }
-    };
-
-    var newFilter = new Method({
-        name: 'newFilter',
-        call: newFilterCall,
-        params: 1
-    });
-
-    var uninstallFilter = new Method({
-        name: 'uninstallFilter',
-        call: 'shx_uninstallFilter',
-        params: 1
-    });
-
-    var getFilterLogs = new Method({
-        name: 'getFilterLogs',
-        call: 'shx_getFilterLogs',
-        params: 1
-    });
-
-    var getFilterChanges = new Method({
-        name: 'getFilterChanges',
-        call: 'shx_getFilterChanges',
-        params: 1
     });
 
     return [
@@ -5422,11 +5454,7 @@ var methods = function () {
         compileLLL,
         compileSerpent,
         submitWork,
-        getWork,
-        newFilter,
-        uninstallFilter,
-        getFilterLogs,
-        getFilterChanges
+        getWork
     ];
 };
 
@@ -5435,76 +5463,84 @@ var properties = function () {
     return [
         new Property({
             name: 'coinbase',
-            getter: 'shx_coinbase'
+            getter: 'eth_coinbase'
         }),
         new Property({
             name: 'mining',
-            getter: 'shx_mining'
+            getter: 'eth_mining'
+        }),
+        new Property({
+            name: 'hashrate',
+            getter: 'eth_hashrate',
+            outputFormatter: utils.toDecimal
         }),
         new Property({
             name: 'syncing',
-            getter: 'shx_syncing',
+            getter: 'eth_syncing',
             outputFormatter: formatters.outputSyncingFormatter
         }),
         new Property({
             name: 'gasPrice',
-            getter: 'shx_gasPrice',
+            getter: 'eth_gasPrice',
             outputFormatter: formatters.outputBigNumberFormatter
         }),
         new Property({
             name: 'accounts',
-            getter: 'shx_accounts'
+            getter: 'eth_accounts'
         }),
         new Property({
             name: 'blockNumber',
-            getter: 'shx_blockNumber',
+            getter: 'eth_blockNumber',
             outputFormatter: utils.toDecimal
         }),
         new Property({
             name: 'protocolVersion',
-            getter: 'shx_protocolVersion'
+            getter: 'eth_protocolVersion'
         })
     ];
 };
 
-Shx.prototype.contract = function (abi) {
+Eth.prototype.contract = function (abi) {
     var factory = new Contract(this, abi);
     return factory;
 };
 
-Shx.prototype.filter = function (options, callback, filterCreationErrorCallback) {
-    return new Filter(options, 'shx', this._requestManager, watches.shx(), formatters.outputLogFormatter, callback, filterCreationErrorCallback);
+Eth.prototype.filter = function (options, callback, filterCreationErrorCallback) {
+    return new Filter(options, 'eth', this._requestManager, watches.eth(), formatters.outputLogFormatter, callback, filterCreationErrorCallback);
 };
 
-Shx.prototype.namereg = function () {
+Eth.prototype.namereg = function () {
     return this.contract(namereg.global.abi).at(namereg.global.address);
 };
 
-Shx.prototype.icapNamereg = function () {
+Eth.prototype.icapNamereg = function () {
     return this.contract(namereg.icap.abi).at(namereg.icap.address);
 };
 
-Shx.prototype.isSyncing = function (callback) {
+Eth.prototype.isSyncing = function (callback) {
     return new IsSyncing(this._requestManager, callback);
 };
 
-module.exports = Shx;
+module.exports = Eth;
 
 },{"../../utils/config":18,"../../utils/utils":20,"../contract":25,"../filter":29,"../formatters":30,"../iban":33,"../method":36,"../namereg":44,"../property":45,"../syncing":48,"../transfer":49,"./watches":43}],39:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file shx.js
+/** @file eth.js
  * @authors:
  *   Marek Kotewicz <marek@ethdev.com>
  * @date 2015
@@ -5524,7 +5560,7 @@ var Net = function (web3) {
     });
 };
 
-/// @returns an array of objects describing web3.shx api properties
+/// @returns an array of objects describing web3.eth api properties
 var properties = function () {
     return [
         new Property({
@@ -5544,19 +5580,22 @@ module.exports = Net;
 },{"../../utils/utils":20,"../property":45}],40:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
 /**
- * @file shx.js
+ * @file eth.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @author Fabian Vogelsteller <fabian@ethdev.com>
  * @date 2015
@@ -5658,17 +5697,26 @@ module.exports = Personal;
 },{"../formatters":30,"../method":36,"../property":45}],41:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
+/** @file shh.js
+ * @authors:
+ *   Fabian Vogelsteller <fabian@ethereum.org>
+ *   Marek Kotewicz <marek@ethcore.io>
+ * @date 2017
+ */
 
 var Method = require('../method');
 var Filter = require('../filter');
@@ -5795,17 +5843,27 @@ module.exports = Shh;
 },{"../filter":29,"../method":36,"./watches":43}],42:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
+/**
+ * @file bzz.js
+ * @author Alex Beregszaszi <alex@rtfs.hu>
+ * @date 2016
+ *
+ * Reference: https://github.com/ethereum/go-ethereum/blob/swarm/internal/web3ext/web3ext.go#L33
+ */
 
 "use strict";
 
@@ -5932,14 +5990,17 @@ module.exports = Swarm;
 },{"../method":36,"../property":45}],43:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -5951,8 +6012,8 @@ module.exports = Swarm;
 
 var Method = require('../method');
 
-/// @returns an array of objects describing web3.shx.filter api methods
-var shx = function (web3) {
+/// @returns an array of objects describing web3.eth.filter api methods
+var eth = function () {
     var newFilterCall = function (args) {
         var type = args[0];
 
@@ -5960,13 +6021,13 @@ var shx = function (web3) {
             case 'latest':
                 args.shift();
                 this.params = 0;
-                return 'shx_newBlockFilter';
+                return 'eth_newBlockFilter';
             case 'pending':
                 args.shift();
                 this.params = 0;
-                return 'shx_newPendingTransactionFilter';
+                return 'eth_newPendingTransactionFilter';
             default:
-                return 'shx_newFilter';
+                return 'eth_newFilter';
         }
     };
 
@@ -5978,19 +6039,19 @@ var shx = function (web3) {
 
     var uninstallFilter = new Method({
         name: 'uninstallFilter',
-        call: 'shx_uninstallFilter',
+        call: 'eth_uninstallFilter',
         params: 1
     });
 
     var getLogs = new Method({
         name: 'getLogs',
-        call: 'shx_getFilterLogs',
+        call: 'eth_getFilterLogs',
         params: 1
     });
 
     var poll = new Method({
         name: 'poll',
-        call: 'shx_getFilterChanges',
+        call: 'eth_getFilterChanges',
         params: 1
     });
 
@@ -6003,7 +6064,7 @@ var shx = function (web3) {
 };
 
 /// @returns an array of objects describing web3.shh.watch api methods
-var shh = function (web3) {
+var shh = function () {
 
     return [
         new Method({
@@ -6030,7 +6091,7 @@ var shh = function (web3) {
 };
 
 module.exports = {
-    shx: shx,
+    eth: eth,
     shh: shh
 };
 
@@ -6038,14 +6099,17 @@ module.exports = {
 },{"../method":36}],44:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -6076,14 +6140,17 @@ module.exports = {
 },{"../contracts/GlobalRegistrar.json":1,"../contracts/ICAPRegistrar.json":2}],45:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -6219,14 +6286,17 @@ module.exports = Property;
 },{"../utils/utils":20}],46:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -6247,7 +6317,7 @@ var errors = require('./errors');
 
 /**
  * It's responsible for passing messages to providers
- * It's also responsible for polling the shx node for incoming messages
+ * It's also responsible for polling the ethereum node for incoming messages
  * Default poll timeout is 1 second
  * Singleton
  */
@@ -6494,14 +6564,17 @@ module.exports = Settings;
 },{}],48:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -6518,6 +6591,7 @@ var count = 1;
 
 /**
 Adds the callback and sets up the methods, to iterate over the results.
+
 @method pollSyncing
 @param {Object} self
 */
@@ -6551,7 +6625,7 @@ var pollSyncing = function(self) {
     };
 
     self.requestManager.startPolling({
-        method: 'shx_syncing',
+        method: 'eth_syncing',
         params: [],
     }, self.pollId, onMessage, self.stopWatching.bind(self));
 
@@ -6585,14 +6659,17 @@ module.exports = IsSyncing;
 },{"../utils/utils":20,"./formatters":30}],49:[function(require,module,exports){
 /*
     This file is part of web3.js.
+
     web3.js is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     web3.js is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
+
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -6614,23 +6691,23 @@ var exchangeAbi = require('../contracts/SmartExchange.json');
  * @param {Value} value to be tranfered
  * @param {Function} callback, callback
  */
-var transfer = function (shx, from, to, value, callback) {
+var transfer = function (eth, from, to, value, callback) {
     var iban = new Iban(to); 
     if (!iban.isValid()) {
         throw new Error('invalid iban address');
     }
 
     if (iban.isDirect()) {
-        return transferToAddress(shx, from, iban.address(), value, callback);
+        return transferToAddress(eth, from, iban.address(), value, callback);
     }
     
     if (!callback) {
-        var address = shx.icapNamereg().addr(iban.institution());
-        return deposit(shx, from, address, value, iban.client());
+        var address = eth.icapNamereg().addr(iban.institution());
+        return deposit(eth, from, address, value, iban.client());
     }
 
-    shx.icapNamereg().addr(iban.institution(), function (err, address) {
-        return deposit(shx, from, address, value, iban.client(), callback);
+    eth.icapNamereg().addr(iban.institution(), function (err, address) {
+        return deposit(eth, from, address, value, iban.client(), callback);
     });
     
 };
@@ -6644,8 +6721,8 @@ var transfer = function (shx, from, to, value, callback) {
  * @param {Value} value to be tranfered
  * @param {Function} callback, callback
  */
-var transferToAddress = function (shx, from, to, value, callback) {
-    return shx.sendTransaction({
+var transferToAddress = function (eth, from, to, value, callback) {
+    return eth.sendTransaction({
         address: to,
         from: from,
         value: value
@@ -6658,13 +6735,13 @@ var transferToAddress = function (shx, from, to, value, callback) {
  * @method deposit
  * @param {String} from
  * @param {String} to
- * @param {Value} value to be transfered
+ * @param {Value} value to be transferred
  * @param {String} client unique identifier
  * @param {Function} callback, callback
  */
-var deposit = function (shx, from, to, value, client, callback) {
+var deposit = function (eth, from, to, value, client, callback) {
     var abi = exchangeAbi;
-    return shx.contract(abi).at(to).deposit(client, {
+    return eth.contract(abi).at(to).deposit(client, {
         from: from,
         value: value
     }, callback);
@@ -10792,9 +10869,12 @@ module.exports = transfer;
 
 	/** @preserve
 	(c) 2012 by Cédric Mesnil. All rights reserved.
+
 	Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
 	    - Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
 	    - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
 	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	*/
 
@@ -13537,7 +13617,7 @@ module.exports = BigNumber; // jshint ignore:line
 },{}],"web3":[function(require,module,exports){
 var Web3 = require('./lib/web3');
 
-// dont override global variable
+// don't override global variable
 if (typeof window !== 'undefined' && typeof window.Web3 === 'undefined') {
     window.Web3 = Web3;
 }

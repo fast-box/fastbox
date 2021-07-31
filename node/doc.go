@@ -1,25 +1,62 @@
-// Copyright 2018 The sphinx Authors
-// Modified based on go-ethereum, which Copyright (C) 2014 The go-ethereum Authors.
+// Copyright 2016 The go-ethereum Authors
+// This file is part of the go-ethereum library.
 //
-// The sphinx is free software: you can redistribute it and/or modify
+// The go-ethereum library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The sphinx is distributed in the hope that it will be useful,
+// The go-ethereum library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the sphinx. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
 /*
-Package node sets up multi-protocol Shx nodes.
+Package node sets up multi-protocol Ethereum nodes.
 
 In the model exposed by this package, a node is a collection of services which use shared
 resources to provide RPC APIs. Services can also offer devp2p protocols, which are wired
 up to the devp2p network when the node instance is started.
+
+
+Node Lifecycle
+
+The Node object has a lifecycle consisting of three basic states, INITIALIZING, RUNNING
+and CLOSED.
+
+
+    ●───────┐
+         New()
+            │
+            ▼
+      INITIALIZING ────Start()─┐
+            │                  │
+            │                  ▼
+        Close()             RUNNING
+            │                  │
+            ▼                  │
+         CLOSED ◀──────Close()─┘
+
+
+Creating a Node allocates basic resources such as the data directory and returns the node
+in its INITIALIZING state. Lifecycle objects, RPC APIs and peer-to-peer networking
+protocols can be registered in this state. Basic operations such as opening a key-value
+database are permitted while initializing.
+
+Once everything is registered, the node can be started, which moves it into the RUNNING
+state. Starting the node starts all registered Lifecycle objects and enables RPC and
+peer-to-peer networking. Note that no additional Lifecycles, APIs or p2p protocols can be
+registered while the node is running.
+
+Closing the node releases all held resources. The actions performed by Close depend on the
+state it was in. When closing a node in INITIALIZING state, resources related to the data
+directory are released. If the node was RUNNING, closing it also stops all Lifecycle
+objects and shuts down RPC and peer-to-peer networking.
+
+You must always call Close on Node, even if the node was not started.
 
 
 Resources Managed By Node
@@ -43,7 +80,7 @@ Service implementations can open LevelDB databases through the service context. 
 node chooses the file system location of each database. If the node is configured to run
 without a data directory, databases are opened in memory instead.
 
-Node also creates the shared store of encrypted Shx account keys. Services can access
+Node also creates the shared store of encrypted Ethereum account keys. Services can access
 the account manager through the service context.
 
 
@@ -59,7 +96,7 @@ using the same data directory will store this information in different subdirect
 the data directory.
 
 LevelDB databases are also stored within the instance subdirectory. If multiple node
-instances use the same data directory, openening the databases with identical names will
+instances use the same data directory, opening the databases with identical names will
 create one database for each instance.
 
 The account key store is shared among all node instances using the same data directory
@@ -69,7 +106,7 @@ unless its location is changed through the KeyStoreDir configuration option.
 Data Directory Sharing Example
 
 In this example, two node instances named A and B are started with the same data
-directory. Mode instance A opens the database "db", node instance B opens the databases
+directory. Node instance A opens the database "db", node instance B opens the databases
 "db" and "db-2". The following files will be created in the data directory:
 
    data-directory/
@@ -84,7 +121,7 @@ directory. Mode instance A opens the database "db", node instance B opens the da
             static-nodes.json  -- devp2p static node list of instance B
             db/                -- LevelDB content for "db"
             db-2/              -- LevelDB content for "db-2"
-        B.ipc                  -- JSON-RPC UNIX domain socket endpoint of instance A
+        B.ipc                  -- JSON-RPC UNIX domain socket endpoint of instance B
         keystore/              -- account key store, used by both instances
 */
 package node
